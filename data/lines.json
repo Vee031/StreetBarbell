@@ -1,0 +1,65 @@
+[
+  {
+    "nameEn": "Standard Line",
+    "nameCs": "Standardní řada",
+    "slug": "standard-line",
+    "count": 26,
+    "image": "https://streetbarbell.com/wp-content/uploads/2024/05/sb-standard-line.jpeg"
+  },
+  {
+    "nameEn": "Light Line",
+    "nameCs": "Lehká řada",
+    "slug": "light-line",
+    "count": 22,
+    "image": "https://streetbarbell.com/wp-content/uploads/2024/05/sb-light-line.jpg"
+  },
+  {
+    "nameEn": "Plus Line",
+    "nameCs": "Řada Plus",
+    "slug": "plus-line",
+    "count": 9,
+    "image": "https://streetbarbell.com/wp-content/uploads/2024/05/sb-plus-line.jpg"
+  },
+  {
+    "nameEn": "PRO Line",
+    "nameCs": "Řada PRO",
+    "slug": "pro-line",
+    "count": 10,
+    "image": "https://streetbarbell.com/wp-content/uploads/2024/05/block2bg.jpg"
+  },
+  {
+    "nameEn": "Cardio Line",
+    "nameCs": "Kardio řada",
+    "slug": "cardio-line",
+    "count": 3,
+    "image": "https://streetbarbell.com/wp-content/uploads/2024/05/sb-cardio-line.jpg"
+  },
+  {
+    "nameEn": "Workout Line",
+    "nameCs": "Workoutová řada",
+    "slug": "workout-line",
+    "count": 19,
+    "image": "https://streetbarbell.com/wp-content/uploads/2024/05/sb-workout-line.jpg"
+  },
+  {
+    "nameEn": "Gymnastics Line",
+    "nameCs": "Gymnastická řada",
+    "slug": "gymnastics-line",
+    "count": 17,
+    "image": "https://streetbarbell.com/wp-content/uploads/2024/05/sb-gymnastic-line.jpg"
+  },
+  {
+    "nameEn": "Boxing Line",
+    "nameCs": "Boxerská řada",
+    "slug": "boxing-line",
+    "count": 3,
+    "image": "https://streetbarbell.com/wp-content/uploads/2024/05/block2bg.jpg"
+  },
+  {
+    "nameEn": "Kids Line",
+    "nameCs": "Dětská řada",
+    "slug": "kids-line",
+    "count": 7,
+    "image": "https://streetbarbell.com/wp-content/uploads/2024/05/block2bg.jpg"
+  }
+]
