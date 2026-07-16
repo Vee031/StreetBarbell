@@ -145,3 +145,16 @@ export const dictionaries = {
 export function getDictionary(locale: Locale) {
   return dictionaries[locale];
 }
+
+// Czech has three plural forms: 1 stroj, 2–4 stroje, 5+ strojů.
+export function countNoun(count: number, locale: Locale, forms: { en: [string, string]; cs: [string, string, string] }) {
+  if (locale === "cs") {
+    if (count === 1) return forms.cs[0];
+    if (count >= 2 && count <= 4) return forms.cs[1];
+    return forms.cs[2];
+  }
+  return count === 1 ? forms.en[0] : forms.en[1];
+}
+
+export const nounMachines = { en: ["machine", "machines"] as [string, string], cs: ["stroj", "stroje", "strojů"] as [string, string, string] };
+export const nounProducts = { en: ["product", "products"] as [string, string], cs: ["produkt", "produkty", "produktů"] as [string, string, string] };

@@ -44,7 +44,7 @@
     },
     "weightKg": null,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K2:Q2)=0,\"\",K2*25+L2*20+M2*15+N2*10+O2*5+P2*2.5+Q2*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -110,7 +110,7 @@
     },
     "weightKg": null,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K3:Q3)=0,\"\",K3*25+L3*20+M3*15+N3*10+O3*5+P3*2.5+Q3*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -176,7 +176,7 @@
     },
     "weightKg": null,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K4:Q4)=0,\"\",K4*25+L4*20+M4*15+N4*10+O4*5+P4*2.5+Q4*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -242,7 +242,7 @@
     },
     "weightKg": 160,
     "loadSpecification": "5 resistant levels available (10kg / 15kg / 20kg / 25kg / 30kg)",
-    "totalPlateLoadKg": "=IF(COUNTA(K5:Q5)=0,\"\",K5*25+L5*20+M5*15+N5*10+O5*5+P5*2.5+Q5*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "",
@@ -308,7 +308,7 @@
     },
     "weightKg": 150,
     "loadSpecification": "5 resistant levels available (10kg / 20kg / 30kg / 40kg / 50kg)",
-    "totalPlateLoadKg": "=IF(COUNTA(K6:Q6)=0,\"\",K6*25+L6*20+M6*15+N6*10+O6*5+P6*2.5+Q6*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "",
@@ -374,7 +374,7 @@
     },
     "weightKg": 160,
     "loadSpecification": "5 resistant levels available (10kg / 15kg / 20kg / 25kg / 30kg)",
-    "totalPlateLoadKg": "=IF(COUNTA(K7:Q7)=0,\"\",K7*25+L7*20+M7*15+N7*10+O7*5+P7*2.5+Q7*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "",
@@ -440,7 +440,7 @@
     },
     "weightKg": null,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K8:Q8)=0,\"\",K8*25+L8*20+M8*15+N8*10+O8*5+P8*2.5+Q8*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -506,7 +506,7 @@
     },
     "weightKg": null,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K9:Q9)=0,\"\",K9*25+L9*20+M9*15+N9*10+O9*5+P9*2.5+Q9*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -572,7 +572,7 @@
     },
     "weightKg": 44,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K10:Q10)=0,\"\",K10*25+L10*20+M10*15+N10*10+O10*5+P10*2.5+Q10*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -638,7 +638,7 @@
     },
     "weightKg": 56,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K11:Q11)=0,\"\",K11*25+L11*20+M11*15+N11*10+O11*5+P11*2.5+Q11*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -704,7 +704,7 @@
     },
     "weightKg": 66,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K12:Q12)=0,\"\",K12*25+L12*20+M12*15+N12*10+O12*5+P12*2.5+Q12*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -770,7 +770,7 @@
     },
     "weightKg": 60,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K13:Q13)=0,\"\",K13*25+L13*20+M13*15+N13*10+O13*5+P13*2.5+Q13*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -836,7 +836,7 @@
     },
     "weightKg": 74,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K14:Q14)=0,\"\",K14*25+L14*20+M14*15+N14*10+O14*5+P14*2.5+Q14*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -902,7 +902,7 @@
     },
     "weightKg": 46,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K15:Q15)=0,\"\",K15*25+L15*20+M15*15+N15*10+O15*5+P15*2.5+Q15*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -968,7 +968,7 @@
     },
     "weightKg": 56,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K16:Q16)=0,\"\",K16*25+L16*20+M16*15+N16*10+O16*5+P16*2.5+Q16*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -1034,7 +1034,7 @@
     },
     "weightKg": 63,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K17:Q17)=0,\"\",K17*25+L17*20+M17*15+N17*10+O17*5+P17*2.5+Q17*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -1100,7 +1100,7 @@
     },
     "weightKg": 67,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K18:Q18)=0,\"\",K18*25+L18*20+M18*15+N18*10+O18*5+P18*2.5+Q18*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -1166,7 +1166,7 @@
     },
     "weightKg": 40,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K19:Q19)=0,\"\",K19*25+L19*20+M19*15+N19*10+O19*5+P19*2.5+Q19*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -1232,7 +1232,7 @@
     },
     "weightKg": 76,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K20:Q20)=0,\"\",K20*25+L20*20+M20*15+N20*10+O20*5+P20*2.5+Q20*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -1298,7 +1298,7 @@
     },
     "weightKg": 67,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K21:Q21)=0,\"\",K21*25+L21*20+M21*15+N21*10+O21*5+P21*2.5+Q21*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -1364,7 +1364,7 @@
     },
     "weightKg": 121,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K22:Q22)=0,\"\",K22*25+L22*20+M22*15+N22*10+O22*5+P22*2.5+Q22*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -1430,7 +1430,7 @@
     },
     "weightKg": 87,
     "loadSpecification": "6 pcs / 2.5 kg (15 kg)",
-    "totalPlateLoadKg": "=IF(COUNTA(K23:Q23)=0,\"\",K23*25+L23*20+M23*15+N23*10+O23*5+P23*2.5+Q23*1.25)",
+    "totalPlateLoadKg": 15,
     "materials": {
       "frame": "",
       "rails": "",
@@ -1496,7 +1496,7 @@
     },
     "weightKg": 101,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K24:Q24)=0,\"\",K24*25+L24*20+M24*15+N24*10+O24*5+P24*2.5+Q24*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -1562,7 +1562,7 @@
     },
     "weightKg": null,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K25:Q25)=0,\"\",K25*25+L25*20+M25*15+N25*10+O25*5+P25*2.5+Q25*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -1628,7 +1628,7 @@
     },
     "weightKg": null,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K26:Q26)=0,\"\",K26*25+L26*20+M26*15+N26*10+O26*5+P26*2.5+Q26*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -1694,7 +1694,7 @@
     },
     "weightKg": null,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K27:Q27)=0,\"\",K27*25+L27*20+M27*15+N27*10+O27*5+P27*2.5+Q27*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -1760,7 +1760,7 @@
     },
     "weightKg": null,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K28:Q28)=0,\"\",K28*25+L28*20+M28*15+N28*10+O28*5+P28*2.5+Q28*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -1826,7 +1826,7 @@
     },
     "weightKg": null,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K29:Q29)=0,\"\",K29*25+L29*20+M29*15+N29*10+O29*5+P29*2.5+Q29*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -1892,7 +1892,7 @@
     },
     "weightKg": null,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K30:Q30)=0,\"\",K30*25+L30*20+M30*15+N30*10+O30*5+P30*2.5+Q30*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -1958,7 +1958,7 @@
     },
     "weightKg": null,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K31:Q31)=0,\"\",K31*25+L31*20+M31*15+N31*10+O31*5+P31*2.5+Q31*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -2024,7 +2024,7 @@
     },
     "weightKg": 150,
     "loadSpecification": "3 in 1 (pull-ups, dips, leg-lifts)",
-    "totalPlateLoadKg": "=IF(COUNTA(K32:Q32)=0,\"\",K32*25+L32*20+M32*15+N32*10+O32*5+P32*2.5+Q32*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "",
@@ -2090,7 +2090,7 @@
     },
     "weightKg": 130,
     "loadSpecification": "2 in 1 (abs and lower back / glutes)",
-    "totalPlateLoadKg": "=IF(COUNTA(K33:Q33)=0,\"\",K33*25+L33*20+M33*15+N33*10+O33*5+P33*2.5+Q33*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "",
@@ -2156,7 +2156,7 @@
     },
     "weightKg": 355,
     "loadSpecification": "8 x 15 kg and 6 x 2.5 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K34:Q34)=0,\"\",K34*25+L34*20+M34*15+N34*10+O34*5+P34*2.5+Q34*1.25)",
+    "totalPlateLoadKg": 135,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -2222,7 +2222,7 @@
     },
     "weightKg": 420,
     "loadSpecification": "10 x 20 kg and 8 x 2.5 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K35:Q35)=0,\"\",K35*25+L35*20+M35*15+N35*10+O35*5+P35*2.5+Q35*1.25)",
+    "totalPlateLoadKg": 220,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -2288,7 +2288,7 @@
     },
     "weightKg": 390,
     "loadSpecification": "8 x 25 kg and 8 x 2.5 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K36:Q36)=0,\"\",K36*25+L36*20+M36*15+N36*10+O36*5+P36*2.5+Q36*1.25)",
+    "totalPlateLoadKg": 220,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -2354,7 +2354,7 @@
     },
     "weightKg": 390,
     "loadSpecification": "8 x 25 kg and 8 x 2.5 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K37:Q37)=0,\"\",K37*25+L37*20+M37*15+N37*10+O37*5+P37*2.5+Q37*1.25)",
+    "totalPlateLoadKg": 220,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -2420,7 +2420,7 @@
     },
     "weightKg": 305,
     "loadSpecification": "10 x 10 kg and 6 x 2.5 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K38:Q38)=0,\"\",K38*25+L38*20+M38*15+N38*10+O38*5+P38*2.5+Q38*1.25)",
+    "totalPlateLoadKg": 115,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -2486,7 +2486,7 @@
     },
     "weightKg": 295,
     "loadSpecification": "10 x 10 kg and 6 x 2.5 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K39:Q39)=0,\"\",K39*25+L39*20+M39*15+N39*10+O39*5+P39*2.5+Q39*1.25)",
+    "totalPlateLoadKg": 115,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -2552,7 +2552,7 @@
     },
     "weightKg": 158,
     "loadSpecification": "8 x 5 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K40:Q40)=0,\"\",K40*25+L40*20+M40*15+N40*10+O40*5+P40*2.5+Q40*1.25)",
+    "totalPlateLoadKg": 40,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -2618,7 +2618,7 @@
     },
     "weightKg": 243,
     "loadSpecification": "12 x 5 kg and 6 x 2.5 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K41:Q41)=0,\"\",K41*25+L41*20+M41*15+N41*10+O41*5+P41*2.5+Q41*1.25)",
+    "totalPlateLoadKg": 75,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -2684,7 +2684,7 @@
     },
     "weightKg": null,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K42:Q42)=0,\"\",K42*25+L42*20+M42*15+N42*10+O42*5+P42*2.5+Q42*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -2750,7 +2750,7 @@
     },
     "weightKg": null,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K43:Q43)=0,\"\",K43*25+L43*20+M43*15+N43*10+O43*5+P43*2.5+Q43*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -2816,7 +2816,7 @@
     },
     "weightKg": 355,
     "loadSpecification": "3 in 1 (pull-ups, dips, leg-lifts); 8 x 10 kg / total 80 kg counterweight",
-    "totalPlateLoadKg": "=IF(COUNTA(K44:Q44)=0,\"\",K44*25+L44*20+M44*15+N44*10+O44*5+P44*2.5+Q44*1.25)",
+    "totalPlateLoadKg": 80,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -2882,7 +2882,7 @@
     },
     "weightKg": 420,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K45:Q45)=0,\"\",K45*25+L45*20+M45*15+N45*10+O45*5+P45*2.5+Q45*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -2948,7 +2948,7 @@
     },
     "weightKg": 373,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K46:Q46)=0,\"\",K46*25+L46*20+M46*15+N46*10+O46*5+P46*2.5+Q46*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -3014,7 +3014,7 @@
     },
     "weightKg": 254,
     "loadSpecification": "12 plates of 5 kg each (60 kg)",
-    "totalPlateLoadKg": "=IF(COUNTA(K47:Q47)=0,\"\",K47*25+L47*20+M47*15+N47*10+O47*5+P47*2.5+Q47*1.25)",
+    "totalPlateLoadKg": 60,
     "materials": {
       "frame": "",
       "rails": "",
@@ -3080,7 +3080,7 @@
     },
     "weightKg": null,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K48:Q48)=0,\"\",K48*25+L48*20+M48*15+N48*10+O48*5+P48*2.5+Q48*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -3146,7 +3146,7 @@
     },
     "weightKg": null,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K49:Q49)=0,\"\",K49*25+L49*20+M49*15+N49*10+O49*5+P49*2.5+Q49*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -3212,7 +3212,7 @@
     },
     "weightKg": null,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K50:Q50)=0,\"\",K50*25+L50*20+M50*15+N50*10+O50*5+P50*2.5+Q50*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -3278,7 +3278,7 @@
     },
     "weightKg": null,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K51:Q51)=0,\"\",K51*25+L51*20+M51*15+N51*10+O51*5+P51*2.5+Q51*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -3344,7 +3344,7 @@
     },
     "weightKg": null,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K52:Q52)=0,\"\",K52*25+L52*20+M52*15+N52*10+O52*5+P52*2.5+Q52*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -3410,7 +3410,7 @@
     },
     "weightKg": 378,
     "loadSpecification": "16 x 5 kg and 6 x 1.25 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K53:Q53)=0,\"\",K53*25+L53*20+M53*15+N53*10+O53*5+P53*2.5+Q53*1.25)",
+    "totalPlateLoadKg": 87.5,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -3476,7 +3476,7 @@
     },
     "weightKg": 318,
     "loadSpecification": "16 x 5 kg and 6 x 1.25 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K54:Q54)=0,\"\",K54*25+L54*20+M54*15+N54*10+O54*5+P54*2.5+Q54*1.25)",
+    "totalPlateLoadKg": 87.5,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -3542,7 +3542,7 @@
     },
     "weightKg": 358,
     "loadSpecification": "16 x 5 kg and 6 x 1.25 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K55:Q55)=0,\"\",K55*25+L55*20+M55*15+N55*10+O55*5+P55*2.5+Q55*1.25)",
+    "totalPlateLoadKg": 87.5,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -3608,7 +3608,7 @@
     },
     "weightKg": 338,
     "loadSpecification": "16 x 5 kg and 6 x 1.25 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K56:Q56)=0,\"\",K56*25+L56*20+M56*15+N56*10+O56*5+P56*2.5+Q56*1.25)",
+    "totalPlateLoadKg": 87.5,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -3674,7 +3674,7 @@
     },
     "weightKg": 368,
     "loadSpecification": "16 x 5 kg and 6 x 1.25 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K57:Q57)=0,\"\",K57*25+L57*20+M57*15+N57*10+O57*5+P57*2.5+Q57*1.25)",
+    "totalPlateLoadKg": 87.5,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -3740,7 +3740,7 @@
     },
     "weightKg": 358,
     "loadSpecification": "16 x 5 kg and 6 x 1.25 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K58:Q58)=0,\"\",K58*25+L58*20+M58*15+N58*10+O58*5+P58*2.5+Q58*1.25)",
+    "totalPlateLoadKg": 87.5,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -3806,7 +3806,7 @@
     },
     "weightKg": 496,
     "loadSpecification": "16 x 5 kg and 6 x 1.25 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K59:Q59)=0,\"\",K59*25+L59*20+M59*15+N59*10+O59*5+P59*2.5+Q59*1.25)",
+    "totalPlateLoadKg": 87.5,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -3872,7 +3872,7 @@
     },
     "weightKg": 140,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K60:Q60)=0,\"\",K60*25+L60*20+M60*15+N60*10+O60*5+P60*2.5+Q60*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "",
@@ -3938,7 +3938,7 @@
     },
     "weightKg": 377,
     "loadSpecification": "16 x 5 kg and 6 x 1.25 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K61:Q61)=0,\"\",K61*25+L61*20+M61*15+N61*10+O61*5+P61*2.5+Q61*1.25)",
+    "totalPlateLoadKg": 87.5,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -4004,7 +4004,7 @@
     },
     "weightKg": null,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K62:Q62)=0,\"\",K62*25+L62*20+M62*15+N62*10+O62*5+P62*2.5+Q62*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -4070,7 +4070,7 @@
     },
     "weightKg": null,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K63:Q63)=0,\"\",K63*25+L63*20+M63*15+N63*10+O63*5+P63*2.5+Q63*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -4136,7 +4136,7 @@
     },
     "weightKg": null,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K64:Q64)=0,\"\",K64*25+L64*20+M64*15+N64*10+O64*5+P64*2.5+Q64*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -4202,7 +4202,7 @@
     },
     "weightKg": null,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K65:Q65)=0,\"\",K65*25+L65*20+M65*15+N65*10+O65*5+P65*2.5+Q65*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -4268,7 +4268,7 @@
     },
     "weightKg": null,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K66:Q66)=0,\"\",K66*25+L66*20+M66*15+N66*10+O66*5+P66*2.5+Q66*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -4334,7 +4334,7 @@
     },
     "weightKg": null,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K67:Q67)=0,\"\",K67*25+L67*20+M67*15+N67*10+O67*5+P67*2.5+Q67*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -4400,7 +4400,7 @@
     },
     "weightKg": null,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K68:Q68)=0,\"\",K68*25+L68*20+M68*15+N68*10+O68*5+P68*2.5+Q68*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -4466,7 +4466,7 @@
     },
     "weightKg": null,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K69:Q69)=0,\"\",K69*25+L69*20+M69*15+N69*10+O69*5+P69*2.5+Q69*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -4532,7 +4532,7 @@
     },
     "weightKg": null,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K70:Q70)=0,\"\",K70*25+L70*20+M70*15+N70*10+O70*5+P70*2.5+Q70*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -4598,7 +4598,7 @@
     },
     "weightKg": 450,
     "loadSpecification": "12 x 10 kg (120 kg)",
-    "totalPlateLoadKg": "=IF(COUNTA(K71:Q71)=0,\"\",K71*25+L71*20+M71*15+N71*10+O71*5+P71*2.5+Q71*1.25)",
+    "totalPlateLoadKg": 120,
     "materials": {
       "frame": "",
       "rails": "",
@@ -4664,7 +4664,7 @@
     },
     "weightKg": null,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K72:Q72)=0,\"\",K72*25+L72*20+M72*15+N72*10+O72*5+P72*2.5+Q72*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -4730,7 +4730,7 @@
     },
     "weightKg": 265,
     "loadSpecification": "10 x 10 kg and 6 x 2.5 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K73:Q73)=0,\"\",K73*25+L73*20+M73*15+N73*10+O73*5+P73*2.5+Q73*1.25)",
+    "totalPlateLoadKg": 115,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -4796,7 +4796,7 @@
     },
     "weightKg": 335,
     "loadSpecification": "14 x 10 kg and 6 x 2.5 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K74:Q74)=0,\"\",K74*25+L74*20+M74*15+N74*10+O74*5+P74*2.5+Q74*1.25)",
+    "totalPlateLoadKg": 155,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -4862,7 +4862,7 @@
     },
     "weightKg": 358,
     "loadSpecification": "16 x 5 kg and 6 x 1.25 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K75:Q75)=0,\"\",K75*25+L75*20+M75*15+N75*10+O75*5+P75*2.5+Q75*1.25)",
+    "totalPlateLoadKg": 87.5,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -4928,7 +4928,7 @@
     },
     "weightKg": 285,
     "loadSpecification": "8 x 10 kg and 6 x 2.5 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K76:Q76)=0,\"\",K76*25+L76*20+M76*15+N76*10+O76*5+P76*2.5+Q76*1.25)",
+    "totalPlateLoadKg": 95,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -4994,7 +4994,7 @@
     },
     "weightKg": 188,
     "loadSpecification": "2 x 11 kg / 2 x 16 kg / 2 x 18.5 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K77:Q77)=0,\"\",K77*25+L77*20+M77*15+N77*10+O77*5+P77*2.5+Q77*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -5060,7 +5060,7 @@
     },
     "weightKg": 221,
     "loadSpecification": "2 x 21 kg / 2 x 26 kg / 2 x 31 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K78:Q78)=0,\"\",K78*25+L78*20+M78*15+N78*10+O78*5+P78*2.5+Q78*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -5126,7 +5126,7 @@
     },
     "weightKg": 315,
     "loadSpecification": "14 x 10 kg and 6 x 2.5 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K79:Q79)=0,\"\",K79*25+L79*20+M79*15+N79*10+O79*5+P79*2.5+Q79*1.25)",
+    "totalPlateLoadKg": 155,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -5192,7 +5192,7 @@
     },
     "weightKg": 325,
     "loadSpecification": "14 x 10 kg and 6 x 2.5 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K80:Q80)=0,\"\",K80*25+L80*20+M80*15+N80*10+O80*5+P80*2.5+Q80*1.25)",
+    "totalPlateLoadKg": 155,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -5258,7 +5258,7 @@
     },
     "weightKg": 245,
     "loadSpecification": "6 x 10 kg and 6 x 2.5 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K81:Q81)=0,\"\",K81*25+L81*20+M81*15+N81*10+O81*5+P81*2.5+Q81*1.25)",
+    "totalPlateLoadKg": 75,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -5324,7 +5324,7 @@
     },
     "weightKg": 345,
     "loadSpecification": "14 x 10 kg and 6 x 2.5 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K82:Q82)=0,\"\",K82*25+L82*20+M82*15+N82*10+O82*5+P82*2.5+Q82*1.25)",
+    "totalPlateLoadKg": 155,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -5390,7 +5390,7 @@
     },
     "weightKg": 345,
     "loadSpecification": "14 x 10 kg and 6 x 2.5 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K83:Q83)=0,\"\",K83*25+L83*20+M83*15+N83*10+O83*5+P83*2.5+Q83*1.25)",
+    "totalPlateLoadKg": 155,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -5456,7 +5456,7 @@
     },
     "weightKg": 335,
     "loadSpecification": "8 x 10 kg and 6 x 2.5 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K84:Q84)=0,\"\",K84*25+L84*20+M84*15+N84*10+O84*5+P84*2.5+Q84*1.25)",
+    "totalPlateLoadKg": 95,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -5522,7 +5522,7 @@
     },
     "weightKg": 280,
     "loadSpecification": "10 x 10 kg and 6 x 2.5 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K85:Q85)=0,\"\",K85*25+L85*20+M85*15+N85*10+O85*5+P85*2.5+Q85*1.25)",
+    "totalPlateLoadKg": 115,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -5588,7 +5588,7 @@
     },
     "weightKg": 280,
     "loadSpecification": "10 x 10 kg and 6 x 2.5 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K86:Q86)=0,\"\",K86*25+L86*20+M86*15+N86*10+O86*5+P86*2.5+Q86*1.25)",
+    "totalPlateLoadKg": 115,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -5654,7 +5654,7 @@
     },
     "weightKg": 327,
     "loadSpecification": "14 x 10 kg and 6 x 2.5 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K87:Q87)=0,\"\",K87*25+L87*20+M87*15+N87*10+O87*5+P87*2.5+Q87*1.25)",
+    "totalPlateLoadKg": 155,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -5720,7 +5720,7 @@
     },
     "weightKg": 250,
     "loadSpecification": "8 x 10 kg and 6 x 2.5 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K88:Q88)=0,\"\",K88*25+L88*20+M88*15+N88*10+O88*5+P88*2.5+Q88*1.25)",
+    "totalPlateLoadKg": 95,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -5786,7 +5786,7 @@
     },
     "weightKg": 496,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K89:Q89)=0,\"\",K89*25+L89*20+M89*15+N89*10+O89*5+P89*2.5+Q89*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -5852,7 +5852,7 @@
     },
     "weightKg": null,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K90:Q90)=0,\"\",K90*25+L90*20+M90*15+N90*10+O90*5+P90*2.5+Q90*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -5918,7 +5918,7 @@
     },
     "weightKg": null,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K91:Q91)=0,\"\",K91*25+L91*20+M91*15+N91*10+O91*5+P91*2.5+Q91*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -5984,7 +5984,7 @@
     },
     "weightKg": 390,
     "loadSpecification": "14 x 10 kg and 6 x 2.5 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K92:Q92)=0,\"\",K92*25+L92*20+M92*15+N92*10+O92*5+P92*2.5+Q92*1.25)",
+    "totalPlateLoadKg": 155,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -6050,7 +6050,7 @@
     },
     "weightKg": 390,
     "loadSpecification": "14 x 10 kg and 6 x 2.5 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K93:Q93)=0,\"\",K93*25+L93*20+M93*15+N93*10+O93*5+P93*2.5+Q93*1.25)",
+    "totalPlateLoadKg": 155,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -6116,7 +6116,7 @@
     },
     "weightKg": 293,
     "loadSpecification": "10 x 10 kg and 6 x 2.5 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K94:Q94)=0,\"\",K94*25+L94*20+M94*15+N94*10+O94*5+P94*2.5+Q94*1.25)",
+    "totalPlateLoadKg": 115,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -6182,7 +6182,7 @@
     },
     "weightKg": 365,
     "loadSpecification": "14 x 10 kg and 6 x 2.5 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K95:Q95)=0,\"\",K95*25+L95*20+M95*15+N95*10+O95*5+P95*2.5+Q95*1.25)",
+    "totalPlateLoadKg": 155,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -6248,7 +6248,7 @@
     },
     "weightKg": 335,
     "loadSpecification": "14 x 10 kg and 6 x 2.5 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K96:Q96)=0,\"\",K96*25+L96*20+M96*15+N96*10+O96*5+P96*2.5+Q96*1.25)",
+    "totalPlateLoadKg": 155,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -6314,7 +6314,7 @@
     },
     "weightKg": 280,
     "loadSpecification": "10 x 10 kg and 6 x 2.5 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K97:Q97)=0,\"\",K97*25+L97*20+M97*15+N97*10+O97*5+P97*2.5+Q97*1.25)",
+    "totalPlateLoadKg": 115,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -6380,7 +6380,7 @@
     },
     "weightKg": 335,
     "loadSpecification": "14 x 10 kg and 6 x 2.5 kg",
-    "totalPlateLoadKg": "=IF(COUNTA(K98:Q98)=0,\"\",K98*25+L98*20+M98*15+N98*10+O98*5+P98*2.5+Q98*1.25)",
+    "totalPlateLoadKg": 155,
     "materials": {
       "frame": "Steel, zink primer with powder coating plus extra clear coating finish",
       "rails": "Stainless Steel",
@@ -6446,7 +6446,7 @@
     },
     "weightKg": 1186,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K99:Q99)=0,\"\",K99*25+L99*20+M99*15+N99*10+O99*5+P99*2.5+Q99*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -6512,7 +6512,7 @@
     },
     "weightKg": 200,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K100:Q100)=0,\"\",K100*25+L100*20+M100*15+N100*10+O100*5+P100*2.5+Q100*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -6578,7 +6578,7 @@
     },
     "weightKg": 230,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K101:Q101)=0,\"\",K101*25+L101*20+M101*15+N101*10+O101*5+P101*2.5+Q101*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -6644,7 +6644,7 @@
     },
     "weightKg": 320,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K102:Q102)=0,\"\",K102*25+L102*20+M102*15+N102*10+O102*5+P102*2.5+Q102*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -6710,7 +6710,7 @@
     },
     "weightKg": 140,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K103:Q103)=0,\"\",K103*25+L103*20+M103*15+N103*10+O103*5+P103*2.5+Q103*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -6776,7 +6776,7 @@
     },
     "weightKg": 245,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K104:Q104)=0,\"\",K104*25+L104*20+M104*15+N104*10+O104*5+P104*2.5+Q104*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -6842,7 +6842,7 @@
     },
     "weightKg": 135,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K105:Q105)=0,\"\",K105*25+L105*20+M105*15+N105*10+O105*5+P105*2.5+Q105*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -6908,7 +6908,7 @@
     },
     "weightKg": 266,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K106:Q106)=0,\"\",K106*25+L106*20+M106*15+N106*10+O106*5+P106*2.5+Q106*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -6974,7 +6974,7 @@
     },
     "weightKg": 340,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K107:Q107)=0,\"\",K107*25+L107*20+M107*15+N107*10+O107*5+P107*2.5+Q107*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -7040,7 +7040,7 @@
     },
     "weightKg": 136,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K108:Q108)=0,\"\",K108*25+L108*20+M108*15+N108*10+O108*5+P108*2.5+Q108*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -7106,7 +7106,7 @@
     },
     "weightKg": 155,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K109:Q109)=0,\"\",K109*25+L109*20+M109*15+N109*10+O109*5+P109*2.5+Q109*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -7172,7 +7172,7 @@
     },
     "weightKg": 671,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K110:Q110)=0,\"\",K110*25+L110*20+M110*15+N110*10+O110*5+P110*2.5+Q110*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -7238,7 +7238,7 @@
     },
     "weightKg": 568,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K111:Q111)=0,\"\",K111*25+L111*20+M111*15+N111*10+O111*5+P111*2.5+Q111*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -7304,7 +7304,7 @@
     },
     "weightKg": 540,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K112:Q112)=0,\"\",K112*25+L112*20+M112*15+N112*10+O112*5+P112*2.5+Q112*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -7370,7 +7370,7 @@
     },
     "weightKg": 68,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K113:Q113)=0,\"\",K113*25+L113*20+M113*15+N113*10+O113*5+P113*2.5+Q113*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -7436,7 +7436,7 @@
     },
     "weightKg": 82,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K114:Q114)=0,\"\",K114*25+L114*20+M114*15+N114*10+O114*5+P114*2.5+Q114*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -7502,7 +7502,7 @@
     },
     "weightKg": 134,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K115:Q115)=0,\"\",K115*25+L115*20+M115*15+N115*10+O115*5+P115*2.5+Q115*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -7568,7 +7568,7 @@
     },
     "weightKg": 382,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K116:Q116)=0,\"\",K116*25+L116*20+M116*15+N116*10+O116*5+P116*2.5+Q116*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",
@@ -7634,7 +7634,7 @@
     },
     "weightKg": 166,
     "loadSpecification": "",
-    "totalPlateLoadKg": "=IF(COUNTA(K117:Q117)=0,\"\",K117*25+L117*20+M117*15+N117*10+O117*5+P117*2.5+Q117*1.25)",
+    "totalPlateLoadKg": null,
     "materials": {
       "frame": "",
       "rails": "",

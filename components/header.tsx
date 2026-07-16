@@ -5,7 +5,7 @@ import { usePathname } from "next/navigation";
 import { ChevronDown, Languages, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { productLines } from "@/lib/data";
-import { getDictionary, type Locale } from "@/lib/i18n";
+import { countNoun, getDictionary, nounMachines, type Locale } from "@/lib/i18n";
 
 function switchLocale(pathname: string, locale: Locale) {
   const parts = pathname.split("/").filter(Boolean);
@@ -48,7 +48,7 @@ function HeaderContent({ locale, pathname }: { locale: Locale; pathname: string 
                 {productLines.map((line) => (
                   <Link key={line.slug} href={`/${locale}/products/${line.slug}`} className="mega-item">
                     <span>{locale === "cs" ? line.nameCs : line.nameEn}</span>
-                    <small>{line.count} {d.products.machines}</small>
+                    <small>{line.count} {countNoun(line.count, locale, nounMachines)}</small>
                   </Link>
                 ))}
               </div>
