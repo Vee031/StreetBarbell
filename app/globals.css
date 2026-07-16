@@ -160,7 +160,7 @@ p { color: var(--muted); line-height: 1.7; }
 .back-link { display:inline-flex; align-items:center; gap:7px; margin-bottom:35px; color:#d7d9dd; font-size:.8rem; font-weight:700; }
 .back-link.dark { color:#62666d; }
 .config-hero { background:radial-gradient(circle at 80% 30%,rgba(225,40,46,.26),transparent 30%),linear-gradient(135deg,#121620,#07080b); }
-.contact-hero { background:linear-gradient(90deg,rgba(7,9,13,.96),rgba(7,9,13,.7)),url('/images/hero.svg') center/cover; }
+.contact-hero { background:linear-gradient(90deg,rgba(7,9,13,.96),rgba(7,9,13,.7)),url('/images/photos/park-city.webp') center/cover; }
 
 /* Catalogue */
 .product-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:18px; }

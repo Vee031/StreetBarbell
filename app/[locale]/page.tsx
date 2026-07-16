@@ -16,7 +16,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   return (
     <>
       <section className="hero">
-        <Image src="/images/hero.svg" alt="Street Barbell outdoor fitness" fill priority sizes="100vw" />
+        <Image src="/images/photos/hero-sunset.webp" alt="Street Barbell outdoor fitness" fill priority sizes="100vw" />
         <div className="hero-shade" />
         <div className="hero-grid-lines" />
         <div className="hero-content page-shell">
@@ -61,7 +61,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
       <section className="gallery-teaser">
         <div className="gallery-teaser-grid">
-          {["standard-line","light-line","plus-line","workout-line"].map((slug, index) => <div key={slug} className={`gallery-tile tile-${index + 1}`}><Image src={`/images/lines/${slug}.svg`} alt="Street Barbell" fill sizes="50vw" /></div>)}
+          {["park-yellow","park-seaside","park-blue","park-aerial"].map((name, index) => <div key={name} className={`gallery-tile tile-${index + 1}`}><Image src={`/images/photos/${name}.webp`} alt="Street Barbell installation" fill sizes="50vw" /></div>)}
         </div>
         <div className="gallery-teaser-copy"><span className="eyebrow light">{d.nav.gallery}</span><h2>{d.home.galleryTitle}</h2><Link className="button button-ghost" href={`/${locale}/gallery`}>{d.home.galleryCta}<ArrowRight size={18} /></Link></div>
       </section>

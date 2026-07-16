@@ -3,14 +3,14 @@ import { notFound } from "next/navigation";
 import { getDictionary, isLocale, type Locale } from "@/lib/i18n";
 
 const gallery = [
-  ["/images/hero.svg", "Installation"],
-  ["/images/lines/standard-line.svg", "Standard Line"],
-  ["/images/lines/light-line.svg", "Light Line"],
-  ["/images/lines/plus-line.svg", "Plus Line"],
-  ["/images/lines/workout-line.svg", "Workout Line"],
-  ["/images/lines/gymnastics-line.svg", "Gymnastics Line"],
-  ["/images/lines/cardio-line.svg", "Cardio Line"],
-  ["/images/lines/boxing-line.svg", "Multi Bar"],
+  ["/images/photos/park-yellow.webp", "Public park installation"],
+  ["/images/photos/park-seaside.webp", "Seaside installation"],
+  ["/images/photos/park-canopy.webp", "Covered training zone"],
+  ["/images/photos/park-aerial.webp", "Site layout"],
+  ["/images/photos/park-city.webp", "Urban park"],
+  ["/images/photos/park-snow.webp", "All-season durability"],
+  ["/images/photos/assembly-team.webp", "Assembly and installation"],
+  ["/images/photos/event-expo.webp", "Events and community"],
 ];
 
 export default async function GalleryPage({ params }: { params: Promise<{ locale: string }> }) {
