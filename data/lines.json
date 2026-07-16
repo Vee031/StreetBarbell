@@ -4,62 +4,62 @@
     "nameCs": "Standardní řada",
     "slug": "standard-line",
     "count": 26,
-    "image": "https://streetbarbell.com/wp-content/uploads/2024/05/sb-standard-line.jpeg"
+    "image": "/images/lines/standard-line.svg"
   },
   {
     "nameEn": "Light Line",
     "nameCs": "Lehká řada",
     "slug": "light-line",
     "count": 22,
-    "image": "https://streetbarbell.com/wp-content/uploads/2024/05/sb-light-line.jpg"
+    "image": "/images/lines/light-line.svg"
   },
   {
     "nameEn": "Plus Line",
     "nameCs": "Řada Plus",
     "slug": "plus-line",
     "count": 9,
-    "image": "https://streetbarbell.com/wp-content/uploads/2024/05/sb-plus-line.jpg"
+    "image": "/images/lines/plus-line.svg"
   },
   {
     "nameEn": "PRO Line",
     "nameCs": "Řada PRO",
     "slug": "pro-line",
     "count": 10,
-    "image": "https://streetbarbell.com/wp-content/uploads/2024/05/block2bg.jpg"
+    "image": "/images/lines/pro-line.svg"
   },
   {
     "nameEn": "Cardio Line",
     "nameCs": "Kardio řada",
     "slug": "cardio-line",
     "count": 3,
-    "image": "https://streetbarbell.com/wp-content/uploads/2024/05/sb-cardio-line.jpg"
+    "image": "/images/lines/cardio-line.svg"
   },
   {
     "nameEn": "Workout Line",
     "nameCs": "Workoutová řada",
     "slug": "workout-line",
     "count": 19,
-    "image": "https://streetbarbell.com/wp-content/uploads/2024/05/sb-workout-line.jpg"
+    "image": "/images/lines/workout-line.svg"
   },
   {
     "nameEn": "Gymnastics Line",
     "nameCs": "Gymnastická řada",
     "slug": "gymnastics-line",
     "count": 17,
-    "image": "https://streetbarbell.com/wp-content/uploads/2024/05/sb-gymnastic-line.jpg"
+    "image": "/images/lines/gymnastics-line.svg"
   },
   {
     "nameEn": "Boxing Line",
     "nameCs": "Boxerská řada",
     "slug": "boxing-line",
     "count": 3,
-    "image": "https://streetbarbell.com/wp-content/uploads/2024/05/block2bg.jpg"
+    "image": "/images/lines/boxing-line.svg"
   },
   {
     "nameEn": "Kids Line",
     "nameCs": "Dětská řada",
     "slug": "kids-line",
     "count": 7,
-    "image": "https://streetbarbell.com/wp-content/uploads/2024/05/block2bg.jpg"
+    "image": "/images/lines/kids-line.svg"
   }
 ]

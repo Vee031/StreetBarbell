@@ -16,7 +16,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   return (
     <>
       <section className="hero">
-        <Image src="https://streetbarbell.com/wp-content/uploads/2024/05/block2bg.jpg" alt="Street Barbell outdoor fitness" fill priority sizes="100vw" />
+        <Image src="/images/hero.svg" alt="Street Barbell outdoor fitness" fill priority sizes="100vw" />
         <div className="hero-shade" />
         <div className="hero-grid-lines" />
         <div className="hero-content page-shell">
@@ -61,7 +61,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
 
       <section className="gallery-teaser">
         <div className="gallery-teaser-grid">
-          {["sb-standard-line.jpeg","sb-light-line.jpg","sb-plus-line.jpg","sb-workout-line.jpg"].map((file, index) => <div key={file} className={`gallery-tile tile-${index + 1}`}><Image src={`https://streetbarbell.com/wp-content/uploads/2024/05/${file}`} alt="Street Barbell" fill sizes="50vw" /></div>)}
+          {["standard-line","light-line","plus-line","workout-line"].map((slug, index) => <div key={slug} className={`gallery-tile tile-${index + 1}`}><Image src={`/images/lines/${slug}.svg`} alt="Street Barbell" fill sizes="50vw" /></div>)}
         </div>
         <div className="gallery-teaser-copy"><span className="eyebrow light">{d.nav.gallery}</span><h2>{d.home.galleryTitle}</h2><Link className="button button-ghost" href={`/${locale}/gallery`}>{d.home.galleryCta}<ArrowRight size={18} /></Link></div>
       </section>

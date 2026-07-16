@@ -3,14 +3,14 @@ import { notFound } from "next/navigation";
 import { getDictionary, isLocale, type Locale } from "@/lib/i18n";
 
 const gallery = [
-  ["https://streetbarbell.com/wp-content/uploads/2024/05/block2bg.jpg", "Installation"],
-  ["https://streetbarbell.com/wp-content/uploads/2024/05/sb-standard-line.jpeg", "Standard Line"],
-  ["https://streetbarbell.com/wp-content/uploads/2024/05/sb-light-line.jpg", "Light Line"],
-  ["https://streetbarbell.com/wp-content/uploads/2024/05/sb-plus-line.jpg", "Plus Line"],
-  ["https://streetbarbell.com/wp-content/uploads/2024/05/sb-workout-line.jpg", "Workout Line"],
-  ["https://streetbarbell.com/wp-content/uploads/2024/05/sb-gymnastic-line.jpg", "Gymnastics Line"],
-  ["https://streetbarbell.com/wp-content/uploads/2024/05/sb-cardio-line.jpg", "Cardio Line"],
-  ["https://streetbarbell.com/wp-content/uploads/2024/06/perspective-view-export-26.png", "Multi Bar"],
+  ["/images/hero.svg", "Installation"],
+  ["/images/lines/standard-line.svg", "Standard Line"],
+  ["/images/lines/light-line.svg", "Light Line"],
+  ["/images/lines/plus-line.svg", "Plus Line"],
+  ["/images/lines/workout-line.svg", "Workout Line"],
+  ["/images/lines/gymnastics-line.svg", "Gymnastics Line"],
+  ["/images/lines/cardio-line.svg", "Cardio Line"],
+  ["/images/lines/boxing-line.svg", "Multi Bar"],
 ];
 
 export default async function GalleryPage({ params }: { params: Promise<{ locale: string }> }) {
