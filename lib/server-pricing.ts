@@ -1,21 +1,22 @@
-import type { PriceKey, Product } from "@/lib/data";
+import type { Product } from "@/lib/data";
 
-export type PrivatePricing = Record<string, Record<PriceKey, number | null>>;
+// 2026 pricelist: one CZK price (excl. VAT) per product code. Machines from the
+// official "Pricelist StreetBarbell 2026" PDF carry their listed price; all
+// other machines carry distributor powder-coating price × 2 (fixed at 25 CZK/EUR,
+// rounded to whole thousands). Values live only in STREETBARBELL_PRICELIST_JSON.
+export type PricedProduct = Product & { priceCzk: number | null };
 
-export function getPrivatePricing(): PrivatePricing {
-  const raw = process.env.STREETBARBELL_PRICING_JSON;
+export function getPricelist(): Record<string, number> {
+  const raw = process.env.STREETBARBELL_PRICELIST_JSON;
   if (!raw) return {};
   try {
-    return JSON.parse(raw) as PrivatePricing;
+    return JSON.parse(raw) as Record<string, number>;
   } catch {
-    throw new Error("STREETBARBELL_PRICING_JSON is not valid JSON.");
+    throw new Error("STREETBARBELL_PRICELIST_JSON is not valid JSON.");
   }
 }
 
-export function attachPrivatePrices(products: Product[]) {
-  const pricing = getPrivatePricing();
-  return products.map((product) => ({
-    ...product,
-    prices: pricing[product.code] ?? product.prices,
-  }));
+export function attachPrices(products: Product[]): PricedProduct[] {
+  const pricelist = getPricelist();
+  return products.map((product) => ({ ...product, priceCzk: pricelist[product.code] ?? null }));
 }

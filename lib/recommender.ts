@@ -1,4 +1,5 @@
-import type { PriceKey, Product } from "@/lib/data";
+import type { Product } from "@/lib/data";
+import type { PricedProduct } from "@/lib/server-pricing";
 
 export type Focus = "Full Body" | "Upper Body" | "Lower Body" | "Core / Posterior Chain" | "Cardio / Conditioning" | "Sport-specific";
 export type PositionPreference = "Doesn't matter" | "Standing" | "Seated" | "Lying / Bench" | "Mixed / Multiple" | "Hanging / Bodyweight";
@@ -21,7 +22,6 @@ export type ConfigInput = {
   budgetCzk: number;
   exchangeRate: number;
   reservePercent: number;
-  priceKey: PriceKey;
   existingWorkout: boolean;
   focus: Focus;
   sport: string;
@@ -128,9 +128,8 @@ function focusMetric(product: Product, focus: Focus, sport: string) {
   return base;
 }
 
-function candidateScore(product: Product, input: ConfigInput) {
-  const price = product.prices[input.priceKey];
-  if (!price || product.bodyFocus === "Accessory" || product.line === "Kids Line") return -Infinity;
+function candidateScore(product: PricedProduct, input: ConfigInput) {
+  if (!product.priceCzk || product.bodyFocus === "Accessory" || product.line === "Kids Line") return -Infinity;
   let score = focusMetric(product, input.focus, input.sport) * 3;
   score += product.scores.variety * 0.35 + product.scores.beginner * 0.15;
   if (input.existingWorkout) score += product.scores.complement * 0.45;
@@ -168,7 +167,7 @@ function targetCoverage(combo: Product[], input: ConfigInput) {
   return combo.reduce((sum, p) => sum + focusMetric(p, input.focus, input.sport), 0);
 }
 
-function metricsFor(combo: Product[], input: ConfigInput, totalEur: number, budgetEur: number): Record<PriorityKey, number> {
+function metricsFor(combo: Product[], input: ConfigInput, totalPrice: number, budget: number): Record<PriorityKey, number> {
   const upper = combo.reduce((s, p) => s + p.coverage.upper, 0);
   const lower = combo.reduce((s, p) => s + p.coverage.lower, 0);
   const core = combo.reduce((s, p) => s + p.coverage.core, 0);
@@ -193,12 +192,12 @@ function metricsFor(combo: Product[], input: ConfigInput, totalEur: number, budg
   const usefulPatterns = Math.max(1, patterns);
   const space = knownFootprints.length ? clamp((usefulPatterns / Math.max(1, totalFootprint)) * 6) : clamp(average(combo.map((p) => p.scores.space)));
   const complement = input.existingWorkout ? clamp(average(combo.map((p) => p.scores.complement))) : 5;
-  const budgetUse = clamp((1 - totalEur / Math.max(budgetEur, totalEur)) * 4 + average(combo.map((p) => p.scores.affordability)) * 0.75 + variety * 0.25);
+  const budgetUse = clamp((1 - totalPrice / Math.max(budget, totalPrice)) * 4 + average(combo.map((p) => p.scores.affordability)) * 0.75 + variety * 0.25);
   return { balance, specialization, variety, beginner, accessibility, throughput, space, complement, value: budgetUse };
 }
 
-function scoreCombination(combo: Product[], input: ConfigInput, totalEur: number, budgetEur: number) {
-  const metrics = metricsFor(combo, input, totalEur, budgetEur);
+function scoreCombination(combo: Product[], input: ConfigInput, totalPrice: number, budget: number) {
+  const metrics = metricsFor(combo, input, totalPrice, budget);
   const totalPoints = Object.values(input.priorities).reduce((a, b) => a + b, 0) || 20;
   let score = (Object.keys(input.priorities) as PriorityKey[]).reduce((sum, key) => sum + metrics[key] * (input.priorities[key] / totalPoints), 0);
 
@@ -239,7 +238,7 @@ function scoreCombination(combo: Product[], input: ConfigInput, totalEur: number
     if (hasKneeDominant && hasHamstrings && hasHipExtension) score += 0.35;
   }
 
-  score += Math.min(0.4, (totalEur / Math.max(1, budgetEur)) * 0.4);
+  score += Math.min(0.4, (totalPrice / Math.max(1, budget)) * 0.4);
   return { score: Number(clamp(score * 0.82).toFixed(3)), metrics };
 }
 
@@ -273,9 +272,9 @@ function explanations(combo: Product[], metrics: Record<PriorityKey, number>, in
   };
 }
 
-function enumerateCombos(candidates: Product[], count: number, budgetEur: number, priceKey: PriceKey, limit = 12000) {
-  const combos: { products: Product[]; price: number }[] = [];
-  const walk = (start: number, selected: Product[], price: number) => {
+function enumerateCombos(candidates: PricedProduct[], count: number, budgetCzk: number, limit = 12000) {
+  const combos: { products: PricedProduct[]; price: number }[] = [];
+  const walk = (start: number, selected: PricedProduct[], price: number) => {
     if (combos.length >= limit) return;
     if (selected.length === count) {
       combos.push({ products: [...selected], price });
@@ -283,8 +282,8 @@ function enumerateCombos(candidates: Product[], count: number, budgetEur: number
     }
     for (let i = start; i < candidates.length; i++) {
       const p = candidates[i];
-      const productPrice = p.prices[priceKey];
-      if (!productPrice || price + productPrice > budgetEur) continue;
+      const productPrice = p.priceCzk;
+      if (!productPrice || price + productPrice > budgetCzk) continue;
       selected.push(p);
       walk(i + 1, selected, price + productPrice);
       selected.pop();
@@ -302,12 +301,11 @@ function jaccard(a: Product[], b: Product[]) {
   return intersection / (setA.size + setB.size - intersection);
 }
 
-export function recommend(products: Product[], input: ConfigInput, locale: "en" | "cs"): CombinationResult[] {
-  const budgetEur = input.budgetCzk / Math.max(1, input.exchangeRate) * (1 - input.reservePercent / 100);
+export function recommend(products: PricedProduct[], input: ConfigInput, locale: "en" | "cs"): CombinationResult[] {
+  const budgetCzk = input.budgetCzk * (1 - input.reservePercent / 100);
   let candidates = products
     .filter((product) => {
-      const price = product.prices[input.priceKey];
-      if (!price || price > budgetEur || product.bodyFocus === "Accessory" || product.line === "Kids Line") return false;
+      if (!product.priceCzk || product.priceCzk > budgetCzk || product.bodyFocus === "Accessory" || product.line === "Kids Line") return false;
       if (input.strictPosition && input.position !== "Doesn't matter" && !product.position.includes(input.position.replace("Hanging / Bodyweight", "Hanging"))) return false;
       return true;
     })
@@ -317,22 +315,22 @@ export function recommend(products: Product[], input: ConfigInput, locale: "en" 
   const poolSize = input.machineCount === "auto" ? (focusedProfile ? 25 : 22) : Number(input.machineCount) >= 5 ? 20 : (focusedProfile ? 28 : 24);
   candidates = candidates.slice(0, poolSize);
 
-  const candidatePrices = candidates.map((p) => p.prices[input.priceKey]).filter((v): v is number => typeof v === "number").sort((a, b) => a - b);
-  const referencePrice = candidatePrices.length ? candidatePrices[Math.floor((candidatePrices.length - 1) * 0.78)] : budgetEur;
-  const inferredCount = Math.max(1, Math.min(5, Math.floor(budgetEur / Math.max(1, referencePrice))));
+  const candidatePrices = candidates.map((p) => p.priceCzk).filter((v): v is number => typeof v === "number").sort((a, b) => a - b);
+  const referencePrice = candidatePrices.length ? candidatePrices[Math.floor((candidatePrices.length - 1) * 0.78)] : budgetCzk;
+  const inferredCount = Math.max(1, Math.min(5, Math.floor(budgetCzk / Math.max(1, referencePrice))));
   const counts = input.machineCount === "auto" ? [inferredCount] : [Number(input.machineCount)];
 
   const scored: CombinationResult[] = [];
   counts.forEach((count) => {
-    enumerateCombos(candidates, count, budgetEur, input.priceKey).forEach(({ products: combo, price }) => {
-      const { score, metrics } = scoreCombination(combo, input, price, budgetEur);
+    enumerateCombos(candidates, count, budgetCzk).forEach(({ products: combo, price }) => {
+      const { score, metrics } = scoreCombination(combo, input, price, budgetCzk);
       const footprintValues = combo.map((p) => p.footprint).filter((v): v is number => typeof v === "number");
       const copy = explanations(combo, metrics, input, locale);
       scored.push({
         id: combo.map((p) => p.code).join("+"),
         products: combo,
-        totalEur: price,
-        totalCzk: price * input.exchangeRate,
+        totalEur: price / Math.max(1, input.exchangeRate),
+        totalCzk: price,
         footprint: footprintValues.length === combo.length ? footprintValues.reduce((a, b) => a + b, 0) : null,
         score,
         metrics,

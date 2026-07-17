@@ -4,7 +4,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { jsPDF } from "jspdf";
 import { ArrowRight, Check, Download, Info, RotateCcw, Sparkles } from "lucide-react";
-import { getProductName, type PriceKey } from "@/lib/data";
+import { getProductName } from "@/lib/data";
 import { pdfFontBold, pdfFontNormal } from "@/lib/pdf-font";
 import type { CombinationResult, ConfigInput, Focus, PositionPreference, Priorities, PriorityKey, SpecializationMode } from "@/lib/recommender";
 import { countNoun, nounMachines, type Locale } from "@/lib/i18n";
@@ -34,15 +34,6 @@ const priorityLabels = {
   },
 } as const;
 
-const priceOptions: { value: PriceKey; en: string; cs: string }[] = [
-  { value: "pcDiscount", en: "Powder coating — distributor price", cs: "Práškový lak — distributorská cena" },
-  { value: "tcDiscount", en: "Thermoplastic coating — distributor price", cs: "Termoplast — distributorská cena" },
-  { value: "hdgDiscount", en: "Hot-dip galvanised — distributor price", cs: "Žárový zinek — distributorská cena" },
-  { value: "pcBase", en: "Powder coating — list price", cs: "Práškový lak — ceníková cena" },
-  { value: "tcBase", en: "Thermoplastic coating — list price", cs: "Termoplast — ceníková cena" },
-  { value: "hdgBase", en: "Hot-dip galvanised — list price", cs: "Žárový zinek — ceníková cena" },
-];
-
 export function Configurator({ locale }: { locale: Locale }) {
   const cs = locale === "cs";
   const [step, setStep] = useState(1);
@@ -50,7 +41,6 @@ export function Configurator({ locale }: { locale: Locale }) {
     budgetCzk: 250000,
     exchangeRate: 25,
     reservePercent: 0,
-    priceKey: "pcBase",
     existingWorkout: false,
     focus: "Full Body",
     sport: "General Public",
@@ -74,7 +64,7 @@ export function Configurator({ locale }: { locale: Locale }) {
   }, []);
 
   const totalPoints = Object.values(input.priorities).reduce((a, b) => a + b, 0);
-  const budgetEur = input.budgetCzk / input.exchangeRate * (1 - input.reservePercent / 100);
+  const equipmentBudgetCzk = input.budgetCzk * (1 - input.reservePercent / 100);
 
   const update = <K extends keyof ConfigInput>(key: K, value: ConfigInput[K]) => {
     setInput((current) => ({ ...current, [key]: value }));
@@ -125,7 +115,7 @@ export function Configurator({ locale }: { locale: Locale }) {
     doc.setFont("DejaVu", "normal"); doc.setFontSize(10); doc.text(`streetbarbell.cz  |  export@rvl13.com  |  +420 721 443 652`, 18, 30);
     doc.setDrawColor(210); doc.line(18, 35, 192, 35);
     doc.setFontSize(12); doc.text(`${cs ? "Rozpočet" : "Budget"}: ${Math.round(input.budgetCzk).toLocaleString()} CZK`, 18, 45);
-    doc.text(`${cs ? "Odhad ceny sestavy" : "Estimated equipment price"}: €${Math.round(result.totalEur).toLocaleString()} / ${Math.round(result.totalCzk).toLocaleString()} CZK`, 18, 53);
+    doc.text(`${cs ? "Odhad ceny sestavy (bez DPH)" : "Estimated equipment price (excl. VAT)"}: ${Math.round(result.totalCzk).toLocaleString()} CZK / ≈ €${Math.round(result.totalEur).toLocaleString()}`, 18, 53);
     doc.text(`${cs ? "Skóre doporučení" : "Recommendation score"}: ${result.score.toFixed(1)} / 10`, 18, 61);
     doc.setFont("DejaVu", "bold"); doc.text(cs ? "Stroje" : "Machines", 18, 74);
     doc.setFont("DejaVu", "normal");
@@ -170,10 +160,9 @@ export function Configurator({ locale }: { locale: Locale }) {
           <label><span>{cs ? "Celkový rozpočet (CZK)" : "Total budget (CZK)"}</span><input type="number" min="50000" step="10000" value={input.budgetCzk} onChange={(e) => update("budgetCzk", Number(e.target.value))} /></label>
           <label><span>{cs ? "Kurz CZK / EUR" : "CZK / EUR exchange rate"}</span><input type="number" min="1" step="0.1" value={input.exchangeRate} onChange={(e) => update("exchangeRate", Number(e.target.value))} /></label>
           <label><span>{cs ? "Rezerva mimo vybavení (%)" : "Non-equipment reserve (%)"}</span><input type="number" min="0" max="80" value={input.reservePercent} onChange={(e) => update("reservePercent", Number(e.target.value))} /></label>
-          <label className="wide-field"><span>{cs ? "Cenová varianta" : "Price basis"}</span><select value={input.priceKey} onChange={(e) => update("priceKey", e.target.value as PriceKey)}>{priceOptions.map((option) => <option key={option.value} value={option.value}>{cs ? option.cs : option.en}</option>)}</select></label>
           <label><span>{cs ? "Počet strojů" : "Machine count"}</span><select value={input.machineCount} onChange={(e) => update("machineCount", e.target.value === "auto" ? "auto" : Number(e.target.value))}><option value="auto">{cs ? "Automaticky podle rozpočtu" : "Auto from budget"}</option>{[1,2,3,4,5,6].map((n) => <option value={n} key={n}>{n}</option>)}</select></label>
         </div>
-        <div className="budget-summary"><div><small>{cs ? "Rozpočet na stroje" : "Equipment budget"}</small><strong>€{Math.round(budgetEur).toLocaleString()}</strong></div><Info size={18} /><p>{cs ? "Cena je orientační a nezahrnuje dopravu, instalaci, beton ani dopadovou plochu." : "Prices are indicative and exclude freight, installation, concrete works and safety surfacing."}</p></div>
+        <div className="budget-summary"><div><small>{cs ? "Rozpočet na stroje" : "Equipment budget"}</small><strong>{Math.round(equipmentBudgetCzk).toLocaleString()} CZK</strong></div><Info size={18} /><p>{cs ? "Ceník 2026 bez DPH. Cena je orientační a nezahrnuje dopravu, instalaci, beton ani dopadovou plochu." : "2026 pricelist, excl. VAT. Prices are indicative and exclude freight, installation, concrete works and safety surfacing."}</p></div>
         <div className="config-next"><button className="button button-red" onClick={() => setStep(2)}>{cs ? "Pokračovat" : "Continue"} <ArrowRight size={18} /></button></div>
       </section>
 
@@ -215,7 +204,7 @@ export function Configurator({ locale }: { locale: Locale }) {
               <article className="result-card" key={result.id}>
                 <div className="result-rank"><span>#{index + 1}</span><strong>{result.score.toFixed(1)}</strong><small>/ 10</small></div>
                 <div className="result-content">
-                  <div className="result-title-row"><div><small>{result.products.length} {countNoun(result.products.length, locale, nounMachines)}</small><h3>{result.products.map((p) => getProductName(p)).join(" + ")}</h3></div><div className="result-price"><small>{cs ? "Odhad ceny" : "Estimated price"}</small><strong>€{Math.round(result.totalEur).toLocaleString()}</strong><span>{Math.round(result.totalCzk).toLocaleString()} CZK</span></div></div>
+                  <div className="result-title-row"><div><small>{result.products.length} {countNoun(result.products.length, locale, nounMachines)}</small><h3>{result.products.map((p) => getProductName(p)).join(" + ")}</h3></div><div className="result-price"><small>{cs ? "Odhad ceny" : "Estimated price"}</small><strong>{Math.round(result.totalCzk).toLocaleString()} CZK</strong><span>≈ €{Math.round(result.totalEur).toLocaleString()}</span></div></div>
                   <p className="result-purpose">{result.purpose}</p>
                   <div className="result-products">{result.products.map((product) => <Link key={product.code} href={`/${locale}/products/${product.lineSlug}/${product.slug}`}><span>{product.code}</span><strong>{getProductName(product)}</strong><small>{product.bodyFocus}</small></Link>)}</div>
                   <div className="metric-bars">{(Object.entries(result.metrics) as [PriorityKey, number][]).filter(([key]) => input.priorities[key] > 0).sort((a,b) => input.priorities[b[0]] - input.priorities[a[0]]).slice(0,5).map(([key,value]) => <div key={key}><span>{priorityLabels[locale][key]}</span><i><b style={{ width: `${value * 10}%` }} /></i><strong>{value.toFixed(1)}</strong></div>)}</div>

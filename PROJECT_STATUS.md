@@ -47,7 +47,8 @@ and in Vercel → Settings → Environment Variables (Production). Local dev use
 |---|---|
 | `STREETBARBELL_DISTRIBUTOR_CODE` | Unlock code for the configurator (`/api/access`) |
 | `STREETBARBELL_APP_SECRET` | HMAC secret for both session cookies (distributor + admin) |
-| `STREETBARBELL_PRICING_JSON` | All 116 products' EUR prices (public products.json has nulls by design) |
+| `STREETBARBELL_PRICELIST_JSON` | **Active configurator pricing** — 2026 pricelist, one CZK price (excl. VAT) per code |
+| `STREETBARBELL_PRICING_JSON` | Legacy 6-variant EUR distributor prices — no longer read by code, kept as the source for regenerating the pricelist fallback |
 | `STREETBARBELL_ADMIN_PASSWORD` | Login for the `/system` text editor |
 | `BLOB_READ_WRITE_TOKEN` | Vercel Blob store `streetbarbell-content` (auto-added by store link) |
 
@@ -72,8 +73,16 @@ Gotcha: adding env values via PowerShell piping appends `\r` that Vercel keeps. 
 - `lib/data.ts` — products/lines from `data/products.json` + `data/lines.json`.
   **`getProductName()` always returns the English name — owner decision 2026-07-17: machine
   names are shown in original English on both language versions.** Descriptions/lines stay localized.
-- `lib/server-pricing.ts` — prices only from `STREETBARBELL_PRICING_JSON`.
-  `lib/recommender.ts` — scoring. `lib/pdf-font.ts` — subsetted DejaVu Sans (Czech diacritics in PDF).
+- `lib/server-pricing.ts` — configurator prices from `STREETBARBELL_PRICELIST_JSON` (CZK-native
+  since 2026-07-17): 39 machines carry the official "Pricelist StreetBarbell 2026" PDF price
+  (source PDF: `C:\Users\ASUS\OneDrive\Plocha\Pricelist StreetBarbell 2026.pdf`); the other 77 =
+  distributor powder-coating price (pcDiscount) × 2, converted at 25 CZK/EUR, rounded to 1,000 CZK
+  (owner's rule). Note MB 7.54 is 130,000 in the PDF while the rest of Standard is 139,000 — taken
+  as written. Regeneration script preserved at the bottom of this section's history in git
+  (`scratchpad/gen_pricelist.py` in session; recreate from this description if needed).
+  The old coating/price-basis dropdown was removed from the configurator — single pricelist,
+  results show CZK primary with ≈€ via the user-set exchange rate.
+  `lib/recommender.ts` — scoring, budget filtering in CZK. `lib/pdf-font.ts` — subsetted DejaVu Sans (Czech diacritics in PDF).
 - `components/` — header (client; receives texts as prop `d`), footer, product-card (takes
   `t={d.products}`), line-card, configurator (client), contact-form, motion-reveal.
 - `scripts/check-public-data.mjs` — CI guard: public products.json must contain no prices.
@@ -128,7 +137,9 @@ with rapid automated fetches (transient "Vercel Security Checkpoint" HTML replac
 
 - `https://streetbarbell.cz/{en,cs}` + products/lines/gallery/configurations/contact → 200
 - `/api/access` with the current distributor code → `{"authenticated":true}`
-- `/api/recommend` top result for the handover sample brief: MB 7.47.3 + MB 7.71, €5,317, score 7.1
+- `/api/recommend` (2026 CZK pricing) sample: budget 450,000 CZK, default priorities → top result
+  MB 7.47.3 + MB 7.02 + MB 7.71 = 198,000 CZK (62,000 + 38,000 + 98,000), score ≈ 7.0
+  (the old EUR sample "MB 7.47.3 + MB 7.71 €5,317" predates the pricelist switch)
 - `/system` login → editor; text edit → live in seconds; empty+save → default restored
 - CZ machine names render in English (e.g. `/cs/products/standard-line` → "Vertical Press")
 - Czech PDF from configurator renders diacritics
@@ -141,3 +152,5 @@ with rapid automated fetches (transient "Vercel Security Checkpoint" HTML replac
 - `e78b5c5` Real product renders + photos (116 products, hero/gallery)
 - `679546e` `/system` admin: login + editable site texts (EN/CS), Vercel Blob storage
 - `8baa491` Machine names always in original English (both locales)
+- `a0f69f4` PROJECT_STATUS.md handover doc
+- (2026-07-17) Configurator switched to CZK-native 2026 pricelist (see server-pricing above)
