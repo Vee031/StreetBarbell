@@ -5,9 +5,16 @@
 > Last checkpoint: **2026-07-17**. It supersedes the older
 > `STREETBARBELL_CODEX_HANDOVER_COMPLETE.md` (one folder tree up, kept for history).
 
-## Where we left off (2026-07-17)
+## Where we left off (2026-07-17, end of day)
 
 Everything requested so far is **built, deployed and verified live**. No half-finished work.
+Shipped today: `/system` admin (login + site-text editor), English machine names on /cs,
+configurator switched to the CZK 2026 pricelist, and `/system/products` bulk XLSX import.
+
+**Next session:** Vojta said "I would like to change a couple things about the recommended
+configurations generator" — the pricelist switch and the bulk product import were the first
+two; ask what else he wants changed on the configurator.
+
 Open follow-ups (nice-to-haves, none urgent):
 
 1. Distributor code is still the temporary `SB-8C7EFF74` — changing it = swap the
@@ -160,6 +167,8 @@ with rapid automated fetches (transient "Vercel Security Checkpoint" HTML replac
   MB 7.47.3 + MB 7.02 + MB 7.71 = 198,000 CZK (62,000 + 38,000 + 98,000), score ≈ 7.0
   (the old EUR sample "MB 7.47.3 + MB 7.71 €5,317" predates the pricelist switch)
 - `/system` login → editor; text edit → live in seconds; empty+save → default restored
+- `/system/products` → template downloads (116 rows); upload applies/reverts; report shows on page
+  (2026-07-17: zero product overrides active — live site runs on built-in data + env pricelist)
 - CZ machine names render in English (e.g. `/cs/products/standard-line` → "Vertical Press")
 - Czech PDF from configurator renders diacritics
 
