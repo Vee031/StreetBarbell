@@ -5,7 +5,8 @@ import { usePathname } from "next/navigation";
 import { ChevronDown, Languages, Menu, X } from "lucide-react";
 import { useState } from "react";
 import { productLines } from "@/lib/data";
-import { countNoun, getDictionary, nounMachines, type Locale } from "@/lib/i18n";
+import { countNoun, nounMachines, type Locale } from "@/lib/i18n";
+import type { SiteTexts } from "@/lib/site-texts";
 
 function switchLocale(pathname: string, locale: Locale) {
   const parts = pathname.split("/").filter(Boolean);
@@ -14,13 +15,12 @@ function switchLocale(pathname: string, locale: Locale) {
   return `/${parts.join("/")}`;
 }
 
-export function Header({ locale }: { locale: Locale }) {
+export function Header({ locale, d }: { locale: Locale; d: SiteTexts }) {
   const pathname = usePathname();
-  return <HeaderContent key={pathname} locale={locale} pathname={pathname} />;
+  return <HeaderContent key={pathname} locale={locale} d={d} pathname={pathname} />;
 }
 
-function HeaderContent({ locale, pathname }: { locale: Locale; pathname: string }) {
-  const d = getDictionary(locale);
+function HeaderContent({ locale, d, pathname }: { locale: Locale; d: SiteTexts; pathname: string }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [productsOpen, setProductsOpen] = useState(false);
 
@@ -40,9 +40,9 @@ function HeaderContent({ locale, pathname }: { locale: Locale; pathname: string 
             <div className={`mega-menu ${productsOpen ? "is-open" : ""}`}>
               <div className="mega-intro">
                 <span className="eyebrow">Street Barbell</span>
-                <strong>{locale === "cs" ? "Produktové řady" : "Product lines"}</strong>
-                <p>{locale === "cs" ? "Kompletní nabídka venkovního fitness pro různé cílové skupiny." : "A complete outdoor fitness portfolio for different users and training goals."}</p>
-                <Link href={`/${locale}/products`}>{locale === "cs" ? "Všechny produkty" : "All products"} →</Link>
+                <strong>{d.nav.menuTitle}</strong>
+                <p>{d.nav.menuText}</p>
+                <Link href={`/${locale}/products`}>{d.nav.allProducts} →</Link>
               </div>
               <div className="mega-grid">
                 {productLines.map((line) => (
@@ -79,7 +79,7 @@ function HeaderContent({ locale, pathname }: { locale: Locale; pathname: string 
         </button>
         {productsOpen && (
           <div className="mobile-product-list">
-            <Link href={`/${locale}/products`}>{locale === "cs" ? "Všechny produkty" : "All products"}</Link>
+            <Link href={`/${locale}/products`}>{d.nav.allProducts}</Link>
             {productLines.map((line) => <Link key={line.slug} href={`/${locale}/products/${line.slug}`}>{locale === "cs" ? line.nameCs : line.nameEn}</Link>)}
           </div>
         )}

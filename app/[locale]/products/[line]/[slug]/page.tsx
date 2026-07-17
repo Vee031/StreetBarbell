@@ -3,7 +3,8 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowUpRight, Check, Mail } from "lucide-react";
 import { getProduct, getProductDescription, getProductName, products } from "@/lib/data";
-import { getDictionary, isLocale, type Locale } from "@/lib/i18n";
+import { isLocale, type Locale } from "@/lib/i18n";
+import { getSiteTexts } from "@/lib/site-texts";
 
 export function generateStaticParams() {
   return products.map((product) => ({ line: product.lineSlug, slug: product.slug }));
@@ -14,7 +15,7 @@ function valueOrDash(value: unknown) { return value === null || value === undefi
 export default async function ProductDetailPage({ params }: { params: Promise<{ locale: string; line: string; slug: string }> }) {
   const { locale: rawLocale, line, slug } = await params;
   if (!isLocale(rawLocale)) notFound();
-  const locale = rawLocale as Locale; const d = getDictionary(locale); const cs = locale === "cs";
+  const locale = rawLocale as Locale; const d = await getSiteTexts(locale); const cs = locale === "cs";
   const product = getProduct(line, slug); if (!product) notFound();
   const name = getProductName(product, locale);
   const mailBody = `${cs ? "Mám zájem o produkt" : "I am interested in"}: ${product.code} — ${name}`;

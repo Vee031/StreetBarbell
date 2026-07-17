@@ -3,8 +3,9 @@ import Link from "next/link";
 import { ArrowUpRight } from "lucide-react";
 import { getProductName, type Product } from "@/lib/data";
 import type { Locale } from "@/lib/i18n";
+import type { SiteTexts } from "@/lib/site-texts";
 
-export function ProductCard({ product, locale }: { product: Product; locale: Locale }) {
+export function ProductCard({ product, locale, t }: { product: Product; locale: Locale; t: SiteTexts["products"] }) {
   return (
     <Link href={`/${locale}/products/${product.lineSlug}/${product.slug}`} className="product-card">
       <div className="product-image-wrap">
@@ -18,9 +19,9 @@ export function ProductCard({ product, locale }: { product: Product; locale: Loc
         </div>
         <div className="product-card-meta">
           <span>{product.bodyFocus}</span>
-<strong>{locale === "cs" ? "Cena na vyžádání" : "Price on request"}</strong>
+<strong>{t.priceOnRequest}</strong>
         </div>
-        <span className="text-link">{locale === "cs" ? "Detail produktu" : "Product detail"} <ArrowUpRight size={16} /></span>
+        <span className="text-link">{t.detail} <ArrowUpRight size={16} /></span>
       </div>
     </Link>
   );

@@ -12,6 +12,7 @@
     "verify": "npm run lint && npm run typecheck && npm run security:check && npm run build"
   },
   "dependencies": {
+    "@vercel/blob": "^2.6.1",
     "framer-motion": "^12.23.0",
     "jspdf": "^3.0.1",
     "lucide-react": "^0.468.0",

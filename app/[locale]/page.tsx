@@ -4,14 +4,15 @@ import { ArrowRight, Award, BadgeCheck, Dumbbell, ShieldCheck, Sparkles, Users }
 import { LineCard } from "@/components/line-card";
 import { MotionReveal } from "@/components/motion-reveal";
 import { productLines } from "@/lib/data";
-import { getDictionary, isLocale, type Locale } from "@/lib/i18n";
+import { isLocale, type Locale } from "@/lib/i18n";
+import { getSiteTexts } from "@/lib/site-texts";
 import { notFound } from "next/navigation";
 
 export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale: rawLocale } = await params;
   if (!isLocale(rawLocale)) notFound();
   const locale = rawLocale as Locale;
-  const d = getDictionary(locale);
+  const d = await getSiteTexts(locale);
   const cs = locale === "cs";
   return (
     <>
@@ -22,12 +23,12 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
         <div className="hero-content page-shell">
           <MotionReveal><span className="eyebrow light">{d.home.eyebrow}</span><h1>{d.home.title}</h1><p>{d.home.intro}</p><div className="hero-actions"><Link className="button button-red" href={`/${locale}/configurations`}>{d.home.configure}<ArrowRight size={18} /></Link><Link className="button button-ghost" href={`/${locale}/products`}>{d.home.explore}</Link></div></MotionReveal>
           <MotionReveal delay={0.18} className="hero-stat-panel">
-            <div><strong>9</strong><span>{cs ? "produktových řad" : "product lines"}</span></div>
-            <div><strong>116</strong><span>{cs ? "položek v databázi" : "database items"}</span></div>
-            <div><strong>20</strong><span>{cs ? "bodů priorit" : "priority points"}</span></div>
+            <div><strong>9</strong><span>{d.home.statLines}</span></div>
+            <div><strong>116</strong><span>{d.home.statItems}</span></div>
+            <div><strong>20</strong><span>{d.home.statPoints}</span></div>
           </MotionReveal>
         </div>
-        <div className="hero-scroll"><span>{cs ? "Objevte systém" : "Discover the system"}</span><i /></div>
+        <div className="hero-scroll"><span>{d.home.scroll}</span><i /></div>
       </section>
 
       <section className="section page-shell">
@@ -48,13 +49,13 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
       </section>
 
       <section className="section page-shell">
-        <MotionReveal className="section-heading"><span className="eyebrow">{d.home.advantages}</span><h2>{cs ? "Technická kvalita, která dává obchodní smysl." : "Technical quality that makes commercial sense."}</h2></MotionReveal>
+        <MotionReveal className="section-heading"><span className="eyebrow">{d.home.advantages}</span><h2>{d.home.advantagesTitle}</h2></MotionReveal>
         <div className="benefit-grid">
           {[
-            [BadgeCheck, cs ? "Variabilní zátěž" : "Variable load", cs ? "Skutečný silový trénink venku, nikoli pouze pohyb vlastní vahou." : "Real outdoor strength training, not only bodyweight movement."],
-            [ShieldCheck, cs ? "Odolnost pro veřejný prostor" : "Public-space durability", cs ? "Konstrukce navržená pro intenzivní provoz, počasí a vandalismus." : "Structures engineered for intensive use, weather and vandal resistance."],
-            [Users, cs ? "Pro různé cílové skupiny" : "For different user groups", cs ? "Profesionálové, veřejnost, senioři, vozíčkáři i sportovní týmy." : "Professionals, the general public, seniors, wheelchair users and sports teams."],
-            [Award, cs ? "Evropské standardy" : "European standards", cs ? "Bezpečnost, dokumentace a technická podpora pro veřejné zakázky." : "Safety, documentation and technical support for public projects."],
+            [BadgeCheck, d.home.benefit1Title, d.home.benefit1Text],
+            [ShieldCheck, d.home.benefit2Title, d.home.benefit2Text],
+            [Users, d.home.benefit3Title, d.home.benefit3Text],
+            [Award, d.home.benefit4Title, d.home.benefit4Text],
           ].map(([Icon, title, text], index) => <MotionReveal key={String(title)} delay={index * 0.06} className="benefit-card"><Icon /><h3>{String(title)}</h3><p>{String(text)}</p></MotionReveal>)}
         </div>
       </section>

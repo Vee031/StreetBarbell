@@ -13,6 +13,9 @@ export const dictionaries = {
       gallery: "Gallery",
       contact: "Contact",
       quote: "Request a quote",
+      allProducts: "All products",
+      menuTitle: "Product lines",
+      menuText: "A complete outdoor fitness portfolio for different users and training goals.",
     },
     home: {
       eyebrow: "Outdoor strength. Built without compromise.",
@@ -31,6 +34,19 @@ export const dictionaries = {
       galleryCta: "View gallery",
       contactTitle: "Have a project in mind?",
       contactText: "Send us the location, available area and approximate budget. We will help you prepare a technically sound setup.",
+      statLines: "product lines",
+      statItems: "database items",
+      statPoints: "priority points",
+      scroll: "Discover the system",
+      advantagesTitle: "Technical quality that makes commercial sense.",
+      benefit1Title: "Variable load",
+      benefit1Text: "Real outdoor strength training, not only bodyweight movement.",
+      benefit2Title: "Public-space durability",
+      benefit2Text: "Structures engineered for intensive use, weather and vandal resistance.",
+      benefit3Title: "For different user groups",
+      benefit3Text: "Professionals, the general public, seniors, wheelchair users and sports teams.",
+      benefit4Title: "European standards",
+      benefit4Text: "Safety, documentation and technical support for public projects.",
     },
     products: {
       title: "Products",
@@ -54,6 +70,8 @@ export const dictionaries = {
       openSource: "Original product source",
       from: "From",
       exVat: "excl. VAT",
+      priceOnRequest: "Price on request",
+      detail: "Product detail",
     },
     config: {
       title: "Recommended configurations",
@@ -62,6 +80,10 @@ export const dictionaries = {
     gallery: {
       title: "Gallery",
       intro: "A first selection of Street Barbell product lines and installations. The production gallery will be expanded from the connected project archive.",
+      filterAll: "All",
+      filterInstallations: "Installations",
+      filterProducts: "Products",
+      filterProcess: "Installation process",
     },
     contact: {
       title: "Contact & quote request",
@@ -72,6 +94,11 @@ export const dictionaries = {
       email: "Email",
       whatsapp: "WhatsApp",
     },
+    footer: {
+      about: "Professional outdoor fitness equipment for municipalities, distributors and private investors.",
+      allLines: "All lines",
+      tools: "Tools",
+    },
   },
   cs: {
     nav: {
@@ -80,6 +107,9 @@ export const dictionaries = {
       gallery: "Galerie",
       contact: "Kontakt",
       quote: "Nezávazná poptávka",
+      allProducts: "Všechny produkty",
+      menuTitle: "Produktové řady",
+      menuText: "Kompletní nabídka venkovního fitness pro různé cílové skupiny.",
     },
     home: {
       eyebrow: "Venkovní síla. Bez kompromisů.",
@@ -98,6 +128,19 @@ export const dictionaries = {
       galleryCta: "Zobrazit galerii",
       contactTitle: "Máte konkrétní projekt?",
       contactText: "Pošlete nám lokalitu, dostupnou plochu a přibližný rozpočet. Pomůžeme připravit technicky smysluplnou sestavu.",
+      statLines: "produktových řad",
+      statItems: "položek v databázi",
+      statPoints: "bodů priorit",
+      scroll: "Objevte systém",
+      advantagesTitle: "Technická kvalita, která dává obchodní smysl.",
+      benefit1Title: "Variabilní zátěž",
+      benefit1Text: "Skutečný silový trénink venku, nikoli pouze pohyb vlastní vahou.",
+      benefit2Title: "Odolnost pro veřejný prostor",
+      benefit2Text: "Konstrukce navržená pro intenzivní provoz, počasí a vandalismus.",
+      benefit3Title: "Pro různé cílové skupiny",
+      benefit3Text: "Profesionálové, veřejnost, senioři, vozíčkáři i sportovní týmy.",
+      benefit4Title: "Evropské standardy",
+      benefit4Text: "Bezpečnost, dokumentace a technická podpora pro veřejné zakázky.",
     },
     products: {
       title: "Produkty",
@@ -121,6 +164,8 @@ export const dictionaries = {
       openSource: "Původní zdroj produktu",
       from: "Od",
       exVat: "bez DPH",
+      priceOnRequest: "Cena na vyžádání",
+      detail: "Detail produktu",
     },
     config: {
       title: "Doporučené sestavy",
@@ -129,6 +174,10 @@ export const dictionaries = {
     gallery: {
       title: "Galerie",
       intro: "První výběr produktových řad a realizací Street Barbell. Produkční galerie bude dále rozšířena z připojeného projektového archivu.",
+      filterAll: "Vše",
+      filterInstallations: "Realizace",
+      filterProducts: "Produkty",
+      filterProcess: "Proces instalace",
     },
     contact: {
       title: "Kontakt a nezávazná poptávka",
@@ -138,6 +187,11 @@ export const dictionaries = {
       learnMore: "Zjistit více",
       email: "E-mail",
       whatsapp: "WhatsApp",
+    },
+    footer: {
+      about: "Profesionální venkovní fitness vybavení pro města, distributory a soukromé investory.",
+      allLines: "Všechny řady",
+      tools: "Nástroje",
     },
   },
 } as const;
