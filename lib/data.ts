@@ -60,8 +60,10 @@ export type ProductLine = {
 export const products = productsJson as unknown as Product[];
 export const productLines = linesJson as unknown as ProductLine[];
 
-export function getProductName(product: Product, locale: "en" | "cs") {
-  return locale === "cs" ? product.nameCs : product.nameEn;
+// Machine names are shown in their original English on both language
+// versions (owner decision 2026-07-17); descriptions stay localized.
+export function getProductName(product: Product) {
+  return product.nameEn;
 }
 
 export function getProductDescription(product: Product, locale: "en" | "cs") {

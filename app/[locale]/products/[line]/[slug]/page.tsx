@@ -17,7 +17,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   if (!isLocale(rawLocale)) notFound();
   const locale = rawLocale as Locale; const d = await getSiteTexts(locale); const cs = locale === "cs";
   const product = getProduct(line, slug); if (!product) notFound();
-  const name = getProductName(product, locale);
+  const name = getProductName(product);
   const mailBody = `${cs ? "Mám zájem o produkt" : "I am interested in"}: ${product.code} — ${name}`;
   return <>
     <section className="product-detail-hero">

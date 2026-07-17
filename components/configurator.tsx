@@ -130,7 +130,7 @@ export function Configurator({ locale }: { locale: Locale }) {
     doc.setFont("DejaVu", "bold"); doc.text(cs ? "Stroje" : "Machines", 18, 74);
     doc.setFont("DejaVu", "normal");
     let y = 83;
-    result.products.forEach((product, i) => { doc.text(`${i + 1}. ${product.code} — ${getProductName(product, locale)}`, 22, y); y += 8; });
+    result.products.forEach((product, i) => { doc.text(`${i + 1}. ${product.code} — ${getProductName(product)}`, 22, y); y += 8; });
     y += 5; doc.setFont("DejaVu", "bold"); doc.text(cs ? "Proč tato sestava" : "Why this setup", 18, y); y += 8;
     doc.setFont("DejaVu", "normal");
     const purpose = doc.splitTextToSize(result.purpose, 170); doc.text(purpose, 18, y); y += purpose.length * 6 + 3;
@@ -215,9 +215,9 @@ export function Configurator({ locale }: { locale: Locale }) {
               <article className="result-card" key={result.id}>
                 <div className="result-rank"><span>#{index + 1}</span><strong>{result.score.toFixed(1)}</strong><small>/ 10</small></div>
                 <div className="result-content">
-                  <div className="result-title-row"><div><small>{result.products.length} {countNoun(result.products.length, locale, nounMachines)}</small><h3>{result.products.map((p) => getProductName(p, locale)).join(" + ")}</h3></div><div className="result-price"><small>{cs ? "Odhad ceny" : "Estimated price"}</small><strong>€{Math.round(result.totalEur).toLocaleString()}</strong><span>{Math.round(result.totalCzk).toLocaleString()} CZK</span></div></div>
+                  <div className="result-title-row"><div><small>{result.products.length} {countNoun(result.products.length, locale, nounMachines)}</small><h3>{result.products.map((p) => getProductName(p)).join(" + ")}</h3></div><div className="result-price"><small>{cs ? "Odhad ceny" : "Estimated price"}</small><strong>€{Math.round(result.totalEur).toLocaleString()}</strong><span>{Math.round(result.totalCzk).toLocaleString()} CZK</span></div></div>
                   <p className="result-purpose">{result.purpose}</p>
-                  <div className="result-products">{result.products.map((product) => <Link key={product.code} href={`/${locale}/products/${product.lineSlug}/${product.slug}`}><span>{product.code}</span><strong>{getProductName(product, locale)}</strong><small>{product.bodyFocus}</small></Link>)}</div>
+                  <div className="result-products">{result.products.map((product) => <Link key={product.code} href={`/${locale}/products/${product.lineSlug}/${product.slug}`}><span>{product.code}</span><strong>{getProductName(product)}</strong><small>{product.bodyFocus}</small></Link>)}</div>
                   <div className="metric-bars">{(Object.entries(result.metrics) as [PriorityKey, number][]).filter(([key]) => input.priorities[key] > 0).sort((a,b) => input.priorities[b[0]] - input.priorities[a[0]]).slice(0,5).map(([key,value]) => <div key={key}><span>{priorityLabels[locale][key]}</span><i><b style={{ width: `${value * 10}%` }} /></i><strong>{value.toFixed(1)}</strong></div>)}</div>
                   <div className="result-notes"><div>{result.strengths.map((strength) => <p key={strength}><Check size={16} /> {strength}</p>)}</div><p className="weakness"><Info size={16} /> {result.weakness}</p></div>
                   <div className="result-footer"><span>{result.footprint ? `${cs ? "Přibližná plocha strojů" : "Approx. machine footprint"}: ${result.footprint.toFixed(1)} m²` : (cs ? "Pro část strojů chybí rozměrová data." : "Some machine footprint data is unavailable.")}</span><button className="button button-dark button-small" onClick={() => downloadPdf(index)}><Download size={17} /> PDF</button></div>
