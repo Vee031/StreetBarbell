@@ -2,7 +2,8 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowUpRight, Check, Mail } from "lucide-react";
-import { getProduct, getProductDescription, getProductName, products } from "@/lib/data";
+import { getProductDescription, getProductName, products } from "@/lib/data";
+import { getMergedProduct } from "@/lib/products-store";
 import { isLocale, type Locale } from "@/lib/i18n";
 import { getSiteTexts } from "@/lib/site-texts";
 
@@ -16,7 +17,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   const { locale: rawLocale, line, slug } = await params;
   if (!isLocale(rawLocale)) notFound();
   const locale = rawLocale as Locale; const d = await getSiteTexts(locale); const cs = locale === "cs";
-  const product = getProduct(line, slug); if (!product) notFound();
+  const product = await getMergedProduct(line, slug); if (!product) notFound();
   const name = getProductName(product);
   const mailBody = `${cs ? "Mám zájem o produkt" : "I am interested in"}: ${product.code} — ${name}`;
   return <>

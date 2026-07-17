@@ -100,8 +100,27 @@ Gotcha: adding env values via PowerShell piping appends `\r` that Vercel keeps. 
   read-your-writes; **`updateTag(tag)`** is the immediate expire. Don't "fix" this back.
 - Blob CDN serves the previous JSON for a few seconds after a save → the editor form can
   briefly show pre-save values (site itself updates correctly). Harmless; refresh.
-- Machine names/specs/prices are intentionally NOT in the editor (they come from the Excel
-  pipeline below).
+- Machine names/specs/prices are edited via the **Products import** page instead (below), not
+  the text editor.
+
+## /system/products — bulk product import (added 2026-07-17)
+
+- Workflow: download `products.xlsx` (always reflects live data incl. previous uploads) →
+  edit anything except the Code column → upload → live in seconds.
+- 35 editable columns per machine: Price CZK excl. VAT, names EN/CS, descriptions EN/CS,
+  muscles/focus/movement/position, users, load spec, plate load, weight, footprint,
+  dimensions, materials, coverage + recommender scores, website URL.
+- Semantics: uploaded values are stored as diffs-only overrides in Blob
+  (`content/product-overrides.json`), merged over `data/products.json` at read time
+  (`lib/products-store.ts`, cache tag `products`). **Empty cell = revert to built-in value.**
+  Each upload atomically replaces the whole override set (the template contains current
+  values, so unchanged cells re-assert themselves). Price overrides also feed the
+  configurator via `getEffectivePricelist()`.
+- Validation: unknown codes / non-numeric / negative numbers → import is checked but NOT
+  applied; errors listed on the page (last-import report stored at
+  `content/product-import-report.json`). Template generation + parsing use `exceljs`;
+  XLSX only (Czech CSV encoding/delimiters are unreliable). Server-action body limit
+  raised to 8 MB in next.config.ts.
 
 ## Data pipeline (products)
 
@@ -154,3 +173,4 @@ with rapid automated fetches (transient "Vercel Security Checkpoint" HTML replac
 - `8baa491` Machine names always in original English (both locales)
 - `a0f69f4` PROJECT_STATUS.md handover doc
 - (2026-07-17) Configurator switched to CZK-native 2026 pricelist (see server-pricing above)
+- (2026-07-17) /system/products bulk XLSX import (see its section above)

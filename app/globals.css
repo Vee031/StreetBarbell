@@ -469,3 +469,7 @@ p { color: var(--muted); line-height: 1.7; }
 .sys-field-grid input:focus, .sys-field-grid textarea:focus { outline: 2px solid var(--red); outline-offset: 1px; }
 .sys-card form > .button { margin-top: 6px; }
 @media (max-width: 760px) { .sys-field-grid { grid-template-columns: 1fr; } }
+.sys-upload-row { display: flex; flex-wrap: wrap; gap: 14px; align-items: center; }
+.sys-upload-row input[type=file] { border: 1px dashed var(--line); border-radius: 10px; padding: 10px 13px; background: var(--bg); font-size: .9rem; max-width: 100%; }
+.sys-note { margin: 14px 0 0; color: var(--muted); font-size: .86rem; }
+.sys-error-list { margin: 0; padding-left: 20px; color: var(--red-dark); font-size: .88rem; display: grid; gap: 4px; }

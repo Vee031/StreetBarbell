@@ -1,6 +1,12 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  experimental: {
+    serverActions: {
+      // The /system/products XLSX upload can exceed the 1 MB default.
+      bodySizeLimit: "8mb",
+    },
+  },
   images: {
     unoptimized: true,
     remotePatterns: [

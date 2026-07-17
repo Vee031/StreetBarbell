@@ -39,6 +39,7 @@ export default async function SystemPage({ searchParams }: { searchParams: Promi
           <p>Edit the wording on streetbarbell.cz. Empty a field and save to return to the original text.</p>
         </div>
         <div className="sys-header-actions">
+          <Link href="/system/products">Products import →</Link>
           <Link href="/en" target="_blank" rel="noreferrer">Open website ↗</Link>
           <form action={logout}><button type="submit">Sign out</button></form>
         </div>

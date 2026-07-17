@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { products } from "@/lib/data";
+import { getProducts } from "@/lib/products-store";
 import { recommend, type ConfigInput, type PriorityKey } from "@/lib/recommender";
 import { isDistributorAuthenticated } from "@/lib/server-auth";
 import { attachPrices } from "@/lib/server-pricing";
@@ -27,7 +27,7 @@ export async function POST(request: Request) {
     const body = (await request.json()) as { input?: ConfigInput; locale?: "en" | "cs" };
     const validationError = validateInput(body.input);
     if (validationError || !body.input) return NextResponse.json({ error: validationError }, { status: 400 });
-    const result = recommend(attachPrices(products), body.input, body.locale === "cs" ? "cs" : "en");
+    const result = recommend(await attachPrices(await getProducts()), body.input, body.locale === "cs" ? "cs" : "en");
     return NextResponse.json({ results: result });
   } catch (error) {
     return NextResponse.json({ error: error instanceof Error ? error.message : "Recommendation failed." }, { status: 400 });
