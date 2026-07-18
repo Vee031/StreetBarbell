@@ -129,6 +129,26 @@ Gotcha: adding env values via PowerShell piping appends `\r` that Vercel keeps. 
   XLSX only (Czech CSV encoding/delimiters are unreliable). Server-action body limit
   raised to 8 MB in next.config.ts.
 
+## /system/catalog — product catalogue admin (added 2026-07-18)
+
+- Grid of all 116 machines (grouped by line, On/Off badges) → per-product editor:
+  - **On/Off switch**: switched-off machines vanish from product lists, their detail page
+    404s, and the configurator excludes them. Line pages show the live machine count.
+  - **Pictures**: official render stays the dominant image; admin uploads extra photos that
+    appear as a thumbnail mini gallery under it (`components/product-gallery.tsx`, client).
+  - **Documents**: PDF repository per product, shown as a Downloads section on the page.
+  - **Video**: YouTube URL → `youtube-nocookie` embed + "Watch on YouTube" link.
+  - **Muscles**: front+back figure (`components/muscle-map.tsx`, hand-drawn SVG, brand-red
+    highlights) with 15 muscle groups; pre-selected by keyword detection from the product's
+    "Target muscles" text (`lib/muscles.ts`), manually adjustable with live preview.
+- Storage: `content/product-meta.json` in Blob (`lib/product-meta.ts`); uploads under
+  `products-media/<code>/gallery|docs/`. Absent entry = enabled with defaults.
+- **`lib/blob-json.ts`**: all JSON-in-blob stores (texts, product overrides, meta, report)
+  read/write through this helper — globalThis write-through cache prevents CDN-stale
+  read-modify-write lost updates; `unstable_cache(..., revalidate: 300)` self-heals any
+  transient bad read. Rapid scripted writes can still race across serverless instances;
+  human-paced admin use is safe.
+
 ## Data pipeline (products)
 
 Source Excels (same folder tree as the private file):
@@ -183,3 +203,4 @@ with rapid automated fetches (transient "Vercel Security Checkpoint" HTML replac
 - `a0f69f4` PROJECT_STATUS.md handover doc
 - (2026-07-17) Configurator switched to CZK-native 2026 pricelist (see server-pricing above)
 - (2026-07-17) /system/products bulk XLSX import (see its section above)
+- `2db5c86` (2026-07-18) /system/catalog: per-product visibility, gallery, PDFs, video, muscle map
