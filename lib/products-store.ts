@@ -1,5 +1,5 @@
-import { head } from "@vercel/blob";
 import { unstable_cache } from "next/cache";
+import { readBlobJson } from "./blob-json";
 import { products as baseProducts, type Product } from "./data";
 
 // Admin bulk-import of product data: an uploaded XLSX becomes a diffs-only
@@ -66,33 +66,17 @@ export const productColumns: ColumnSpec[] = [
   { key: "websiteUrl", header: "Website URL", type: "text", get: (p) => p.websiteUrl },
 ];
 
-async function fetchBlobJson<T>(pathname: string): Promise<T | null> {
-  if (!process.env.BLOB_READ_WRITE_TOKEN) return null;
-  try {
-    const meta = await head(pathname, { abortSignal: AbortSignal.timeout(5000) });
-    const bustedUrl = `${meta.url}${meta.url.includes("?") ? "&" : "?"}v=${meta.uploadedAt.getTime()}`;
-    const response = await fetch(bustedUrl, {
-      cache: "no-store",
-      headers: { "cache-control": "no-cache" },
-      signal: AbortSignal.timeout(5000),
-    });
-    if (!response.ok) return null;
-    return (await response.json()) as T;
-  } catch {
-    return null;
-  }
-}
-
 export async function fetchProductOverridesUncached(): Promise<ProductOverrides> {
-  return (await fetchBlobJson<ProductOverrides>(PRODUCTS_BLOB_PATH)) ?? {};
+  return (await readBlobJson<ProductOverrides>(PRODUCTS_BLOB_PATH)) ?? {};
 }
 
 export async function fetchImportReport(): Promise<ImportReport | null> {
-  return fetchBlobJson<ImportReport>(PRODUCTS_REPORT_BLOB_PATH);
+  return readBlobJson<ImportReport>(PRODUCTS_REPORT_BLOB_PATH);
 }
 
 export const loadProductOverrides = unstable_cache(fetchProductOverridesUncached, ["product-overrides"], {
   tags: [PRODUCTS_CACHE_TAG],
+  revalidate: 300,
 });
 
 function asText(value: string | number | undefined, fallback: string) {

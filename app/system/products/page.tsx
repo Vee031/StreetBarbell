@@ -31,6 +31,7 @@ export default async function SystemProductsPage({ searchParams }: { searchParam
         </div>
         <div className="sys-header-actions">
           <Link href="/system">← Site texts</Link>
+          <Link href="/system/catalog">Catalogue →</Link>
         </div>
       </header>
 

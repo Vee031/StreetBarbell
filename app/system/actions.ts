@@ -1,9 +1,9 @@
 "use server";
 
-import { put } from "@vercel/blob";
 import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
+import { writeBlobJson } from "@/lib/blob-json";
 import { dictionaries, locales } from "@/lib/i18n";
 import { fetchOverridesUncached, TEXTS_BLOB_PATH, TEXTS_CACHE_TAG, type SectionKey } from "@/lib/site-texts";
 
@@ -32,13 +32,7 @@ export async function saveSection(formData: FormData) {
   }
 
   try {
-    await put(TEXTS_BLOB_PATH, JSON.stringify(overrides, null, 2), {
-      access: "public",
-      addRandomSuffix: false,
-      allowOverwrite: true,
-      contentType: "application/json",
-      abortSignal: AbortSignal.timeout(10000),
-    });
+    await writeBlobJson(TEXTS_BLOB_PATH, overrides);
   } catch {
     redirect("/system?error=storage");
   }

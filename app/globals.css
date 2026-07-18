@@ -473,3 +473,44 @@ p { color: var(--muted); line-height: 1.7; }
 .sys-upload-row input[type=file] { border: 1px dashed var(--line); border-radius: 10px; padding: 10px 13px; background: var(--bg); font-size: .9rem; max-width: 100%; }
 .sys-note { margin: 14px 0 0; color: var(--muted); font-size: .86rem; }
 .sys-error-list { margin: 0; padding-left: 20px; color: var(--red-dark); font-size: .88rem; display: grid; gap: 4px; }
+
+/* ---- product detail: gallery, muscles, video, documents ---- */
+.product-gallery { display: grid; gap: 12px; align-content: start; }
+.product-thumbs { display: flex; flex-wrap: wrap; gap: 10px; }
+.product-thumbs button { position: relative; width: 88px; height: 66px; border-radius: 10px; overflow: hidden; border: 2px solid var(--line); background: white; padding: 0; transition: border-color .18s ease, transform .18s ease; }
+.product-thumbs button:hover { transform: translateY(-2px); }
+.product-thumbs button.active { border-color: var(--red); }
+.product-thumbs img { object-fit: cover; }
+.muscle-map { width: min(430px, 100%); display: block; margin: 16px 0 6px; }
+.product-video { position: relative; aspect-ratio: 16 / 9; width: min(680px, 100%); border-radius: var(--radius); overflow: hidden; background: var(--dark); margin: 10px 0 12px; }
+.product-video iframe { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; }
+.document-list { display: grid; gap: 10px; margin-top: 12px; }
+.document-list a { display: flex; align-items: center; gap: 12px; border: 1px solid var(--line); border-radius: 12px; padding: 13px 17px; background: var(--surface); font-weight: 600; font-size: .93rem; transition: border-color .18s ease, transform .18s ease; }
+.document-list a:hover { border-color: var(--red); transform: translateY(-2px); }
+.document-list a svg { color: var(--red); flex-shrink: 0; }
+
+/* ---- /system/catalog ---- */
+.cat-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 14px; }
+.cat-card { position: relative; display: block; background: var(--surface); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; transition: transform .18s ease, border-color .18s ease; }
+.cat-card:hover { transform: translateY(-2px); border-color: var(--red); }
+.cat-card-image { position: relative; aspect-ratio: 4 / 3; background: var(--bg); }
+.cat-card-image img { object-fit: contain; }
+.cat-card-body { padding: 10px 13px 13px; }
+.cat-card-body small { color: var(--muted); font-size: .72rem; text-transform: uppercase; letter-spacing: .07em; }
+.cat-card-body strong { display: block; font-size: .92rem; line-height: 1.25; }
+.cat-card.is-off { opacity: .55; }
+.cat-badge { position: absolute; top: 9px; right: 9px; z-index: 1; border-radius: 999px; padding: 3px 10px; font-size: .7rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; background: var(--green); color: white; }
+.cat-badge.off { background: var(--dark); }
+.cat-line-title { margin: 26px 0 12px; font-family: var(--display); font-size: 1.35rem; text-transform: uppercase; }
+.cat-media-grid { display: flex; flex-wrap: wrap; gap: 12px; }
+.cat-media-item { position: relative; width: 130px; }
+.cat-media-item .thumb { position: relative; width: 130px; height: 96px; border-radius: 10px; overflow: hidden; border: 1px solid var(--line); background: var(--bg); }
+.cat-media-item .thumb img { object-fit: cover; }
+.cat-media-item form button { margin-top: 5px; background: none; border: none; padding: 0; color: var(--red-dark); font-size: .78rem; font-weight: 600; }
+.cat-doc-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; border: 1px solid var(--line); border-radius: 10px; padding: 9px 13px; font-size: .9rem; }
+.cat-doc-row form button { background: none; border: none; padding: 0; color: var(--red-dark); font-size: .82rem; font-weight: 600; }
+.muscle-check-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 7px 14px; margin: 14px 0; }
+.muscle-check-grid label { display: flex; align-items: center; gap: 8px; font-size: .9rem; }
+.muscle-check-grid input { accent-color: var(--red); width: 16px; height: 16px; }
+.cat-editor-grid { display: grid; grid-template-columns: 1fr 340px; gap: 22px; align-items: start; }
+@media (max-width: 900px) { .cat-editor-grid { grid-template-columns: 1fr; } }

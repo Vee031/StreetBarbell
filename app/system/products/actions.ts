@@ -1,10 +1,10 @@
 "use server";
 
-import { put } from "@vercel/blob";
 import { revalidatePath, updateTag } from "next/cache";
 import { redirect } from "next/navigation";
 import ExcelJS from "exceljs";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
+import { writeBlobJson } from "@/lib/blob-json";
 import { products as baseProducts } from "@/lib/data";
 import {
   productColumns,
@@ -41,13 +41,7 @@ function toNumber(raw: string | number): number | null {
 }
 
 async function saveReport(report: ImportReport) {
-  await put(PRODUCTS_REPORT_BLOB_PATH, JSON.stringify(report), {
-    access: "public",
-    addRandomSuffix: false,
-    allowOverwrite: true,
-    contentType: "application/json",
-    abortSignal: AbortSignal.timeout(10000),
-  });
+  await writeBlobJson(PRODUCTS_REPORT_BLOB_PATH, report);
 }
 
 export async function importProducts(formData: FormData) {
@@ -135,13 +129,7 @@ export async function importProducts(formData: FormData) {
   try {
     if (errors.length === 0) {
       // Atomic replace: this upload becomes the complete set of overrides.
-      await put(PRODUCTS_BLOB_PATH, JSON.stringify(overrides), {
-        access: "public",
-        addRandomSuffix: false,
-        allowOverwrite: true,
-        contentType: "application/json",
-        abortSignal: AbortSignal.timeout(10000),
-      });
+      await writeBlobJson(PRODUCTS_BLOB_PATH, overrides);
     }
     await saveReport(report);
   } catch {
