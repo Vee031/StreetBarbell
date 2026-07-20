@@ -138,9 +138,18 @@ Gotcha: adding env values via PowerShell piping appends `\r` that Vercel keeps. 
     appear as a thumbnail mini gallery under it (`components/product-gallery.tsx`, client).
   - **Documents**: PDF repository per product, shown as a Downloads section on the page.
   - **Video**: YouTube URL → `youtube-nocookie` embed + "Watch on YouTube" link.
-  - **Muscles**: front+back figure (`components/muscle-map.tsx`, hand-drawn SVG, brand-red
-    highlights) with 15 muscle groups; pre-selected by keyword detection from the product's
-    "Target muscles" text (`lib/muscles.ts`), manually adjustable with live preview.
+  - **Muscles**: front+back figure (`components/muscle-map.tsx`) with 15 muscle groups;
+    pre-selected by keyword detection from the product's "Target muscles" text
+    (`lib/muscles.ts`), manually adjustable with live preview.
+    **The figure is the official catalog artwork** (2026-07-20, commit 5659190): vector paths
+    extracted from "Catalogs/2025/Catalog SB 2025 _compressed For Email.pdf" (Google Drive
+    archive) with PyMuPDF — 71 base paths + 92 red highlight shapes recovered from all 91
+    product figures in the catalog (silhouette-anchored extraction, deduped by bbox, visually
+    labeled to muscle keys). The generated component is committed; to regenerate, re-run the
+    pipeline described here against the catalog PDF (page.get_drawings → normalize to the
+    figure box anchored on the two #848e93 body silhouettes ~22×70pt → dedupe red fills
+    #e?2?24/#ed1b34 → label → emit TSX). Old WP muscle PNGs (7423_muscles.png style) are gone
+    from the web; only 200×200 thumbs remain on the Wayback Machine.
 - Storage: `content/product-meta.json` in Blob (`lib/product-meta.ts`); uploads under
   `products-media/<code>/gallery|docs/`. Absent entry = enabled with defaults.
 - **`lib/blob-json.ts`**: all JSON-in-blob stores (texts, product overrides, meta, report)
