@@ -1,37 +1,27 @@
 import type { Product } from "@/lib/data";
 import type { PricedProduct } from "@/lib/server-pricing";
 
-export type Focus = "Full Body" | "Upper Body" | "Lower Body" | "Core / Posterior Chain" | "Cardio / Conditioning" | "Sport-specific";
-export type PositionPreference = "Doesn't matter" | "Standing" | "Seated" | "Lying / Bench" | "Mixed / Multiple" | "Hanging / Bodyweight";
-export type SpecializationMode = "Balanced" | "Focused" | "Maximum concentration" | "No preference";
+export type PrimaryFocus = "full" | "upper" | "lower";
+export type PositionPreference = "seated" | "standing" | "any";
 
-export type PriorityKey =
-  | "balance"
-  | "specialization"
-  | "variety"
-  | "beginner"
-  | "accessibility"
-  | "throughput"
-  | "space"
-  | "complement"
-  | "value";
-
-export type Priorities = Record<PriorityKey, number>;
-
+// Three bipolar sliders, 1..5, 3 = neutral. See docs/GENERATOR_SPEC.md.
 export type ConfigInput = {
   budgetCzk: number;
   exchangeRate: number;
-  reservePercent: number;
-  existingWorkout: boolean;
-  focus: Focus;
-  sport: string;
+  machineCount: "auto" | number; // fixed number => budget ignored
+  availableSpace: number; // m², soft preference (~6 m²/machine)
+  includedLines: string[]; // line slugs the search may use (from the category chips)
+  existingWorkout: boolean; // true => exclude Workout line + deprioritize duplicate machines
+  primaryFocus: PrimaryFocus;
   position: PositionPreference;
-  strictPosition: boolean;
-  machineCount: "auto" | number;
+  wheelchair: boolean;
+  balanceSpecialised: number; // 1 balanced .. 5 specialised
+  publicPrivate: number; // 1 public .. 5 private
+  costUse: number; // 1 as cheap as possible .. 5 no limit
   resultCount: number;
-  specializationMode: SpecializationMode;
-  priorities: Priorities;
 };
+
+export type MetricKey = "coverage" | "focusFit" | "value" | "space";
 
 export type CombinationResult = {
   id: string;
@@ -40,239 +30,151 @@ export type CombinationResult = {
   totalCzk: number;
   footprint: number | null;
   score: number;
-  metrics: Record<PriorityKey, number>;
+  metrics: Record<MetricKey, number>;
   strengths: string[];
   weakness: string;
   purpose: string;
 };
 
+const SPACE_PER_MACHINE = 6; // m²
+const DUMBBELL_CODES = new Set(["MB 7.33", "MB 7.34", "MB 7.71", "MB 7.72"]);
+const CONV_DIV_CODES = new Set(["MB 7.52", "MB 7.53", "MB 7.54", "MB 7.55", "MB 7.100"]);
+// Machines that duplicate a pull-up / calisthenics rig (lower priority when one already exists).
+const DEPRIORITIZE_CODES = new Set(["MB 7.38", "MB 7.55", "MB 7.47", "MB 7.47/1", "MB 7.61", "MB 7.73", "MB 7.62", "MB 7.67", "MB 7.96"]);
+
 const clamp = (value: number, min = 0, max = 10) => Math.max(min, Math.min(max, value));
-const average = (values: number[]) => values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0;
+const average = (values: number[]) => (values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0);
 
-function capacityNumber(value: string) {
-  if (value === "3+") return 3.5;
-  if (value === "2+") return 2.5;
-  const n = Number.parseFloat(value);
-  return Number.isFinite(n) ? n : 1;
-}
-
-function productText(product: Product) {
-  return `${product.nameEn} ${product.movementPatterns} ${product.bodyFocus} ${product.secondaryFocus}`.toLowerCase();
-}
-
-function soccerSuitability(product: Product) {
-  const text = productText(product);
-  const name = product.nameEn.toLowerCase();
-  const resistanceLine = ["Light Line", "Standard Line", "PRO Line", "Plus Line"].includes(product.line);
-  let score = product.coverage.lower * 0.4 + product.coverage.core * 0.08 + product.coverage.cardio * 0.06;
-
-  // Football profile: compound leg strength and hamstring resilience come first.
-  // Low-load bodyweight/cardio elements remain valid, but should not outrank them.
-  if (/squat|leg press/.test(name) && resistanceLine) score += 2.5;
-  else if (/squat|leg press|knee-dominant/.test(text) && !/stepper/.test(name)) score += 1.15;
-
-  if (/leg curl/.test(name) && resistanceLine) score += 2.45;
-  else if (/knee flexion/.test(text)) score += 1.3;
-
-  if (/deadlift|combo lift|hip thrust|glute press/.test(name) && resistanceLine) score += 2.25;
-  else if (/hyperextension/.test(name)) score += resistanceLine ? 0.95 : 0.65;
-  else if (/hip hinge|hip extension/.test(text)) score += 1.0;
-
-  if (/leg extension/.test(name) && resistanceLine) score += 1.55;
-  else if (/knee extension/.test(text)) score += 0.9;
-
-  if (/outer thigh|inner thigh|hip abduction|hip adduction|leg spreading/.test(text)) score += 0.75;
-  if (/stepper|bike|elliptical|cardiovascular locomotion|cardio rowing/.test(text)) score += 0.55;
-
-  if (resistanceLine) score += 0.7;
-  if (product.line === "Gymnastics Line") score -= 0.6;
-  if (product.line === "Cardio Line") score -= 0.25;
-  return Math.max(0, score);
-}
-
-function strengthSuitability(product: Product) {
-  const text = productText(product);
-  let score = average([product.coverage.upper, product.coverage.lower, product.coverage.core]);
-  if (/squat|deadlift|combo lift|bench press|chest press|standing row|seated row|lat pull|shoulder press|vertical press|hip thrust/.test(text)) score += 1.8;
-  if (/multi trainer|multi workout|multi-station|dumbbell/.test(text)) score += 1.2;
-  if (["Light Line", "Standard Line", "PRO Line", "Plus Line"].includes(product.line)) score += 0.55;
-  if (product.line === "Gymnastics Line" || product.line === "Cardio Line") score -= 0.35;
-  return Math.max(0, score);
-}
-
-function baseFocusMetric(product: Product, focus: Focus) {
+function focusCoverage(product: Product, focus: PrimaryFocus) {
   const c = product.coverage;
-  if (focus === "Upper Body") return c.upper;
-  if (focus === "Lower Body") return c.lower;
-  if (focus === "Core / Posterior Chain") return c.core;
-  if (focus === "Cardio / Conditioning") return c.cardio;
+  if (focus === "upper") return c.upper;
+  if (focus === "lower") return c.lower;
   return average([c.upper, c.lower, c.core]);
 }
 
-function focusMetric(product: Product, focus: Focus, sport: string) {
-  const base = baseFocusMetric(product, focus);
-  const sportName = sport.toLowerCase();
-
-  // Sport profiles remain active even when the user also selects a body region.
-  // This avoids treating "Lower Body + Soccer" like a generic lower-body request.
-  if (sportName.includes("soccer")) {
-    const sportScore = soccerSuitability(product);
-    return focus === "Lower Body" || focus === "Sport-specific"
-      ? base * 0.55 + sportScore * 0.45
-      : base * 0.8 + sportScore * 0.2;
-  }
-  if (sportName.includes("strength")) {
-    const sportScore = strengthSuitability(product);
-    return focus === "Sport-specific" ? sportScore : base * 0.72 + sportScore * 0.28;
-  }
-  return base;
+// Even spread across upper/lower/core = full-body machine.
+function balanceScore(product: Product) {
+  const c = product.coverage;
+  const parts = [c.upper, c.lower, c.core];
+  const mean = average(parts);
+  const spread = average(parts.map((v) => Math.abs(v - mean)));
+  return clamp(mean - spread * 0.6);
 }
 
-function candidateScore(product: PricedProduct, input: ConfigInput) {
-  if (!product.priceCzk || product.bodyFocus === "Accessory" || product.line === "Kids Line") return -Infinity;
-  let score = focusMetric(product, input.focus, input.sport) * 3;
-  score += product.scores.variety * 0.35 + product.scores.beginner * 0.15;
-  if (input.existingWorkout) score += product.scores.complement * 0.45;
-  if (input.position !== "Doesn't matter") {
-    const exact = product.position === input.position;
-    const compatible = input.position === "Standing" && product.position.includes("Standing");
-    score += exact || compatible ? 2.5 : -1.5;
+function positionFit(product: Product, position: PositionPreference) {
+  if (position === "any") return 0;
+  const p = product.position || "";
+  if (position === "seated") return /seat/i.test(p) ? 1.2 : /lying|bench/i.test(p) ? 0.4 : -1.4;
+  return /stand/i.test(p) ? 1.2 : -1.2; // standing
+}
+
+// -1 (cheap) .. +1 (no limit)
+const costAxis = (input: ConfigInput) => (input.costUse - 3) / 2;
+// -1 (balanced) .. +1 (specialised)
+const specAxis = (input: ConfigInput) => (input.balanceSpecialised - 3) / 2;
+// -1 (public) .. +1 (private)
+const privacyAxis = (input: ConfigInput) => (input.publicPrivate - 3) / 2;
+
+function productScore(product: PricedProduct, input: ConfigInput) {
+  if (product.bodyFocus === "Accessory") return -Infinity;
+  const spec = specAxis(input);
+  const cost = costAxis(input);
+
+  // Body targeting: balanced rewards full-body machines, specialised rewards focus-region machines.
+  const focusFit = focusCoverage(product, input.primaryFocus);
+  const balance = balanceScore(product);
+  let score = 3 + (spec >= 0 ? focusFit * (1 + spec) + balance * (1 - spec) : balance * (1 - spec) + focusFit * (1 + spec));
+
+  score += product.scores.variety * 0.28 + product.scores.beginner * 0.12;
+  score += positionFit(product, input.position);
+
+  // Cost axis: cheap prefers Light + affordability; no-limit prefers Standard/Pro/Plus + conv/div.
+  if (cost < 0) {
+    if (product.line === "Light Line") score += 1.1 * -cost;
+    if (product.line === "PRO Line" || product.line === "Plus Line") score -= 0.9 * -cost;
+    if (CONV_DIV_CODES.has(product.code)) score -= 1.0 * -cost;
+    score += product.scores.affordability * 0.25 * -cost;
+  } else if (cost > 0) {
+    if (CONV_DIV_CODES.has(product.code)) score += 1.2 * cost;
+    if (product.line === "Standard Line" || product.line === "PRO Line" || product.line === "Plus Line") score += 0.6 * cost;
   }
 
-  const sportName = input.sport.toLowerCase();
-  if (sportName.includes("soccer")) {
-    score += soccerSuitability(product) * (input.specializationMode === "Maximum concentration" ? 0.65 : 0.4);
-    if (product.line === "Gymnastics Line" && input.specializationMode !== "Balanced") score -= 0.8;
-  } else if (sportName.includes("strength")) {
-    score += strengthSuitability(product) * 0.45;
-  }
+  // Public installations favour robust, low-maintenance machines.
+  const privacy = privacyAxis(input);
+  if (privacy < 0) score += product.scores.accessibility * 0.15 * -privacy;
 
-  score += product.scores.affordability * 0.12;
+  if (input.existingWorkout && DEPRIORITIZE_CODES.has(product.code)) score -= 2.2;
+
   return score;
 }
 
-function movementSet(combo: Product[]) {
-  const set = new Set<string>();
-  combo.forEach((product) => product.movementPatterns.split(";").map((v) => v.trim()).filter(Boolean).forEach((v) => set.add(v)));
-  return set;
+function passesFilters(product: PricedProduct, input: ConfigInput) {
+  if (product.bodyFocus === "Accessory") return false;
+  if (!input.includedLines.includes(product.lineSlug)) return false;
+  if (!product.priceCzk) return false;
+  if (input.existingWorkout && product.lineSlug === "workout-line") return false;
+  if (input.wheelchair && product.lineSlug !== "plus-line") return false;
+
+  const cost = costAxis(input);
+  if (cost < 0) {
+    // "As cheap as possible" (1–2): avoid Pro/Plus and converging/diverging machines.
+    if (input.costUse <= 2 && (product.line === "PRO Line" || product.line === "Plus Line")) return false;
+    if (input.costUse <= 2 && CONV_DIV_CODES.has(product.code)) return false;
+  }
+
+  const privacy = privacyAxis(input);
+  if (privacy < 0 && input.publicPrivate <= 2) {
+    // Public: avoid loose barbells (dumbbell sets) and the box series (Boxing line).
+    if (DUMBBELL_CODES.has(product.code)) return false;
+    if (product.lineSlug === "boxing-line") return false;
+  }
+
+  return true;
 }
 
-function duplicatePatterns(combo: Product[]) {
-  const counts = new Map<string, number>();
-  combo.forEach((product) => product.movementPatterns.split(";").map((v) => v.trim()).filter(Boolean).forEach((v) => counts.set(v, (counts.get(v) ?? 0) + 1)));
-  return [...counts.values()].reduce((sum, count) => sum + Math.max(0, count - 1), 0);
-}
-
-function targetCoverage(combo: Product[], input: ConfigInput) {
-  return combo.reduce((sum, p) => sum + focusMetric(p, input.focus, input.sport), 0);
-}
-
-function metricsFor(combo: Product[], input: ConfigInput, totalPrice: number, budget: number): Record<PriorityKey, number> {
+function metricsFor(combo: PricedProduct[], input: ConfigInput, totalPrice: number, budget: number): Record<MetricKey, number> {
   const upper = combo.reduce((s, p) => s + p.coverage.upper, 0);
   const lower = combo.reduce((s, p) => s + p.coverage.lower, 0);
   const core = combo.reduce((s, p) => s + p.coverage.core, 0);
   const cardio = combo.reduce((s, p) => s + p.coverage.cardio, 0);
-  const strengthMinimum = Math.min(upper, lower, core);
-  const balance = clamp((strengthMinimum / Math.max(1, combo.length * 2)) * 10 + Math.min(2, cardio));
-  const totalCoverage = upper + lower + core + cardio;
-  const sportName = input.sport.toLowerCase();
-  const specialization = sportName.includes("soccer")
-    ? clamp(average(combo.map(soccerSuitability)) * 2.05)
-    : sportName.includes("strength")
-      ? clamp(average(combo.map(strengthSuitability)) * 2.1)
-      : clamp((targetCoverage(combo, input) / Math.max(1, totalCoverage)) * 16);
-  const patterns = movementSet(combo).size;
-  const variety = clamp(patterns * 1.7 + average(combo.map((p) => p.scores.variety)) * 0.35);
-  const beginner = clamp(average(combo.map((p) => p.scores.beginner)));
-  const accessibility = clamp(average(combo.map((p) => p.scores.accessibility)));
-  const users = combo.reduce((sum, p) => sum + capacityNumber(p.simultaneousUsers), 0);
-  const throughput = clamp((users / combo.length) * 3.1);
+  const coverage = clamp((Math.min(upper, lower, core) / Math.max(1, combo.length)) * 3 + Math.min(2, cardio * 0.4));
+  const focusFit = clamp(average(combo.map((p) => focusCoverage(p, input.primaryFocus))) + (specAxis(input) > 0 ? 1 : 0));
+  const value = clamp((1 - totalPrice / Math.max(budget, totalPrice)) * 6 + average(combo.map((p) => p.scores.affordability)) * 0.4);
   const knownFootprints = combo.map((p) => p.footprint).filter((v): v is number => typeof v === "number");
-  const totalFootprint = knownFootprints.reduce((a, b) => a + b, 0);
-  const usefulPatterns = Math.max(1, patterns);
-  const space = knownFootprints.length ? clamp((usefulPatterns / Math.max(1, totalFootprint)) * 6) : clamp(average(combo.map((p) => p.scores.space)));
-  const complement = input.existingWorkout ? clamp(average(combo.map((p) => p.scores.complement))) : 5;
-  const budgetUse = clamp((1 - totalPrice / Math.max(budget, totalPrice)) * 4 + average(combo.map((p) => p.scores.affordability)) * 0.75 + variety * 0.25);
-  return { balance, specialization, variety, beginner, accessibility, throughput, space, complement, value: budgetUse };
+  const footprint = knownFootprints.reduce((a, b) => a + b, 0);
+  const space = knownFootprints.length ? clamp(10 - Math.max(0, footprint - input.availableSpace) * 0.4) : 5;
+  return { coverage, focusFit, value, space };
 }
 
-function scoreCombination(combo: Product[], input: ConfigInput, totalPrice: number, budget: number) {
+function spacePenalty(comboLength: number, input: ConfigInput) {
+  if (!input.availableSpace || input.availableSpace <= 0) return 0;
+  const capacity = Math.floor(input.availableSpace / SPACE_PER_MACHINE);
+  return comboLength > capacity ? (comboLength - capacity) * 0.9 : 0;
+}
+
+function scoreCombination(combo: PricedProduct[], input: ConfigInput, totalPrice: number, budget: number) {
   const metrics = metricsFor(combo, input, totalPrice, budget);
-  const totalPoints = Object.values(input.priorities).reduce((a, b) => a + b, 0) || 20;
-  let score = (Object.keys(input.priorities) as PriorityKey[]).reduce((sum, key) => sum + metrics[key] * (input.priorities[key] / totalPoints), 0);
+  const base = average(combo.map((p) => productScore(p, input)));
 
-  const duplicates = duplicatePatterns(combo);
-  const specializationPoints = input.priorities.specialization;
-  const modeFactor = input.specializationMode === "Maximum concentration" ? 0 : input.specializationMode === "Focused" ? 0.25 : input.specializationMode === "No preference" ? 0.45 : 0.8;
-  const duplicatePenalty = duplicates * Math.max(0, 1 - specializationPoints / 10) * modeFactor;
-  score -= duplicatePenalty;
-
-  if (input.existingWorkout) {
-    const highOverlap = combo.filter((p) => p.workoutOverlap === "High").length;
-    score -= highOverlap * Math.max(0.1, input.priorities.complement / 10) * 0.7;
+  // Reward complementary movement coverage; penalise duplicated movement patterns.
+  const patterns = new Set<string>();
+  let duplicates = 0;
+  for (const p of combo) {
+    for (const raw of p.movementPatterns.split(";").map((v) => v.trim()).filter(Boolean)) {
+      if (patterns.has(raw)) duplicates += 1;
+      else patterns.add(raw);
+    }
   }
+  const spec = specAxis(input);
+  let score = base + patterns.size * 0.14 - duplicates * Math.max(0, 0.5 - spec * 0.5) * 0.6;
+  score += metrics.coverage * (0.25 - spec * 0.15);
+  score -= spacePenalty(combo.length, input);
+  if (budget > 0) score += Math.min(0.4, (totalPrice / Math.max(1, budget)) * 0.4);
 
-  if (input.position !== "Doesn't matter") {
-    const mismatches = combo.filter((p) => !p.position.includes(input.position.replace("Hanging / Bodyweight", "Hanging"))).length;
-    score -= mismatches * 0.35;
-  }
-
-  const sportName = input.sport.toLowerCase();
-  if (sportName.includes("soccer")) {
-    const texts = combo.map(productText);
-    const hasKneeDominant = texts.some((text) => /squat|leg press|knee-dominant/.test(text));
-    const hasHamstrings = texts.some((text) => /leg curl|knee flexion|deadlift|combo lift|hip hinge/.test(text));
-    const hasHipExtension = texts.some((text) => /hip thrust|glute press|deadlift|combo lift|hip extension/.test(text));
-    const lowerBodyFamilies = [hasKneeDominant, hasHamstrings, hasHipExtension].filter(Boolean).length;
-    const resistanceMachines = combo.filter((product) => ["Light Line", "Standard Line", "PRO Line", "Plus Line"].includes(product.line)).length;
-    const bodyweightMachines = combo.filter((product) => product.line === "Gymnastics Line").length;
-
-    // Specialisation may repeat a body region, while still rewarding a useful mix
-    // of knee-dominant, hamstring and hip-extension work within that region.
-    score += lowerBodyFamilies * 0.24;
-    score += resistanceMachines * 0.18;
-    if (input.specializationMode === "Maximum concentration") score -= bodyweightMachines * 0.16;
-    if (combo.length >= 2 && !hasKneeDominant) score -= 0.85;
-    if (combo.length >= 3 && !hasHamstrings) score -= 0.65;
-    if (hasKneeDominant && hasHamstrings) score += 0.42;
-    if (hasKneeDominant && hasHamstrings && hasHipExtension) score += 0.35;
-  }
-
-  score += Math.min(0.4, (totalPrice / Math.max(1, budget)) * 0.4);
-  return { score: Number(clamp(score * 0.82).toFixed(3)), metrics };
+  return { score: Number(clamp(score * 0.9).toFixed(3)), metrics };
 }
 
-function explanations(combo: Product[], metrics: Record<PriorityKey, number>, input: ConfigInput, locale: "en" | "cs") {
-  const sorted = (Object.entries(metrics) as [PriorityKey, number][]).sort((a, b) => b[1] - a[1]);
-  const labelsEn: Record<PriorityKey, string> = {
-    balance: "balanced body coverage", specialization: "targeted specialization", variety: "exercise variety",
-    beginner: "public usability", accessibility: "accessibility", throughput: "training capacity",
-    space: "space efficiency", complement: "complementarity with the workout structure", value: "value for money",
-  };
-  const labelsCs: Record<PriorityKey, string> = {
-    balance: "vyvážené zapojení těla", specialization: "cílenou specializaci", variety: "variabilitu cviků",
-    beginner: "snadné použití pro veřejnost", accessibility: "přístupnost", throughput: "kapacitu cvičících",
-    space: "efektivní využití prostoru", complement: "doplnění workoutové konstrukce", value: "poměr ceny a užitku",
-  };
-  const labels = locale === "cs" ? labelsCs : labelsEn;
-  const strengthKeys = sorted.slice(0, 2).map(([key]) => labels[key]);
-  const weakKey = sorted.at(-1)?.[0] ?? "balance";
-  const focusName = input.focus === "Sport-specific" ? input.sport : input.focus;
-  if (locale === "cs") {
-    return {
-      purpose: `Sestava zaměřená na ${focusName.toLowerCase()}, která zvýrazňuje ${strengthKeys.join(" a ")}.`,
-      strengths: strengthKeys.map((v) => `Silná stránka: ${v}.`),
-      weakness: `Hlavní kompromis: slabší hodnocení pro ${labels[weakKey]}.`,
-    };
-  }
-  return {
-    purpose: `A ${focusName.toLowerCase()} configuration that prioritizes ${strengthKeys.join(" and ")}.`,
-    strengths: strengthKeys.map((v) => `Strong ${v}.`),
-    weakness: `Main trade-off: lower score for ${labels[weakKey]}.`,
-  };
-}
-
-function enumerateCombos(candidates: PricedProduct[], count: number, budgetCzk: number, limit = 12000) {
+function enumerateCombos(candidates: PricedProduct[], count: number, budgetCap: number | null, limit = 12000) {
   const combos: { products: PricedProduct[]; price: number }[] = [];
   const walk = (start: number, selected: PricedProduct[], price: number) => {
     if (combos.length >= limit) return;
@@ -282,8 +184,8 @@ function enumerateCombos(candidates: PricedProduct[], count: number, budgetCzk: 
     }
     for (let i = start; i < candidates.length; i++) {
       const p = candidates[i];
-      const productPrice = p.priceCzk;
-      if (!productPrice || price + productPrice > budgetCzk) continue;
+      const productPrice = p.priceCzk ?? 0;
+      if (budgetCap !== null && price + productPrice > budgetCap) continue;
       selected.push(p);
       walk(i + 1, selected, price + productPrice);
       selected.pop();
@@ -301,49 +203,86 @@ function jaccard(a: Product[], b: Product[]) {
   return intersection / (setA.size + setB.size - intersection);
 }
 
-export function recommend(products: PricedProduct[], input: ConfigInput, locale: "en" | "cs"): CombinationResult[] {
-  const budgetCzk = input.budgetCzk * (1 - input.reservePercent / 100);
-  let candidates = products
-    .filter((product) => {
-      if (!product.priceCzk || product.priceCzk > budgetCzk || product.bodyFocus === "Accessory" || product.line === "Kids Line") return false;
-      if (input.strictPosition && input.position !== "Doesn't matter" && !product.position.includes(input.position.replace("Hanging / Bodyweight", "Hanging"))) return false;
-      return true;
-    })
-    .sort((a, b) => candidateScore(b, input) - candidateScore(a, input));
+function explanations(metrics: Record<MetricKey, number>, input: ConfigInput, locale: "en" | "cs") {
+  const labelsEn: Record<MetricKey, string> = {
+    coverage: "balanced body coverage",
+    focusFit: input.primaryFocus === "upper" ? "upper-body focus" : input.primaryFocus === "lower" ? "lower-body focus" : "all-round training",
+    value: "value for money",
+    space: "efficient use of space",
+  };
+  const labelsCs: Record<MetricKey, string> = {
+    coverage: "vyvážené zapojení těla",
+    focusFit: input.primaryFocus === "upper" ? "zaměření na horní část" : input.primaryFocus === "lower" ? "zaměření na dolní část" : "všestranný trénink",
+    value: "poměr ceny a užitku",
+    space: "efektivní využití prostoru",
+  };
+  const labels = locale === "cs" ? labelsCs : labelsEn;
+  const sorted = (Object.entries(metrics) as [MetricKey, number][]).sort((a, b) => b[1] - a[1]);
+  const strong = sorted.slice(0, 2).map(([k]) => labels[k]);
+  const weak = sorted.at(-1)?.[0] ?? "coverage";
+  const focusName = input.primaryFocus === "upper" ? (locale === "cs" ? "horní část těla" : "upper body") : input.primaryFocus === "lower" ? (locale === "cs" ? "dolní část těla" : "lower body") : (locale === "cs" ? "celé tělo" : "full body");
+  if (locale === "cs") {
+    return {
+      purpose: `Sestava pro ${focusName}, která vyniká v ${strong.join(" a ")}.`,
+      strengths: strong.map((v) => `Silná stránka: ${v}.`),
+      weakness: `Hlavní kompromis: nižší hodnocení pro ${labels[weak]}.`,
+    };
+  }
+  return {
+    purpose: `A ${focusName} setup that stands out for ${strong.join(" and ")}.`,
+    strengths: strong.map((v) => `Strong ${v}.`),
+    weakness: `Main trade-off: lower score for ${labels[weak]}.`,
+  };
+}
 
-  const focusedProfile = input.focus !== "Full Body" || input.sport !== "General Public" || input.specializationMode !== "Balanced";
-  const poolSize = input.machineCount === "auto" ? (focusedProfile ? 25 : 22) : Number(input.machineCount) >= 5 ? 20 : (focusedProfile ? 28 : 24);
+export function recommend(products: PricedProduct[], input: ConfigInput, locale: "en" | "cs"): CombinationResult[] {
+  const fixedCount = input.machineCount !== "auto";
+  const budget = fixedCount ? 0 : input.budgetCzk;
+  const budgetCap = fixedCount ? null : input.budgetCzk;
+
+  let candidates = products
+    .filter((product) => passesFilters(product, input))
+    .filter((product) => (budgetCap === null ? true : (product.priceCzk ?? Infinity) <= budgetCap))
+    .sort((a, b) => productScore(b, input) - productScore(a, input));
+
+  if (candidates.length === 0) return [];
+
+  const poolSize = fixedCount ? 18 : 24;
   candidates = candidates.slice(0, poolSize);
 
-  const candidatePrices = candidates.map((p) => p.priceCzk).filter((v): v is number => typeof v === "number").sort((a, b) => a - b);
-  const referencePrice = candidatePrices.length ? candidatePrices[Math.floor((candidatePrices.length - 1) * 0.78)] : budgetCzk;
-  const inferredCount = Math.max(1, Math.min(5, Math.floor(budgetCzk / Math.max(1, referencePrice))));
-  const counts = input.machineCount === "auto" ? [inferredCount] : [Number(input.machineCount)];
+  let counts: number[];
+  if (fixedCount) {
+    counts = [Math.min(Number(input.machineCount), candidates.length)];
+  } else {
+    const prices = candidates.map((p) => p.priceCzk ?? 0).filter((v) => v > 0).sort((a, b) => a - b);
+    const reference = prices.length ? prices[Math.floor((prices.length - 1) * 0.78)] : input.budgetCzk;
+    const inferred = Math.max(1, Math.min(5, Math.floor(input.budgetCzk / Math.max(1, reference))));
+    counts = [inferred];
+  }
 
   const scored: CombinationResult[] = [];
-  counts.forEach((count) => {
-    enumerateCombos(candidates, count, budgetCzk).forEach(({ products: combo, price }) => {
-      const { score, metrics } = scoreCombination(combo, input, price, budgetCzk);
-      const footprintValues = combo.map((p) => p.footprint).filter((v): v is number => typeof v === "number");
-      const copy = explanations(combo, metrics, input, locale);
+  for (const count of counts) {
+    for (const { products: combo, price } of enumerateCombos(candidates, count, budgetCap)) {
+      const { score, metrics } = scoreCombination(combo, input, price, budget || input.budgetCzk);
+      const footprints = combo.map((p) => p.footprint).filter((v): v is number => typeof v === "number");
       scored.push({
         id: combo.map((p) => p.code).join("+"),
         products: combo,
         totalEur: price / Math.max(1, input.exchangeRate),
         totalCzk: price,
-        footprint: footprintValues.length === combo.length ? footprintValues.reduce((a, b) => a + b, 0) : null,
+        footprint: footprints.length === combo.length ? footprints.reduce((a, b) => a + b, 0) : null,
         score,
         metrics,
-        ...copy,
+        ...explanations(metrics, input, locale),
       });
-    });
-  });
+    }
+  }
 
   scored.sort((a, b) => b.score - a.score);
   const diverse: CombinationResult[] = [];
   for (const candidate of scored) {
-    const similarityLimit = candidate.products.length <= 2 ? 0.3 : 0.5;
-    if (diverse.every((selected) => jaccard(selected.products, candidate.products) < similarityLimit)) diverse.push(candidate);
+    const limit = candidate.products.length <= 2 ? 0.3 : 0.5;
+    if (diverse.every((selected) => jaccard(selected.products, candidate.products) < limit)) diverse.push(candidate);
     if (diverse.length >= input.resultCount) break;
   }
   if (diverse.length < input.resultCount) {

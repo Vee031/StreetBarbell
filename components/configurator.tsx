@@ -6,51 +6,132 @@ import { jsPDF } from "jspdf";
 import { ArrowRight, Check, Download, Info, RotateCcw, Sparkles } from "lucide-react";
 import { getProductName } from "@/lib/data";
 import { pdfFontBold, pdfFontNormal } from "@/lib/pdf-font";
-import type { CombinationResult, ConfigInput, Focus, PositionPreference, Priorities, PriorityKey, SpecializationMode } from "@/lib/recommender";
+import type { CombinationResult, ConfigInput, MetricKey, PositionPreference, PrimaryFocus } from "@/lib/recommender";
 import { countNoun, nounMachines, type Locale } from "@/lib/i18n";
 
-const defaultPriorities: Priorities = {
-  balance: 5,
-  specialization: 2,
-  variety: 4,
-  beginner: 3,
-  accessibility: 1,
-  throughput: 1,
-  space: 1,
-  complement: 1,
-  value: 2,
+type FormState = {
+  budgetCzk: number;
+  exchangeRate: number;
+  machineCount: "auto" | number;
+  spaceA: number;
+  spaceB: number;
+  availableSpace: number;
+  existingWorkout: boolean;
+  bodyweight: boolean;
+  weightlifting: boolean;
+  cardioStretching: boolean;
+  kids: boolean;
+  boxingBag: boolean;
+  wheelchair: boolean;
+  primaryFocus: PrimaryFocus;
+  position: PositionPreference;
+  balanceSpecialised: number;
+  publicPrivate: number;
+  costUse: number;
+  resultCount: number;
 };
 
-const priorityLabels = {
-  en: {
-    balance: "Balanced body coverage", specialization: "Body-part specialization", variety: "Exercise variety",
-    beginner: "Beginner / public suitability", accessibility: "Accessibility", throughput: "Simultaneous users",
-    space: "Space efficiency", complement: "Complement workout structure", value: "Value for money",
-  },
-  cs: {
-    balance: "Vyvážené zapojení těla", specialization: "Specializace na část těla", variety: "Variabilita cviků",
-    beginner: "Vhodnost pro začátečníky", accessibility: "Přístupnost", throughput: "Více uživatelů současně",
-    space: "Úspora prostoru", complement: "Doplnění workoutové konstrukce", value: "Poměr ceny a užitku",
-  },
+const DEFAULTS: FormState = {
+  budgetCzk: 500000,
+  exchangeRate: 25,
+  machineCount: "auto",
+  spaceA: 5,
+  spaceB: 5,
+  availableSpace: 25,
+  existingWorkout: false,
+  bodyweight: false,
+  weightlifting: true,
+  cardioStretching: false,
+  kids: false,
+  boxingBag: false,
+  wheelchair: false,
+  primaryFocus: "full",
+  position: "any",
+  balanceSpecialised: 3,
+  publicPrivate: 3,
+  costUse: 3,
+  resultCount: 5,
+};
+
+const LINES: { slug: string; en: string; cs: string }[] = [
+  { slug: "standard-line", en: "Standard", cs: "Standard" },
+  { slug: "light-line", en: "Light", cs: "Light" },
+  { slug: "pro-line", en: "Pro", cs: "Pro" },
+  { slug: "plus-line", en: "Plus", cs: "Plus" },
+  { slug: "workout-line", en: "Workout", cs: "Workout" },
+  { slug: "cardio-line", en: "Cardio", cs: "Cardio" },
+  { slug: "gymnastics-line", en: "Gymnastics", cs: "Gymnastika" },
+  { slug: "boxing-line", en: "Boxing", cs: "Box" },
+  { slug: "kids-line", en: "Kids", cs: "Děti" },
+];
+
+function deriveLines(s: FormState): string[] {
+  if (s.wheelchair) return ["plus-line"];
+  const set = new Set<string>();
+  if (s.weightlifting) {
+    set.add("standard-line");
+    set.add("light-line");
+    if (s.costUse >= 4) {
+      set.add("pro-line");
+      set.add("plus-line");
+    }
+  }
+  if (s.bodyweight && !s.existingWorkout) set.add("workout-line");
+  if (s.cardioStretching) {
+    set.add("cardio-line");
+    set.add("gymnastics-line");
+  }
+  if (s.kids) set.add("kids-line");
+  if (s.boxingBag) set.add("boxing-line");
+  if (s.position === "seated") {
+    set.delete("standard-line");
+    set.delete("pro-line");
+    if (s.weightlifting) {
+      set.add("light-line");
+      set.add("plus-line");
+    }
+  }
+  return [...set];
+}
+
+const metricLabels: Record<Locale, Record<MetricKey, string>> = {
+  en: { coverage: "Body coverage", focusFit: "Focus fit", value: "Value for money", space: "Space efficiency" },
+  cs: { coverage: "Zapojení těla", focusFit: "Zaměření", value: "Poměr cena/užitek", space: "Úspora prostoru" },
+};
+
+const sliderLabels = {
+  balanceSpecialised: { en: ["Balanced", "No preference", "Specialised"], cs: ["Vyvážené", "Bez preference", "Specializované"] },
+  publicPrivate: { en: ["Public", "No preference", "Private"], cs: ["Veřejné", "Bez preference", "Soukromé"] },
+  costUse: { en: ["As cheap as possible", "No preference", "No limit"], cs: ["Co nejlevněji", "Bez preference", "Bez limitu"] },
 } as const;
+
+function YesNo({ id, label, value, onChange, pulseId, cs }: { id: string; label: string; value: boolean; onChange: (v: boolean) => void; pulseId: string; cs: boolean }) {
+  return (
+    <div className={`choice-group ${pulseId === id ? "pulse" : ""}`} id={id}>
+      <span>{label}</span>
+      <div className="choice-row">
+        <button className={value ? "selected" : ""} onClick={() => onChange(true)}>{cs ? "Ano" : "Yes"}</button>
+        <button className={!value ? "selected" : ""} onClick={() => onChange(false)}>{cs ? "Ne" : "No"}</button>
+      </div>
+    </div>
+  );
+}
+
+function Slider({ id, value, onChange, labels, pulseId }: { id: string; value: number; onChange: (v: number) => void; labels: readonly string[]; pulseId: string }) {
+  return (
+    <div className={`slider-item ${pulseId === id ? "pulse" : ""}`} id={id}>
+      <input type="range" min="1" max="5" step="1" value={value} onChange={(e) => onChange(Number(e.target.value))} />
+      <div className="slider-labels"><span>{labels[0]}</span><span>{labels[1]}</span><span>{labels[2]}</span></div>
+    </div>
+  );
+}
 
 export function Configurator({ locale }: { locale: Locale }) {
   const cs = locale === "cs";
   const [step, setStep] = useState(1);
-  const [input, setInput] = useState<ConfigInput>({
-    budgetCzk: 250000,
-    exchangeRate: 25,
-    reservePercent: 0,
-    existingWorkout: false,
-    focus: "Full Body",
-    sport: "General Public",
-    position: "Doesn't matter",
-    strictPosition: false,
-    machineCount: "auto",
-    resultCount: 5,
-    specializationMode: "Balanced",
-    priorities: defaultPriorities,
-  });
+  const [form, setForm] = useState<FormState>(DEFAULTS);
+  const [rateSource, setRateSource] = useState<"cnb" | "fallback" | "manual" | "loading">("loading");
+  const [pulse, setPulse] = useState<string>("");
   const [resultsVisible, setResultsVisible] = useState(false);
   const [results, setResults] = useState<CombinationResult[]>([]);
   const [accessState, setAccessState] = useState<"loading" | "locked" | "ready">("loading");
@@ -60,23 +141,82 @@ export function Configurator({ locale }: { locale: Locale }) {
   const [generationError, setGenerationError] = useState("");
 
   useEffect(() => {
-    fetch("/api/access").then((response) => response.json()).then((data) => setAccessState(data.authenticated ? "ready" : "locked")).catch(() => setAccessState("locked"));
+    fetch("/api/access").then((r) => r.json()).then((d) => setAccessState(d.authenticated ? "ready" : "locked")).catch(() => setAccessState("locked"));
+    fetch("/api/exchange-rate")
+      .then((r) => r.json())
+      .then((d) => {
+        if (typeof d.rate === "number") setForm((f) => ({ ...f, exchangeRate: d.rate }));
+        setRateSource(d.source === "cnb" ? "cnb" : "fallback");
+      })
+      .catch(() => setRateSource("fallback"));
   }, []);
 
-  const totalPoints = Object.values(input.priorities).reduce((a, b) => a + b, 0);
-  const equipmentBudgetCzk = input.budgetCzk * (1 - input.reservePercent / 100);
+  const includedLines = deriveLines(form);
+  const included = new Set(includedLines);
 
-  const update = <K extends keyof ConfigInput>(key: K, value: ConfigInput[K]) => {
-    setInput((current) => ({ ...current, [key]: value }));
+  const update = <K extends keyof FormState>(key: K, value: FormState[K]) => {
+    setForm((f) => ({ ...f, [key]: value }));
     setResultsVisible(false);
     setResults([]);
   };
-  const updatePriority = (key: PriorityKey, value: number) => update("priorities", { ...input.priorities, [key]: value });
+  const triggerPulse = (id: string) => {
+    setPulse(id);
+    setTimeout(() => setPulse((p) => (p === id ? "" : p)), 650);
+  };
+
+  // Clicking a category chip flips the answer that controls its line, and pulses that question.
+  const toggleChip = (slug: string) => {
+    setResultsVisible(false);
+    setResults([]);
+    setForm((f) => {
+      switch (slug) {
+        case "standard-line":
+        case "light-line":
+          triggerPulse("q-weightlifting");
+          return { ...f, weightlifting: !f.weightlifting };
+        case "pro-line":
+        case "plus-line":
+          triggerPulse("q-cost");
+          return { ...f, costUse: f.costUse >= 4 ? 3 : 4 };
+        case "workout-line":
+          triggerPulse("q-bodyweight");
+          return { ...f, bodyweight: !f.bodyweight };
+        case "cardio-line":
+        case "gymnastics-line":
+          triggerPulse("q-cardio");
+          return { ...f, cardioStretching: !f.cardioStretching };
+        case "kids-line":
+          triggerPulse("q-kids");
+          return { ...f, kids: !f.kids };
+        case "boxing-line":
+          triggerPulse("q-boxing");
+          return { ...f, boxingBag: !f.boxingBag };
+        default:
+          return f;
+      }
+    });
+  };
+
+  const setSpace = (a: number, b: number) => update("availableSpace", Math.round(a * b * 10) / 10);
 
   const generate = async () => {
-    if (totalPoints !== 20) return;
     setIsGenerating(true);
     setGenerationError("");
+    const input: ConfigInput = {
+      budgetCzk: form.budgetCzk,
+      exchangeRate: form.exchangeRate,
+      machineCount: form.machineCount,
+      availableSpace: form.availableSpace,
+      includedLines,
+      existingWorkout: form.existingWorkout,
+      primaryFocus: form.primaryFocus,
+      position: form.position,
+      wheelchair: form.wheelchair,
+      balanceSpecialised: form.balanceSpecialised,
+      publicPrivate: form.publicPrivate,
+      costUse: form.costUse,
+      resultCount: form.resultCount,
+    };
     try {
       const response = await fetch("/api/recommend", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ input, locale }) });
       const data = await response.json();
@@ -105,34 +245,29 @@ export function Configurator({ locale }: { locale: Locale }) {
     const result = results[resultIndex];
     if (!result) return;
     const doc = new jsPDF();
-    // jsPDF core fonts cannot render Czech diacritics — register a Unicode font first.
     doc.addFileToVFS("DejaVuSans.ttf", pdfFontNormal);
     doc.addFont("DejaVuSans.ttf", "DejaVu", "normal");
     doc.addFileToVFS("DejaVuSans-Bold.ttf", pdfFontBold);
     doc.addFont("DejaVuSans-Bold.ttf", "DejaVu", "bold");
-    const title = cs ? "Doporučená sestava Street Barbell" : "Recommended Street Barbell configuration";
-    doc.setFont("DejaVu", "bold"); doc.setFontSize(20); doc.text(title, 18, 22);
-    doc.setFont("DejaVu", "normal"); doc.setFontSize(10); doc.text(`streetbarbell.cz  |  export@rvl13.com  |  +420 721 443 652`, 18, 30);
+    doc.setFont("DejaVu", "bold"); doc.setFontSize(20); doc.text(cs ? "Doporučená sestava Street Barbell" : "Recommended Street Barbell configuration", 18, 22);
+    doc.setFont("DejaVu", "normal"); doc.setFontSize(10); doc.text("streetbarbell.cz  |  export@rvl13.com  |  +420 721 443 652", 18, 30);
     doc.setDrawColor(210); doc.line(18, 35, 192, 35);
-    doc.setFontSize(12); doc.text(`${cs ? "Rozpočet" : "Budget"}: ${Math.round(input.budgetCzk).toLocaleString()} CZK`, 18, 45);
-    doc.text(`${cs ? "Odhad ceny sestavy (bez DPH)" : "Estimated equipment price (excl. VAT)"}: ${Math.round(result.totalCzk).toLocaleString()} CZK / ≈ €${Math.round(result.totalEur).toLocaleString()}`, 18, 53);
-    doc.text(`${cs ? "Skóre doporučení" : "Recommendation score"}: ${result.score.toFixed(1)} / 10`, 18, 61);
-    doc.setFont("DejaVu", "bold"); doc.text(cs ? "Stroje" : "Machines", 18, 74);
+    doc.setFontSize(12);
+    doc.text(`${cs ? "Odhad ceny sestavy (bez DPH)" : "Estimated equipment price (excl. VAT)"}: ${Math.round(result.totalCzk).toLocaleString()} CZK / ≈ €${Math.round(result.totalEur).toLocaleString()}`, 18, 45);
+    doc.text(`${cs ? "Skóre doporučení" : "Recommendation score"}: ${result.score.toFixed(1)} / 10`, 18, 53);
+    doc.setFont("DejaVu", "bold"); doc.text(cs ? "Stroje" : "Machines", 18, 66);
     doc.setFont("DejaVu", "normal");
-    let y = 83;
+    let y = 75;
     result.products.forEach((product, i) => { doc.text(`${i + 1}. ${product.code} — ${getProductName(product)}`, 22, y); y += 8; });
     y += 5; doc.setFont("DejaVu", "bold"); doc.text(cs ? "Proč tato sestava" : "Why this setup", 18, y); y += 8;
     doc.setFont("DejaVu", "normal");
     const purpose = doc.splitTextToSize(result.purpose, 170); doc.text(purpose, 18, y); y += purpose.length * 6 + 3;
-    result.strengths.forEach((s) => { const text = doc.splitTextToSize(`• ${s}`, 170); doc.text(text, 18, y); y += text.length * 6; });
+    result.strengths.forEach((s) => { const t = doc.splitTextToSize(`• ${s}`, 170); doc.text(t, 18, y); y += t.length * 6; });
     const weakness = doc.splitTextToSize(`${cs ? "Kompromis" : "Trade-off"}: ${result.weakness}`, 170); y += 3; doc.text(weakness, 18, y);
     doc.save(`street-barbell-configuration-${resultIndex + 1}.pdf`);
   };
 
-  const reset = () => {
-    setInput({ ...input, priorities: defaultPriorities, budgetCzk: 250000, focus: "Full Body", machineCount: "auto", existingWorkout: false, position: "Doesn't matter", strictPosition: false, specializationMode: "Balanced" });
-    setResultsVisible(false); setResults([]); setStep(1);
-  };
+  const reset = () => { setForm({ ...DEFAULTS, exchangeRate: form.exchangeRate }); setResultsVisible(false); setResults([]); setStep(1); };
 
   if (accessState === "loading") return <div className="config-access loading"><span className="eyebrow">Street Barbell Distributor Tool</span><h2>{cs ? "Ověřuji přístup…" : "Checking access…"}</h2></div>;
 
@@ -151,47 +286,62 @@ export function Configurator({ locale }: { locale: Locale }) {
   return (
     <div className="configurator-shell">
       <div className="config-progress">
-        {[1, 2, 3, 4].map((number) => <button key={number} className={step >= number ? "active" : ""} onClick={() => setStep(number)}><span>{step > number ? <Check size={15} /> : number}</span><small>{[cs ? "Rozpočet" : "Budget", cs ? "Zaměření" : "Training brief", cs ? "Priority" : "Priorities", cs ? "Výsledky" : "Results"][number - 1]}</small></button>)}
+        {[1, 2, 3, 4].map((n) => <button key={n} className={step >= n ? "active" : ""} onClick={() => setStep(n)}><span>{step > n ? <Check size={15} /> : n}</span><small>{[cs ? "Rozsah" : "Scope", cs ? "Zadání" : "Brief", cs ? "Priority" : "Priorities", cs ? "Výsledky" : "Results"][n - 1]}</small></button>)}
+      </div>
+
+      {/* Category bar — reflects (and drives) which product lines are in the search. */}
+      <div className="category-bar">
+        {LINES.map((line) => (
+          <button key={line.slug} className={`cat-chip ${included.has(line.slug) ? "on" : ""}`} onClick={() => toggleChip(line.slug)}>
+            {cs ? line.cs : line.en}
+          </button>
+        ))}
       </div>
 
       <section className={step === 1 ? "config-step active" : "config-step"}>
-        <div className="config-step-heading"><span>01</span><div><h2>{cs ? "Rozpočet a rozsah" : "Budget and scope"}</h2><p>{cs ? "Rozpočet je pevný filtr. Počet strojů může být zvolen ručně, nebo vyplynout ze skutečných cen." : "Budget is a hard filter. Machine count can be chosen manually or emerge from actual product prices."}</p></div></div>
+        <div className="config-step-heading"><span>01</span><div><h2>{cs ? "Rozpočet a prostor" : "Budget and space"}</h2><p>{cs ? "Rozpočet je pevný filtr. Pokud zvolíte počet strojů, rozpočet se ignoruje." : "Budget is a hard filter. If you choose a machine count, the budget is ignored."}</p></div></div>
         <div className="field-grid three-columns">
-          <label><span>{cs ? "Celkový rozpočet (CZK)" : "Total budget (CZK)"}</span><input type="number" min="50000" step="10000" value={input.budgetCzk} onChange={(e) => update("budgetCzk", Number(e.target.value))} /></label>
-          <label><span>{cs ? "Kurz CZK / EUR" : "CZK / EUR exchange rate"}</span><input type="number" min="1" step="0.1" value={input.exchangeRate} onChange={(e) => update("exchangeRate", Number(e.target.value))} /></label>
-          <label><span>{cs ? "Rezerva mimo vybavení (%)" : "Non-equipment reserve (%)"}</span><input type="number" min="0" max="80" value={input.reservePercent} onChange={(e) => update("reservePercent", Number(e.target.value))} /></label>
-          <label><span>{cs ? "Počet strojů" : "Machine count"}</span><select value={input.machineCount} onChange={(e) => update("machineCount", e.target.value === "auto" ? "auto" : Number(e.target.value))}><option value="auto">{cs ? "Automaticky podle rozpočtu" : "Auto from budget"}</option>{[1,2,3,4,5,6].map((n) => <option value={n} key={n}>{n}</option>)}</select></label>
+          <label><span>{cs ? "Celkový rozpočet (CZK)" : "Total budget (CZK)"}</span><input type="number" min="10000" step="10000" value={form.budgetCzk} disabled={form.machineCount !== "auto"} onChange={(e) => update("budgetCzk", Number(e.target.value))} /></label>
+          <label><span>{cs ? "Kurz CZK / EUR (ČNB)" : "CZK / EUR rate (CNB)"}</span><input type="number" min="1" step="0.001" value={form.exchangeRate} onChange={(e) => { update("exchangeRate", Number(e.target.value)); setRateSource("manual"); }} /></label>
+          <label><span>{cs ? "Počet strojů" : "Machine count"}</span><select value={form.machineCount} onChange={(e) => update("machineCount", e.target.value === "auto" ? "auto" : Number(e.target.value))}><option value="auto">{cs ? "Automaticky (dle rozpočtu)" : "Auto (from budget)"}</option>{[1, 2, 3, 4, 5, 6].map((n) => <option value={n} key={n}>{n}</option>)}</select></label>
         </div>
-        <div className="budget-summary"><div><small>{cs ? "Rozpočet na stroje" : "Equipment budget"}</small><strong>{Math.round(equipmentBudgetCzk).toLocaleString()} CZK</strong></div><Info size={18} /><p>{cs ? "Ceník 2026 bez DPH. Cena je orientační a nezahrnuje dopravu, instalaci, beton ani dopadovou plochu." : "2026 pricelist, excl. VAT. Prices are indicative and exclude freight, installation, concrete works and safety surfacing."}</p></div>
+        <div className="field-grid space-row">
+          <label><span>{cs ? "Šířka (m)" : "Width (m)"}</span><input type="number" min="0" step="0.1" value={form.spaceA} onChange={(e) => { const a = Number(e.target.value); setForm((f) => ({ ...f, spaceA: a })); setSpace(a, form.spaceB); }} /></label>
+          <span className="space-times">×</span>
+          <label><span>{cs ? "Délka (m)" : "Length (m)"}</span><input type="number" min="0" step="0.1" value={form.spaceB} onChange={(e) => { const b = Number(e.target.value); setForm((f) => ({ ...f, spaceB: b })); setSpace(form.spaceA, b); }} /></label>
+          <span className="space-times">=</span>
+          <label><span>{cs ? "Plocha (m²)" : "Space (m²)"}</span><input type="number" min="0" step="0.1" value={form.availableSpace} onChange={(e) => update("availableSpace", Number(e.target.value))} /></label>
+        </div>
+        <div className="budget-summary"><Info size={18} /><p>{form.machineCount === "auto" ? (cs ? `Ceník 2026 bez DPH. Kurz ${rateSource === "cnb" ? "z ČNB" : rateSource === "manual" ? "ručně" : "orientační"}. Ceny nezahrnují dopravu, instalaci, beton ani dopadovou plochu.` : `2026 pricelist, excl. VAT. Rate ${rateSource === "cnb" ? "from CNB" : rateSource === "manual" ? "manual" : "indicative"}. Prices exclude freight, installation, concrete works and safety surfacing.`) : (cs ? "Pevný počet strojů — rozpočet se ignoruje, cena se přesto zobrazí." : "Fixed machine count — budget ignored, price still shown.")}</p></div>
         <div className="config-next"><button className="button button-red" onClick={() => setStep(2)}>{cs ? "Pokračovat" : "Continue"} <ArrowRight size={18} /></button></div>
       </section>
 
       <section className={step === 2 ? "config-step active" : "config-step"}>
-        <div className="config-step-heading"><span>02</span><div><h2>{cs ? "Tréninkové zadání" : "Training brief"}</h2><p>{cs ? "Duplicitní pohyb není automaticky chyba. U specializované sestavy může být přesně tím, co klient potřebuje." : "A duplicated movement is not automatically a mistake. In a specialist setup it may be exactly what the client needs."}</p></div></div>
-        <div className="choice-group"><span>{cs ? "Je na místě workoutová konstrukce?" : "Is there already a workout structure?"}</span><div className="choice-row"><button className={input.existingWorkout ? "selected" : ""} onClick={() => update("existingWorkout", true)}>{cs ? "Ano" : "Yes"}</button><button className={!input.existingWorkout ? "selected" : ""} onClick={() => update("existingWorkout", false)}>{cs ? "Ne" : "No"}</button></div></div>
-        <div className="field-grid two-columns">
-          <label><span>{cs ? "Hlavní zaměření" : "Primary focus"}</span><select value={input.focus} onChange={(e) => update("focus", e.target.value as Focus)}>{["Full Body","Upper Body","Lower Body","Core / Posterior Chain","Cardio / Conditioning","Sport-specific"].map((v) => <option key={v}>{v}</option>)}</select></label>
-          <label><span>{cs ? "Sport / cílová skupina" : "Sport / use case"}</span><select value={input.sport} onChange={(e) => update("sport", e.target.value)}>{["General Public","Soccer","Strength","Senior / Beginner","Accessible Community","Compact Urban","Custom"].map((v) => <option key={v}>{v}</option>)}</select></label>
-          <label><span>{cs ? "Preferovaná poloha" : "Position preference"}</span><select value={input.position} onChange={(e) => update("position", e.target.value as PositionPreference)}>{["Doesn't matter","Standing","Seated","Lying / Bench","Mixed / Multiple","Hanging / Bodyweight"].map((v) => <option key={v}>{v}</option>)}</select></label>
-          <label><span>{cs ? "Pravidlo pro polohu" : "Position rule"}</span><select value={input.strictPosition ? "strict" : "soft"} onChange={(e) => update("strictPosition", e.target.value === "strict")}><option value="soft">{cs ? "Měkká preference" : "Soft preference"}</option><option value="strict">{cs ? "Pevný filtr" : "Strict filter"}</option></select></label>
-          <label><span>{cs ? "Míra specializace" : "Specialization mode"}</span><select value={input.specializationMode} onChange={(e) => update("specializationMode", e.target.value as SpecializationMode)}>{["Balanced","Focused","Maximum concentration","No preference"].map((v) => <option key={v}>{v}</option>)}</select></label>
-          <label><span>{cs ? "Počet zobrazených sestav" : "Recommendations to show"}</span><select value={input.resultCount} onChange={(e) => update("resultCount", Number(e.target.value))}>{[3,5,8,10].map((v) => <option key={v}>{v}</option>)}</select></label>
+        <div className="config-step-heading"><span>02</span><div><h2>{cs ? "Tréninkové zadání" : "Training brief"}</h2><p>{cs ? "Odpovědi níže rozhodují, které produktové řady se objeví v horní liště." : "The answers below decide which product lines light up in the bar above."}</p></div></div>
+        <div className="brief-grid">
+          <YesNo id="q-existing" cs={cs} pulseId={pulse} label={cs ? "Je už na místě workoutová konstrukce?" : "Is there already a workout structure?"} value={form.existingWorkout} onChange={(v) => update("existingWorkout", v)} />
+          <YesNo id="q-bodyweight" cs={cs} pulseId={pulse} label={cs ? "Přidat cvičení s vlastní vahou (workout)?" : "Add bodyweight (calisthenics) training?"} value={form.bodyweight} onChange={(v) => update("bodyweight", v)} />
+          <YesNo id="q-weightlifting" cs={cs} pulseId={pulse} label={cs ? "Silový trénink se zátěží?" : "Weightlifting training?"} value={form.weightlifting} onChange={(v) => update("weightlifting", v)} />
+          <YesNo id="q-cardio" cs={cs} pulseId={pulse} label={cs ? "Kardio a strečink?" : "Cardio & stretching?"} value={form.cardioStretching} onChange={(v) => update("cardioStretching", v)} />
+          <YesNo id="q-kids" cs={cs} pulseId={pulse} label={cs ? "Dětské prvky?" : "Kids equipment?"} value={form.kids} onChange={(v) => update("kids", v)} />
+          <YesNo id="q-boxing" cs={cs} pulseId={pulse} label={cs ? "Zahrnout boxovací pytel?" : "Include a boxing bag?"} value={form.boxingBag} onChange={(v) => update("boxingBag", v)} />
+          <YesNo id="q-wheelchair" cs={cs} pulseId={pulse} label={cs ? "Přístupné pro vozíčkáře?" : "Wheelchair accessible?"} value={form.wheelchair} onChange={(v) => update("wheelchair", v)} />
+          <label className="brief-select"><span>{cs ? "Hlavní zaměření" : "Primary focus"}</span><select value={form.primaryFocus} onChange={(e) => update("primaryFocus", e.target.value as PrimaryFocus)}><option value="full">{cs ? "Celé tělo" : "Full body"}</option><option value="upper">{cs ? "Horní část" : "Upper body"}</option><option value="lower">{cs ? "Dolní část" : "Lower body"}</option></select></label>
+          <label className="brief-select"><span>{cs ? "Preferovaná poloha" : "Position preference"}</span><select value={form.position} onChange={(e) => update("position", e.target.value as PositionPreference)}><option value="any">{cs ? "Nezáleží" : "Doesn't matter"}</option><option value="seated">{cs ? "Vsedě" : "Seated"}</option><option value="standing">{cs ? "Ve stoje" : "Standing"}</option></select></label>
         </div>
         <div className="config-next"><button className="button button-light" onClick={() => setStep(1)}>{cs ? "Zpět" : "Back"}</button><button className="button button-red" onClick={() => setStep(3)}>{cs ? "Nastavit priority" : "Set priorities"} <ArrowRight size={18} /></button></div>
       </section>
 
       <section className={step === 3 ? "config-step active" : "config-step"}>
-        <div className="config-step-heading"><span>03</span><div><h2>{cs ? "Rozdělte přesně 20 bodů" : "Allocate exactly 20 points"}</h2><p>{cs ? "Silná priorita má 7–10 bodů. Nula znamená, že daný faktor nemá ovlivnit pořadí sestav." : "A strong priority is 7–10 points. Zero means the factor should not influence the ranking."}</p></div></div>
-        <div className="points-status"><strong className={totalPoints === 20 ? "valid" : totalPoints > 20 ? "invalid" : ""}>{totalPoints} / 20</strong><span>{totalPoints === 20 ? (cs ? "Matice je připravena" : "Matrix ready") : totalPoints < 20 ? `${cs ? "Zbývá přidělit" : "Points remaining"}: ${20 - totalPoints}` : `${cs ? "Odeberte" : "Remove"}: ${totalPoints - 20}`}</span></div>
-        <div className="priority-grid">
-          {(Object.keys(input.priorities) as PriorityKey[]).map((key) => (
-            <label className="priority-item" key={key}>
-              <div><span>{priorityLabels[locale][key]}</span><strong>{input.priorities[key]}</strong></div>
-              <input type="range" min="0" max="10" value={input.priorities[key]} onChange={(e) => updatePriority(key, Number(e.target.value))} />
-            </label>
-          ))}
+        <div className="config-step-heading"><span>03</span><div><h2>{cs ? "Priority" : "Priorities"}</h2><p>{cs ? "Střed (3) znamená bez preference. Posuňte jen to, na čem záleží." : "The middle (3) means no preference. Move only what matters."}</p></div></div>
+        <div className="slider-grid">
+          <div className="slider-block"><h3>{cs ? "Zapojení těla" : "Body coverage"}</h3><Slider id="s-balance" pulseId={pulse} value={form.balanceSpecialised} onChange={(v) => update("balanceSpecialised", v)} labels={sliderLabels.balanceSpecialised[locale]} /></div>
+          <div className="slider-block"><h3>{cs ? "Umístění" : "Installation"}</h3><Slider id="s-public" pulseId={pulse} value={form.publicPrivate} onChange={(v) => update("publicPrivate", v)} labels={sliderLabels.publicPrivate[locale]} /></div>
+          <div className="slider-block"><h3>{cs ? "Cena a využití" : "Cost and use"}</h3><Slider id="q-cost" pulseId={pulse} value={form.costUse} onChange={(v) => update("costUse", v)} labels={sliderLabels.costUse[locale]} /></div>
+          <label className="brief-select"><span>{cs ? "Počet zobrazených sestav" : "Recommendations to show"}</span><select value={form.resultCount} onChange={(e) => update("resultCount", Number(e.target.value))}>{[3, 5, 8, 10].map((v) => <option key={v}>{v}</option>)}</select></label>
         </div>
-        <div className="config-next"><button className="button button-light" onClick={() => setStep(2)}>{cs ? "Zpět" : "Back"}</button><button className="button button-red" disabled={totalPoints !== 20 || isGenerating} onClick={generate}><Sparkles size={18} /> {isGenerating ? (cs ? "Počítám sestavy…" : "Calculating…") : (cs ? "Vygenerovat sestavy" : "Generate configurations")}</button></div>
+        <div className="config-next"><button className="button button-light" onClick={() => setStep(2)}>{cs ? "Zpět" : "Back"}</button><button className="button button-red" disabled={isGenerating || includedLines.length === 0} onClick={generate}><Sparkles size={18} /> {isGenerating ? (cs ? "Počítám…" : "Calculating…") : (cs ? "Vygenerovat sestavy" : "Generate configurations")}</button></div>
+        {includedLines.length === 0 && <p className="generation-error">{cs ? "Vyberte alespoň jednu produktovou řadu v horní liště." : "Select at least one product line in the bar above."}</p>}
       </section>
 
       {generationError && <p className="generation-error">{generationError}</p>}
@@ -207,7 +357,7 @@ export function Configurator({ locale }: { locale: Locale }) {
                   <div className="result-title-row"><div><small>{result.products.length} {countNoun(result.products.length, locale, nounMachines)}</small><h3>{result.products.map((p) => getProductName(p)).join(" + ")}</h3></div><div className="result-price"><small>{cs ? "Odhad ceny" : "Estimated price"}</small><strong>{Math.round(result.totalCzk).toLocaleString()} CZK</strong><span>≈ €{Math.round(result.totalEur).toLocaleString()}</span></div></div>
                   <p className="result-purpose">{result.purpose}</p>
                   <div className="result-products">{result.products.map((product) => <Link key={product.code} href={`/${locale}/products/${product.lineSlug}/${product.slug}`}><span>{product.code}</span><strong>{getProductName(product)}</strong><small>{product.bodyFocus}</small></Link>)}</div>
-                  <div className="metric-bars">{(Object.entries(result.metrics) as [PriorityKey, number][]).filter(([key]) => input.priorities[key] > 0).sort((a,b) => input.priorities[b[0]] - input.priorities[a[0]]).slice(0,5).map(([key,value]) => <div key={key}><span>{priorityLabels[locale][key]}</span><i><b style={{ width: `${value * 10}%` }} /></i><strong>{value.toFixed(1)}</strong></div>)}</div>
+                  <div className="metric-bars">{(Object.entries(result.metrics) as [MetricKey, number][]).map(([key, value]) => <div key={key}><span>{metricLabels[locale][key]}</span><i><b style={{ width: `${value * 10}%` }} /></i><strong>{value.toFixed(1)}</strong></div>)}</div>
                   <div className="result-notes"><div>{result.strengths.map((strength) => <p key={strength}><Check size={16} /> {strength}</p>)}</div><p className="weakness"><Info size={16} /> {result.weakness}</p></div>
                   <div className="result-footer"><span>{result.footprint ? `${cs ? "Přibližná plocha strojů" : "Approx. machine footprint"}: ${result.footprint.toFixed(1)} m²` : (cs ? "Pro část strojů chybí rozměrová data." : "Some machine footprint data is unavailable.")}</span><button className="button button-dark button-small" onClick={() => downloadPdf(index)}><Download size={17} /> PDF</button></div>
                 </div>
