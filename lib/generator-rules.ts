@@ -45,6 +45,24 @@ export const SEATED_LINES = ["light-line", "plus-line"]; // seated keeps only th
 export const PUBLIC_AVOID_CODES = ["MB 7.33", "MB 7.34", "MB 7.71", "MB 7.72"]; // dumbbell sets
 export const PUBLIC_AVOID_LINES = ["boxing-line"]; // "box series"
 
+// #1 — treat these machines as belonging to a different line group inside the
+// generator only (their real line on the website is unchanged).
+export const PRODUCT_LINE_OVERRIDES: Record<string, string> = {
+  "MB 7.47": "workout-line", // Multi Workout Station
+  "MB 7.47/1": "workout-line", // Roofless Multi Workout Station
+};
+export function effectiveLineSlug(code: string, lineSlug: string): string {
+  return PRODUCT_LINE_OVERRIDES[code] ?? lineSlug;
+}
+
+// #3 — when bodyweight training is NOT selected, the Workout line is already
+// excluded (via line inclusion); also drop these Light-line machines.
+export const EXCLUDE_WHEN_NO_BODYWEIGHT_CODES = ["MB 7.62", "MB 7.61"]; // AB Bench & Hyperextension, Combination Exerciser
+
+// #6 — with multiple machines, at least half must come from Standard/Light.
+export const PREFERRED_CORE_LINES = ["standard-line", "light-line"];
+export const MAX_OTHER_SHARE = 0.5; // ≤ 50% of a setup may be from other lines
+
 // Converging/diverging machines: used when Cost↔Use is at the "no limit" end, avoided when "cheap".
 export const CONVERGING_DIVERGING_CODES = ["MB 7.52", "MB 7.53", "MB 7.54", "MB 7.55", "MB 7.100"];
 
@@ -52,6 +70,27 @@ export const CONVERGING_DIVERGING_CODES = ["MB 7.52", "MB 7.53", "MB 7.54", "MB 
 export const EXISTING_WORKOUT_EXCLUDE_LINES = ["workout-line"];
 // …and lower the priority of these machines (they duplicate a pull-up / calisthenics rig).
 export const DEPRIORITIZE_WHEN_WORKOUT_CODES = ["MB 7.38", "MB 7.55", "MB 7.47", "MB 7.47/1", "MB 7.61", "MB 7.73", "MB 7.62", "MB 7.67", "MB 7.96"];
+
+// #2 — never put two machines from the same "exercise family" in one setup
+// (e.g. Squat + Squat, Chest Press + Converging Chest Press, both Dumbbell sets).
+// The family is derived from the machine name by stripping variant words below.
+// Workout-line structures (ladders, bars…) are left un-deduped — a park can hold
+// several. FAMILY_OVERRIDES pins any name the auto-rule gets wrong (code -> family).
+export const FAMILY_OVERRIDES: Record<string, string> = {};
+const FAMILY_STRIP =
+  /\b(light|heavy|version|wch|roofless|roof|assisted|converging|convergent|diverging|divergent|reverse|seated|standing|flat|incline|inclined|adjustable|outdoor|machine|combined|combination|start|variable|load|leverage|type [a-h]|for kids|kids)\b/g;
+
+export function exerciseFamily(code: string, nameEn: string, effectiveLine: string): string {
+  if (FAMILY_OVERRIDES[code]) return FAMILY_OVERRIDES[code];
+  if (effectiveLine === "workout-line") return `unique:${code}`; // never dedupe workout structures
+  const family = ` ${nameEn.toLowerCase()} `
+    .replace(/\([^)]*\)/g, " ")
+    .replace(FAMILY_STRIP, " ")
+    .replace(/[^a-z]+/g, " ")
+    .trim()
+    .replace(/\s+/g, " ");
+  return family || `unique:${code}`;
+}
 
 // --- Slider thresholds (1..5, 3 = neutral) ---------------------------------
 export const COST_CHEAP_MAX = 2; // 1–2 = "as cheap as possible" band (avoid Pro/Plus + conv/div)

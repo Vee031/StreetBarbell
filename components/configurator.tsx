@@ -14,9 +14,9 @@ type FormState = {
   budgetCzk: number;
   exchangeRate: number;
   machineCount: "auto" | number;
-  spaceA: number;
-  spaceB: number;
-  availableSpace: number;
+  spaceA: number | "";
+  spaceB: number | "";
+  availableSpace: number | "";
   existingWorkout: boolean;
   bodyweight: boolean;
   weightlifting: boolean;
@@ -36,9 +36,9 @@ const DEFAULTS: FormState = {
   budgetCzk: DEFAULT_BUDGET_CZK,
   exchangeRate: FALLBACK_EXCHANGE_RATE,
   machineCount: "auto",
-  spaceA: 5,
-  spaceB: 5,
-  availableSpace: 25,
+  spaceA: "",
+  spaceB: "",
+  availableSpace: "",
   existingWorkout: false,
   bodyweight: false,
   weightlifting: true,
@@ -151,7 +151,18 @@ export function Configurator({ locale }: { locale: Locale }) {
     });
   };
 
-  const setSpace = (a: number, b: number) => update("availableSpace", Math.round(a * b * 10) / 10);
+  // A×B drives the m² box; either side left blank means "individual" (no space limit).
+  const numOrBlank = (v: string): number | "" => (v === "" ? "" : Number(v));
+  const setSpaceSide = (side: "spaceA" | "spaceB", raw: string) => {
+    setResultsVisible(false);
+    setResults([]);
+    setForm((f) => {
+      const next = { ...f, [side]: numOrBlank(raw) };
+      const a = next.spaceA, b = next.spaceB;
+      next.availableSpace = typeof a === "number" && typeof b === "number" && a > 0 && b > 0 ? Math.round(a * b * 10) / 10 : "";
+      return next;
+    });
+  };
 
   const generate = async () => {
     setIsGenerating(true);
@@ -160,8 +171,9 @@ export function Configurator({ locale }: { locale: Locale }) {
       budgetCzk: form.budgetCzk,
       exchangeRate: form.exchangeRate,
       machineCount: form.machineCount,
-      availableSpace: form.availableSpace,
+      availableSpace: typeof form.availableSpace === "number" ? form.availableSpace : 0,
       includedLines,
+      bodyweight: form.bodyweight,
       existingWorkout: form.existingWorkout,
       primaryFocus: form.primaryFocus,
       position: form.position,
@@ -260,11 +272,11 @@ export function Configurator({ locale }: { locale: Locale }) {
           <label><span>{cs ? "Počet strojů" : "Machine count"}</span><select value={form.machineCount} onChange={(e) => update("machineCount", e.target.value === "auto" ? "auto" : Number(e.target.value))}><option value="auto">{cs ? "Automaticky (dle rozpočtu)" : "Auto (from budget)"}</option>{[1, 2, 3, 4, 5, 6].map((n) => <option value={n} key={n}>{n}</option>)}</select></label>
         </div>
         <div className="field-grid space-row">
-          <label><span>{cs ? "Šířka (m)" : "Width (m)"}</span><input type="number" min="0" step="0.1" value={form.spaceA} onChange={(e) => { const a = Number(e.target.value); setForm((f) => ({ ...f, spaceA: a })); setSpace(a, form.spaceB); }} /></label>
+          <label><span>{cs ? "Prostor k dispozici strana A (m)" : "Available space side A (m)"}</span><input type="number" min="0" step="0.1" placeholder={cs ? "individuální" : "individual"} value={form.spaceA} onChange={(e) => setSpaceSide("spaceA", e.target.value)} /></label>
           <span className="space-times">×</span>
-          <label><span>{cs ? "Délka (m)" : "Length (m)"}</span><input type="number" min="0" step="0.1" value={form.spaceB} onChange={(e) => { const b = Number(e.target.value); setForm((f) => ({ ...f, spaceB: b })); setSpace(form.spaceA, b); }} /></label>
+          <label><span>{cs ? "Prostor k dispozici strana B (m)" : "Available space side B (m)"}</span><input type="number" min="0" step="0.1" placeholder={cs ? "individuální" : "individual"} value={form.spaceB} onChange={(e) => setSpaceSide("spaceB", e.target.value)} /></label>
           <span className="space-times">=</span>
-          <label><span>{cs ? "Plocha (m²)" : "Space (m²)"}</span><input type="number" min="0" step="0.1" value={form.availableSpace} onChange={(e) => update("availableSpace", Number(e.target.value))} /></label>
+          <label><span>{cs ? "Plocha (m²)" : "Space (m²)"}</span><input type="number" min="0" step="0.1" placeholder={cs ? "individuální" : "individual"} value={form.availableSpace} onChange={(e) => update("availableSpace", numOrBlank(e.target.value))} /></label>
         </div>
         <div className="budget-summary"><Info size={18} /><p>{form.machineCount === "auto" ? (cs ? `Ceník 2026 bez DPH. Kurz ${rateSource === "cnb" ? "z ČNB" : rateSource === "manual" ? "ručně" : "orientační"}. Ceny nezahrnují dopravu, instalaci, beton ani dopadovou plochu.` : `2026 pricelist, excl. VAT. Rate ${rateSource === "cnb" ? "from CNB" : rateSource === "manual" ? "manual" : "indicative"}. Prices exclude freight, installation, concrete works and safety surfacing.`) : (cs ? "Pevný počet strojů — rozpočet se ignoruje, cena se přesto zobrazí." : "Fixed machine count — budget ignored, price still shown.")}</p></div>
         <div className="config-next"><button className="button button-red" onClick={() => setStep(2)}>{cs ? "Pokračovat" : "Continue"} <ArrowRight size={18} /></button></div>
@@ -280,8 +292,8 @@ export function Configurator({ locale }: { locale: Locale }) {
           <YesNo id="q-kids" cs={cs} pulseId={pulse} label={cs ? "Dětské prvky?" : "Kids equipment?"} value={form.kids} onChange={(v) => update("kids", v)} />
           <YesNo id="q-boxing" cs={cs} pulseId={pulse} label={cs ? "Zahrnout boxovací pytel?" : "Include a boxing bag?"} value={form.boxingBag} onChange={(v) => update("boxingBag", v)} />
           <YesNo id="q-wheelchair" cs={cs} pulseId={pulse} label={cs ? "Přístupné pro vozíčkáře?" : "Wheelchair accessible?"} value={form.wheelchair} onChange={(v) => update("wheelchair", v)} />
-          <label className="brief-select"><span>{cs ? "Hlavní zaměření" : "Primary focus"}</span><select value={form.primaryFocus} onChange={(e) => update("primaryFocus", e.target.value as PrimaryFocus)}><option value="full">{cs ? "Celé tělo" : "Full body"}</option><option value="upper">{cs ? "Horní část" : "Upper body"}</option><option value="lower">{cs ? "Dolní část" : "Lower body"}</option></select></label>
-          <label className="brief-select"><span>{cs ? "Preferovaná poloha" : "Position preference"}</span><select value={form.position} onChange={(e) => update("position", e.target.value as PositionPreference)}><option value="any">{cs ? "Nezáleží" : "Doesn't matter"}</option><option value="seated">{cs ? "Vsedě" : "Seated"}</option><option value="standing">{cs ? "Ve stoje" : "Standing"}</option></select></label>
+          <div className="choice-group"><span>{cs ? "Hlavní zaměření" : "Primary focus"}</span><select className="choice-select" value={form.primaryFocus} onChange={(e) => update("primaryFocus", e.target.value as PrimaryFocus)}><option value="full">{cs ? "Celé tělo" : "Full body"}</option><option value="upper">{cs ? "Horní část těla" : "Upper body"}</option><option value="lower">{cs ? "Dolní část těla" : "Lower body"}</option></select></div>
+          <div className="choice-group"><span>{cs ? "Preferovaná poloha" : "Position preference"}</span><select className="choice-select" value={form.position} onChange={(e) => update("position", e.target.value as PositionPreference)}><option value="any">{cs ? "Nezáleží" : "Doesn't matter"}</option><option value="seated">{cs ? "Vsedě" : "Seated"}</option><option value="standing">{cs ? "Ve stoje" : "Standing"}</option></select></div>
         </div>
         <div className="config-next"><button className="button button-light" onClick={() => setStep(1)}>{cs ? "Zpět" : "Back"}</button><button className="button button-red" onClick={() => setStep(3)}>{cs ? "Nastavit priority" : "Set priorities"} <ArrowRight size={18} /></button></div>
       </section>

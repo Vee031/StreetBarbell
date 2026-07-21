@@ -4,12 +4,17 @@ import {
   CONVERGING_DIVERGING_CODES,
   COST_CHEAP_MAX,
   DEPRIORITIZE_WHEN_WORKOUT_CODES,
+  EXCLUDE_WHEN_NO_BODYWEIGHT_CODES,
   EXISTING_WORKOUT_EXCLUDE_LINES,
+  MAX_OTHER_SHARE,
+  PREFERRED_CORE_LINES,
   PUBLIC_AVOID_CODES,
   PUBLIC_AVOID_LINES,
   PUBLIC_MAX,
   SPACE_PER_MACHINE_M2,
   WEIGHTLIFTING_PREMIUM_LINES,
+  effectiveLineSlug,
+  exerciseFamily,
 } from "@/lib/generator-rules";
 
 export type PrimaryFocus = "full" | "upper" | "lower";
@@ -22,6 +27,7 @@ export type ConfigInput = {
   machineCount: "auto" | number; // fixed number => budget ignored
   availableSpace: number; // m², soft preference (~6 m²/machine)
   includedLines: string[]; // line slugs the search may use (from the category chips)
+  bodyweight: boolean; // false => also drop the "no bodyweight" excluded machines
   existingWorkout: boolean; // true => exclude Workout line + deprioritize duplicate machines
   primaryFocus: PrimaryFocus;
   position: PositionPreference;
@@ -52,9 +58,14 @@ export type CombinationResult = {
 const DUMBBELL_CODES = new Set(PUBLIC_AVOID_CODES);
 const CONV_DIV_CODES = new Set(CONVERGING_DIVERGING_CODES);
 const DEPRIORITIZE_CODES = new Set(DEPRIORITIZE_WHEN_WORKOUT_CODES);
+const NO_BODYWEIGHT_EXCLUDE = new Set(EXCLUDE_WHEN_NO_BODYWEIGHT_CODES);
 const PUBLIC_AVOID_LINE_SET = new Set(PUBLIC_AVOID_LINES);
 const EXISTING_WORKOUT_EXCLUDE_SET = new Set(EXISTING_WORKOUT_EXCLUDE_LINES);
 const PREMIUM_LINE_SET = new Set(WEIGHTLIFTING_PREMIUM_LINES);
+const CORE_LINE_SET = new Set(PREFERRED_CORE_LINES);
+
+const lineOf = (p: PricedProduct) => effectiveLineSlug(p.code, p.lineSlug);
+const familyOf = (p: PricedProduct) => exerciseFamily(p.code, p.nameEn, lineOf(p));
 
 const clamp = (value: number, min = 0, max = 10) => Math.max(min, Math.min(max, value));
 const average = (values: number[]) => (values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0);
@@ -103,15 +114,18 @@ function productScore(product: PricedProduct, input: ConfigInput) {
   score += positionFit(product, input.position);
 
   // Cost axis: cheap prefers Light + affordability; no-limit prefers Standard/Pro/Plus + conv/div.
+  const line = lineOf(product);
   if (cost < 0) {
-    if (product.lineSlug === "light-line") score += 1.1 * -cost;
-    if (PREMIUM_LINE_SET.has(product.lineSlug)) score -= 0.9 * -cost;
+    if (line === "light-line") score += 1.1 * -cost;
+    if (PREMIUM_LINE_SET.has(line)) score -= 0.9 * -cost;
     if (CONV_DIV_CODES.has(product.code)) score -= 1.0 * -cost;
     score += product.scores.affordability * 0.25 * -cost;
   } else if (cost > 0) {
     if (CONV_DIV_CODES.has(product.code)) score += 1.2 * cost;
-    if (product.lineSlug === "standard-line" || PREMIUM_LINE_SET.has(product.lineSlug)) score += 0.6 * cost;
+    if (line === "standard-line" || PREMIUM_LINE_SET.has(line)) score += 0.6 * cost;
   }
+  // #6 — nudge Standard/Light up so setups lean on the core lines.
+  if (CORE_LINE_SET.has(line)) score += 0.4;
 
   // Public installations favour robust, low-maintenance machines.
   const privacy = privacyAxis(input);
@@ -124,15 +138,17 @@ function productScore(product: PricedProduct, input: ConfigInput) {
 
 function passesFilters(product: PricedProduct, input: ConfigInput) {
   if (product.bodyFocus === "Accessory") return false;
-  if (!input.includedLines.includes(product.lineSlug)) return false;
+  const line = lineOf(product);
+  if (!input.includedLines.includes(line)) return false;
   if (!product.priceCzk) return false;
-  if (input.existingWorkout && EXISTING_WORKOUT_EXCLUDE_SET.has(product.lineSlug)) return false;
-  if (input.wheelchair && product.lineSlug !== "plus-line") return false;
+  if (input.existingWorkout && EXISTING_WORKOUT_EXCLUDE_SET.has(line)) return false;
+  if (!input.bodyweight && NO_BODYWEIGHT_EXCLUDE.has(product.code)) return false;
+  if (input.wheelchair && line !== "plus-line") return false;
 
   const cost = costAxis(input);
   if (cost < 0) {
     // "As cheap as possible" band: avoid Pro/Plus and converging/diverging machines.
-    if (input.costUse <= COST_CHEAP_MAX && PREMIUM_LINE_SET.has(product.lineSlug)) return false;
+    if (input.costUse <= COST_CHEAP_MAX && PREMIUM_LINE_SET.has(line)) return false;
     if (input.costUse <= COST_CHEAP_MAX && CONV_DIV_CODES.has(product.code)) return false;
   }
 
@@ -140,10 +156,19 @@ function passesFilters(product: PricedProduct, input: ConfigInput) {
   if (privacy < 0 && input.publicPrivate <= PUBLIC_MAX) {
     // Public: avoid loose barbells (dumbbell sets) and the box series (Boxing line).
     if (DUMBBELL_CODES.has(product.code)) return false;
-    if (PUBLIC_AVOID_LINE_SET.has(product.lineSlug)) return false;
+    if (PUBLIC_AVOID_LINE_SET.has(line)) return false;
   }
 
   return true;
+}
+
+// #6 — cap how much of a setup can come from lines other than Standard/Light.
+function coreLinePenalty(combo: PricedProduct[], input: ConfigInput) {
+  const coreInSearch = PREFERRED_CORE_LINES.some((l) => input.includedLines.includes(l));
+  if (!coreInSearch || combo.length < 2) return 0;
+  const others = combo.filter((p) => !CORE_LINE_SET.has(lineOf(p))).length;
+  const maxOthers = Math.floor(combo.length * MAX_OTHER_SHARE);
+  return others > maxOthers ? (others - maxOthers) * 4 : 0;
 }
 
 function metricsFor(combo: PricedProduct[], input: ConfigInput, totalPrice: number, budget: number): Record<MetricKey, number> {
@@ -183,6 +208,7 @@ function scoreCombination(combo: PricedProduct[], input: ConfigInput, totalPrice
   let score = base + patterns.size * 0.14 - duplicates * Math.max(0, 0.5 - spec * 0.5) * 0.6;
   score += metrics.coverage * (0.25 - spec * 0.15);
   score -= spacePenalty(combo.length, input);
+  score -= coreLinePenalty(combo, input);
   if (budget > 0) score += Math.min(0.4, (totalPrice / Math.max(1, budget)) * 0.4);
 
   return { score: Number(clamp(score * 0.9).toFixed(3)), metrics };
@@ -190,6 +216,7 @@ function scoreCombination(combo: PricedProduct[], input: ConfigInput, totalPrice
 
 function enumerateCombos(candidates: PricedProduct[], count: number, budgetCap: number | null, limit = 12000) {
   const combos: { products: PricedProduct[]; price: number }[] = [];
+  const usedFamilies = new Set<string>();
   const walk = (start: number, selected: PricedProduct[], price: number) => {
     if (combos.length >= limit) return;
     if (selected.length === count) {
@@ -200,9 +227,13 @@ function enumerateCombos(candidates: PricedProduct[], count: number, budgetCap: 
       const p = candidates[i];
       const productPrice = p.priceCzk ?? 0;
       if (budgetCap !== null && price + productPrice > budgetCap) continue;
+      const family = familyOf(p);
+      if (usedFamilies.has(family)) continue; // #2 — no two machines from the same exercise family
+      usedFamilies.add(family);
       selected.push(p);
       walk(i + 1, selected, price + productPrice);
       selected.pop();
+      usedFamilies.delete(family);
       if (combos.length >= limit) return;
     }
   };

@@ -19,7 +19,7 @@ function validateInput(input: ConfigInput | undefined) {
   if (!["full", "upper", "lower"].includes(input.primaryFocus)) return "Invalid primary focus.";
   if (!["seated", "standing", "any"].includes(input.position)) return "Invalid position preference.";
   if (![input.balanceSpecialised, input.publicPrivate, input.costUse].every(slider)) return "Invalid priority sliders.";
-  if (typeof input.existingWorkout !== "boolean" || typeof input.wheelchair !== "boolean") return "Invalid toggles.";
+  if (![input.existingWorkout, input.wheelchair, input.bodyweight].every((v) => typeof v === "boolean")) return "Invalid toggles.";
   return null;
 }
 
