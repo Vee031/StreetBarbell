@@ -7,6 +7,7 @@ import { ArrowRight, Check, Download, Info, RotateCcw, Sparkles } from "lucide-r
 import { getProductName } from "@/lib/data";
 import { pdfFontBold, pdfFontNormal } from "@/lib/pdf-font";
 import type { CombinationResult, ConfigInput, MetricKey, PositionPreference, PrimaryFocus } from "@/lib/recommender";
+import { DEFAULT_BUDGET_CZK, FALLBACK_EXCHANGE_RATE, LINES, deriveLines, sliderLabels } from "@/lib/generator-rules";
 import { countNoun, nounMachines, type Locale } from "@/lib/i18n";
 
 type FormState = {
@@ -32,8 +33,8 @@ type FormState = {
 };
 
 const DEFAULTS: FormState = {
-  budgetCzk: 500000,
-  exchangeRate: 25,
+  budgetCzk: DEFAULT_BUDGET_CZK,
+  exchangeRate: FALLBACK_EXCHANGE_RATE,
   machineCount: "auto",
   spaceA: 5,
   spaceB: 5,
@@ -53,57 +54,10 @@ const DEFAULTS: FormState = {
   resultCount: 5,
 };
 
-const LINES: { slug: string; en: string; cs: string }[] = [
-  { slug: "standard-line", en: "Standard", cs: "Standard" },
-  { slug: "light-line", en: "Light", cs: "Light" },
-  { slug: "pro-line", en: "Pro", cs: "Pro" },
-  { slug: "plus-line", en: "Plus", cs: "Plus" },
-  { slug: "workout-line", en: "Workout", cs: "Workout" },
-  { slug: "cardio-line", en: "Cardio", cs: "Cardio" },
-  { slug: "gymnastics-line", en: "Gymnastics", cs: "Gymnastika" },
-  { slug: "boxing-line", en: "Boxing", cs: "Box" },
-  { slug: "kids-line", en: "Kids", cs: "Děti" },
-];
-
-function deriveLines(s: FormState): string[] {
-  if (s.wheelchair) return ["plus-line"];
-  const set = new Set<string>();
-  if (s.weightlifting) {
-    set.add("standard-line");
-    set.add("light-line");
-    if (s.costUse >= 4) {
-      set.add("pro-line");
-      set.add("plus-line");
-    }
-  }
-  if (s.bodyweight && !s.existingWorkout) set.add("workout-line");
-  if (s.cardioStretching) {
-    set.add("cardio-line");
-    set.add("gymnastics-line");
-  }
-  if (s.kids) set.add("kids-line");
-  if (s.boxingBag) set.add("boxing-line");
-  if (s.position === "seated") {
-    set.delete("standard-line");
-    set.delete("pro-line");
-    if (s.weightlifting) {
-      set.add("light-line");
-      set.add("plus-line");
-    }
-  }
-  return [...set];
-}
-
 const metricLabels: Record<Locale, Record<MetricKey, string>> = {
   en: { coverage: "Body coverage", focusFit: "Focus fit", value: "Value for money", space: "Space efficiency" },
   cs: { coverage: "Zapojení těla", focusFit: "Zaměření", value: "Poměr cena/užitek", space: "Úspora prostoru" },
 };
-
-const sliderLabels = {
-  balanceSpecialised: { en: ["Balanced", "No preference", "Specialised"], cs: ["Vyvážené", "Bez preference", "Specializované"] },
-  publicPrivate: { en: ["Public", "No preference", "Private"], cs: ["Veřejné", "Bez preference", "Soukromé"] },
-  costUse: { en: ["As cheap as possible", "No preference", "No limit"], cs: ["Co nejlevněji", "Bez preference", "Bez limitu"] },
-} as const;
 
 function YesNo({ id, label, value, onChange, pulseId, cs }: { id: string; label: string; value: boolean; onChange: (v: boolean) => void; pulseId: string; cs: boolean }) {
   return (

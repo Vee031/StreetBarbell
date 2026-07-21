@@ -1,5 +1,16 @@
 import type { Product } from "@/lib/data";
 import type { PricedProduct } from "@/lib/server-pricing";
+import {
+  CONVERGING_DIVERGING_CODES,
+  COST_CHEAP_MAX,
+  DEPRIORITIZE_WHEN_WORKOUT_CODES,
+  EXISTING_WORKOUT_EXCLUDE_LINES,
+  PUBLIC_AVOID_CODES,
+  PUBLIC_AVOID_LINES,
+  PUBLIC_MAX,
+  SPACE_PER_MACHINE_M2,
+  WEIGHTLIFTING_PREMIUM_LINES,
+} from "@/lib/generator-rules";
 
 export type PrimaryFocus = "full" | "upper" | "lower";
 export type PositionPreference = "seated" | "standing" | "any";
@@ -36,11 +47,14 @@ export type CombinationResult = {
   purpose: string;
 };
 
-const SPACE_PER_MACHINE = 6; // m²
-const DUMBBELL_CODES = new Set(["MB 7.33", "MB 7.34", "MB 7.71", "MB 7.72"]);
-const CONV_DIV_CODES = new Set(["MB 7.52", "MB 7.53", "MB 7.54", "MB 7.55", "MB 7.100"]);
-// Machines that duplicate a pull-up / calisthenics rig (lower priority when one already exists).
-const DEPRIORITIZE_CODES = new Set(["MB 7.38", "MB 7.55", "MB 7.47", "MB 7.47/1", "MB 7.61", "MB 7.73", "MB 7.62", "MB 7.67", "MB 7.96"]);
+// Rule data lives in lib/generator-rules.ts (the single "rules map"); wrapped in
+// Sets here for O(1) lookups during scoring.
+const DUMBBELL_CODES = new Set(PUBLIC_AVOID_CODES);
+const CONV_DIV_CODES = new Set(CONVERGING_DIVERGING_CODES);
+const DEPRIORITIZE_CODES = new Set(DEPRIORITIZE_WHEN_WORKOUT_CODES);
+const PUBLIC_AVOID_LINE_SET = new Set(PUBLIC_AVOID_LINES);
+const EXISTING_WORKOUT_EXCLUDE_SET = new Set(EXISTING_WORKOUT_EXCLUDE_LINES);
+const PREMIUM_LINE_SET = new Set(WEIGHTLIFTING_PREMIUM_LINES);
 
 const clamp = (value: number, min = 0, max = 10) => Math.max(min, Math.min(max, value));
 const average = (values: number[]) => (values.length ? values.reduce((a, b) => a + b, 0) / values.length : 0);
@@ -90,13 +104,13 @@ function productScore(product: PricedProduct, input: ConfigInput) {
 
   // Cost axis: cheap prefers Light + affordability; no-limit prefers Standard/Pro/Plus + conv/div.
   if (cost < 0) {
-    if (product.line === "Light Line") score += 1.1 * -cost;
-    if (product.line === "PRO Line" || product.line === "Plus Line") score -= 0.9 * -cost;
+    if (product.lineSlug === "light-line") score += 1.1 * -cost;
+    if (PREMIUM_LINE_SET.has(product.lineSlug)) score -= 0.9 * -cost;
     if (CONV_DIV_CODES.has(product.code)) score -= 1.0 * -cost;
     score += product.scores.affordability * 0.25 * -cost;
   } else if (cost > 0) {
     if (CONV_DIV_CODES.has(product.code)) score += 1.2 * cost;
-    if (product.line === "Standard Line" || product.line === "PRO Line" || product.line === "Plus Line") score += 0.6 * cost;
+    if (product.lineSlug === "standard-line" || PREMIUM_LINE_SET.has(product.lineSlug)) score += 0.6 * cost;
   }
 
   // Public installations favour robust, low-maintenance machines.
@@ -112,21 +126,21 @@ function passesFilters(product: PricedProduct, input: ConfigInput) {
   if (product.bodyFocus === "Accessory") return false;
   if (!input.includedLines.includes(product.lineSlug)) return false;
   if (!product.priceCzk) return false;
-  if (input.existingWorkout && product.lineSlug === "workout-line") return false;
+  if (input.existingWorkout && EXISTING_WORKOUT_EXCLUDE_SET.has(product.lineSlug)) return false;
   if (input.wheelchair && product.lineSlug !== "plus-line") return false;
 
   const cost = costAxis(input);
   if (cost < 0) {
-    // "As cheap as possible" (1–2): avoid Pro/Plus and converging/diverging machines.
-    if (input.costUse <= 2 && (product.line === "PRO Line" || product.line === "Plus Line")) return false;
-    if (input.costUse <= 2 && CONV_DIV_CODES.has(product.code)) return false;
+    // "As cheap as possible" band: avoid Pro/Plus and converging/diverging machines.
+    if (input.costUse <= COST_CHEAP_MAX && PREMIUM_LINE_SET.has(product.lineSlug)) return false;
+    if (input.costUse <= COST_CHEAP_MAX && CONV_DIV_CODES.has(product.code)) return false;
   }
 
   const privacy = privacyAxis(input);
-  if (privacy < 0 && input.publicPrivate <= 2) {
+  if (privacy < 0 && input.publicPrivate <= PUBLIC_MAX) {
     // Public: avoid loose barbells (dumbbell sets) and the box series (Boxing line).
     if (DUMBBELL_CODES.has(product.code)) return false;
-    if (product.lineSlug === "boxing-line") return false;
+    if (PUBLIC_AVOID_LINE_SET.has(product.lineSlug)) return false;
   }
 
   return true;
@@ -148,7 +162,7 @@ function metricsFor(combo: PricedProduct[], input: ConfigInput, totalPrice: numb
 
 function spacePenalty(comboLength: number, input: ConfigInput) {
   if (!input.availableSpace || input.availableSpace <= 0) return 0;
-  const capacity = Math.floor(input.availableSpace / SPACE_PER_MACHINE);
+  const capacity = Math.floor(input.availableSpace / SPACE_PER_MACHINE_M2);
   return comboLength > capacity ? (comboLength - capacity) * 0.9 : 0;
 }
 

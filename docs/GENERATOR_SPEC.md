@@ -3,6 +3,11 @@
 Source: owner's `GENERATOR edit.docx` (2026-07-21) + clarifications. This is the
 authoritative spec for the simplified configurator. Results output is unchanged.
 
+> **The editable rules live in one file: `lib/generator-rules.ts`.** That is the code
+> "map" — machine-code lists, which lines each answer enables, the slider thresholds,
+> defaults and labels — all in one commented place, read by both the configurator UI and
+> the server recommender. Change a rule there (or ask Claude), and this doc for the why.
+
 ## 1. Budget & scope
 
 - **Total budget**: default **500 000 CZK**. Hard filter only when machine count is "Auto".
