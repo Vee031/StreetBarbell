@@ -2,18 +2,23 @@
 
 > **Read this first in any follow-up session.** It is the authoritative status doc for the
 > Street Barbell web app, written so the project can be picked up (or rebuilt) from scratch.
-> Last checkpoint: **2026-07-17**. It supersedes the older
+> Last checkpoint: **2026-07-21**. It supersedes the older
 > `STREETBARBELL_CODEX_HANDOVER_COMPLETE.md` (one folder tree up, kept for history).
 
-## Where we left off (2026-07-17, end of day)
+## Where we left off (2026-07-21)
 
 Everything requested so far is **built, deployed and verified live**. No half-finished work.
-Shipped today: `/system` admin (login + site-text editor), English machine names on /cs,
-configurator switched to the CZK 2026 pricelist, and `/system/products` bulk XLSX import.
 
-**Next session:** Vojta said "I would like to change a couple things about the recommended
-configurations generator" — the pricelist switch and the bulk product import were the first
-two; ask what else he wants changed on the configurator.
+**2026-07-21**: the recommended-configurations generator was redesigned per the owner's
+`GENERATOR edit.docx` — see **`docs/GENERATOR_SPEC.md`** for the full spec (budget/space/
+category-bar/questions/sliders) and the owner's clarifying answers baked into it. Commit
+`c40df6f`. This replaces the old 9-point-priorities / EUR-manual-rate configurator described
+in older notes below — if anything here conflicts with GENERATOR_SPEC.md, the spec wins.
+
+Also shipped earlier the same week: `/system` admin (login + site-text editor + product
+catalogue with per-product visibility/gallery/docs/video/muscle-map), English machine names on
+/cs, configurator on the CZK 2026 pricelist, `/system/products` bulk XLSX import, and the
+click-to-edit muscle figure (exact catalog artwork).
 
 Open follow-ups (nice-to-haves, none urgent):
 
@@ -67,7 +72,8 @@ Gotcha: adding env values via PowerShell piping appends `\r` that Vercel keeps. 
 - `app/[locale]/…` — public pages (en/cs): home, products, products/[line], products/[line]/[slug],
   configurations (configurator), gallery, contact. All SSG via `generateStaticParams`.
 - `app/api/access` — distributor unlock → sets HMAC cookie. `app/api/recommend` — scored
-  recommendations with prices (requires the cookie).
+  recommendations with prices (requires the cookie). `app/api/exchange-rate` — daily CZK/EUR
+  mid rate from the Czech National Bank fixing (12h cache, hardcoded 25 fallback on fetch error).
 - `app/system` — **admin text editor** (see below). `app/system/login` — password login.
 - `lib/i18n.ts` — the full EN/CS dictionary of site texts (single source of default wording,
   including footer/menu/benefit/gallery-filter texts) + Czech plural helper `countNoun`.
@@ -89,7 +95,10 @@ Gotcha: adding env values via PowerShell piping appends `\r` that Vercel keeps. 
   (`scratchpad/gen_pricelist.py` in session; recreate from this description if needed).
   The old coating/price-basis dropdown was removed from the configurator — single pricelist,
   results show CZK primary with ≈€ via the user-set exchange rate.
-  `lib/recommender.ts` — scoring, budget filtering in CZK. `lib/pdf-font.ts` — subsetted DejaVu Sans (Czech diacritics in PDF).
+  **`lib/recommender.ts` — rewritten 2026-07-21 for the simplified generator; see
+  `docs/GENERATOR_SPEC.md` for the full input/filtering/scoring spec** (category-bar line
+  inclusion, 3 bipolar 1-5 sliders, fixed-count-overrides-budget, soft space preference).
+  `lib/pdf-font.ts` — subsetted DejaVu Sans (Czech diacritics in PDF).
 - `components/` — header (client; receives texts as prop `d`), footer, product-card (takes
   `t={d.products}`), line-card, configurator (client), contact-form, motion-reveal.
 - `scripts/check-public-data.mjs` — CI guard: public products.json must contain no prices.
