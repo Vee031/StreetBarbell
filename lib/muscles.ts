@@ -52,11 +52,12 @@ const detectors: [RegExp, MuscleKey[]][] = [
   [/lower\s*back|erector|spinae/i, ["lowerBack"]],
   [/(?<!lower\s)back|lats|latissimus/i, ["back"]],
   [/glute/i, ["glutes"]],
-  [/quad|thig|thigh/i, ["quads"]],
   [/inner\s*thigh|outer\s*thigh|adductor|abductor/i, ["adductors"]],
+  // A generic "thigh" reference fills the whole front thigh (quads + inner thigh).
+  [/quad|thig|thigh/i, ["quads", "adductors"]],
   [/hamstring|biceps\s*femoris/i, ["hamstrings"]],
   [/calf|calv|gastro|soleus/i, ["calves"]],
-  [/\blegs?\b/i, ["quads", "hamstrings", "calves"]],
+  [/\blegs?\b/i, ["quads", "adductors", "hamstrings", "calves"]],
 ];
 
 export function detectMuscles(musclesText: string): MuscleKey[] {

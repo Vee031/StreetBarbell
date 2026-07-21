@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { writeBlobJson } from "@/lib/blob-json";
 import { products } from "@/lib/data";
-import { muscleKeys, type MuscleKey } from "@/lib/muscles";
+import { MUSCLE_SHAPES } from "@/lib/muscle-figure";
 import { fetchProductMetaUncached, META_BLOB_PATH, youtubeVideoId, type ProductMetaMap } from "@/lib/product-meta";
 import { PRODUCTS_CACHE_TAG } from "@/lib/products-store";
 
@@ -58,12 +58,20 @@ export async function saveVideoAndMuscles(formData: FormData) {
   const code = requireCode(formData);
   const youtubeUrl = String(formData.get("youtubeUrl") ?? "").trim();
   if (youtubeUrl && !youtubeVideoId(youtubeUrl)) redirect(editorPath(code, "?error=youtube"));
-  const selected = formData.getAll("muscles").map(String).filter((v): v is MuscleKey => (muscleKeys as readonly string[]).includes(v));
+  const shapes = [
+    ...new Set(
+      String(formData.get("muscleShapes") ?? "")
+        .split(",")
+        .map((v) => Number.parseInt(v, 10))
+        .filter((n) => Number.isInteger(n) && n >= 0 && n < MUSCLE_SHAPES.length),
+    ),
+  ].sort((a, b) => a - b);
   const meta = await fetchProductMetaUncached();
   const entry = { ...(meta[code] ?? {}) };
   if (youtubeUrl) entry.youtubeUrl = youtubeUrl;
   else delete entry.youtubeUrl;
-  entry.muscles = selected;
+  entry.muscleShapes = shapes;
+  delete entry.muscles; // superseded by the explicit per-region selection
   meta[code] = entry;
   await saveMeta(meta);
   redirect(editorPath(code, "?saved=1"));

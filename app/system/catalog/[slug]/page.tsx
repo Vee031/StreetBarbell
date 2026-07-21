@@ -5,7 +5,8 @@ import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { getProductName } from "@/lib/data";
 import { MuscleEditor } from "@/components/muscle-editor";
 import { detectMuscles } from "@/lib/muscles";
-import { fetchProductMetaUncached, isEnabled } from "@/lib/product-meta";
+import { shapeIndicesForKeys } from "@/lib/muscle-figure";
+import { effectiveMuscleShapes, fetchProductMetaUncached, isEnabled } from "@/lib/product-meta";
 import { getProducts } from "@/lib/products-store";
 import { deleteDocument, deleteGalleryImage, saveVideoAndMuscles, toggleProduct, uploadDocument, uploadGalleryImages } from "../actions";
 
@@ -30,7 +31,8 @@ export default async function CatalogProductPage({ params, searchParams }: { par
   const meta = metaMap[product.code] ?? {};
   const enabled = isEnabled(metaMap, product.code);
   const name = getProductName(product);
-  const initialMuscles = meta.muscles ?? detectMuscles(product.muscles);
+  const initialShapes = effectiveMuscleShapes(product, meta);
+  const autoShapes = shapeIndicesForKeys(detectMuscles(product.muscles));
 
   return (
     <div className="sys-shell">
@@ -131,7 +133,7 @@ export default async function CatalogProductPage({ params, searchParams }: { par
                   style={{ border: "1px solid var(--line)", borderRadius: 10, padding: "10px 13px", background: "var(--bg)", fontSize: ".92rem", width: "100%" }}
                 />
               </label>
-              <MuscleEditor initial={initialMuscles} />
+              <MuscleEditor initial={initialShapes} autoDetected={autoShapes} />
               <button type="submit" className="button button-red button-small">Save video &amp; muscles</button>
             </form>
           </section>

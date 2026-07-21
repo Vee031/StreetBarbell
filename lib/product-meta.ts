@@ -2,6 +2,7 @@ import { unstable_cache } from "next/cache";
 import { readBlobJson } from "./blob-json";
 import type { MuscleKey } from "./muscles";
 import { detectMuscles } from "./muscles";
+import { MUSCLE_SHAPES, shapeIndicesForKeys } from "./muscle-figure";
 import type { Product } from "./data";
 import { PRODUCTS_CACHE_TAG } from "./products-store";
 
@@ -17,7 +18,8 @@ export type ProductMeta = {
   gallery?: string[]; // blob URLs of extra images shown under the main picture
   documents?: ProductDocument[];
   youtubeUrl?: string;
-  muscles?: MuscleKey[]; // manual override of the auto-detected highlights
+  muscles?: MuscleKey[]; // legacy: whole-group highlight selection (pre shape editor)
+  muscleShapes?: number[]; // manual per-region selection: indices into MUSCLE_SHAPES
 };
 
 export type ProductMetaMap = Record<string, ProductMeta>;
@@ -42,8 +44,14 @@ export async function filterEnabled(products: Product[]): Promise<Product[]> {
   return products.filter((product) => isEnabled(meta, product.code));
 }
 
-export function effectiveMuscles(product: Product, meta: ProductMeta | undefined): MuscleKey[] {
-  return meta?.muscles ?? detectMuscles(product.muscles);
+// The highlighted regions to show, in priority order:
+//   1. an explicit per-region selection saved from the visual editor
+//   2. a legacy whole-group selection (older saves)
+//   3. auto-detection from the product's "Target muscles" text
+export function effectiveMuscleShapes(product: Product, meta: ProductMeta | undefined): number[] {
+  if (meta?.muscleShapes) return meta.muscleShapes.filter((i) => i >= 0 && i < MUSCLE_SHAPES.length);
+  const keys = meta?.muscles ?? detectMuscles(product.muscles);
+  return shapeIndicesForKeys(keys);
 }
 
 export function youtubeVideoId(url: string | undefined): string | null {

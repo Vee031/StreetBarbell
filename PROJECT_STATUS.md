@@ -138,9 +138,15 @@ Gotcha: adding env values via PowerShell piping appends `\r` that Vercel keeps. 
     appear as a thumbnail mini gallery under it (`components/product-gallery.tsx`, client).
   - **Documents**: PDF repository per product, shown as a Downloads section on the page.
   - **Video**: YouTube URL → `youtube-nocookie` embed + "Watch on YouTube" link.
-  - **Muscles**: front+back figure (`components/muscle-map.tsx`) with 15 muscle groups;
-    pre-selected by keyword detection from the product's "Target muscles" text
-    (`lib/muscles.ts`), manually adjustable with live preview.
+  - **Muscles**: front+back figure with per-region control. `lib/muscle-figure.ts` holds the
+    base artwork + 92 indexed highlight regions (`MUSCLE_SHAPES`, grouped into the 15 muscle
+    keys). `components/muscle-editor.tsx` (client) is a **click-to-edit figure**: click any
+    region to toggle its red highlight, group buttons as shortcuts, reset-to-auto / clear-all.
+    Public page renders via `<MuscleMap activeShapes={…}/>` (read-only). Selection is stored
+    per product as `muscleShapes: number[]` (region indices) in product-meta; priority is
+    explicit selection → legacy `muscles` group list → auto-detect from the "Target muscles"
+    text (`lib/muscles.ts`, "thigh"/"legs" map to the full front-thigh set). **Indices in
+    `lib/muscle-figure.ts` are stable — never reorder** (saved selections reference them).
     **The figure is the official catalog artwork** (2026-07-20, commit 5659190): vector paths
     extracted from "Catalogs/2025/Catalog SB 2025 _compressed For Email.pdf" (Google Drive
     archive) with PyMuPDF — 71 base paths + 92 red highlight shapes recovered from all 91
@@ -213,3 +219,5 @@ with rapid automated fetches (transient "Vercel Security Checkpoint" HTML replac
 - (2026-07-17) Configurator switched to CZK-native 2026 pricelist (see server-pricing above)
 - (2026-07-17) /system/products bulk XLSX import (see its section above)
 - `2db5c86` (2026-07-18) /system/catalog: per-product visibility, gallery, PDFs, video, muscle map
+- `5659190` (2026-07-20) muscle figure = official catalog vector artwork
+- (2026-07-20) per-region click-to-edit muscle editor (muscleShapes indices); fuller thigh auto-detect

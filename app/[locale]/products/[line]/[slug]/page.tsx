@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowUpRight, Check, FileText, Mail, Play } from "lucide-rea
 import { MuscleMap } from "@/components/muscle-map";
 import { ProductGallery } from "@/components/product-gallery";
 import { getProductDescription, getProductName, products } from "@/lib/data";
-import { effectiveMuscles, isEnabled, loadProductMeta, youtubeVideoId } from "@/lib/product-meta";
+import { effectiveMuscleShapes, isEnabled, loadProductMeta, youtubeVideoId } from "@/lib/product-meta";
 import { getMergedProduct } from "@/lib/products-store";
 import { isLocale, type Locale } from "@/lib/i18n";
 import { getSiteTexts } from "@/lib/site-texts";
@@ -28,7 +28,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   const galleryImages = [product.image || product.categoryImage, ...(meta?.gallery ?? [])];
   const documents = meta?.documents ?? [];
   const videoId = youtubeVideoId(meta?.youtubeUrl);
-  const muscles = effectiveMuscles(product, meta);
+  const muscleShapes = effectiveMuscleShapes(product, meta);
   return <>
     <section className="product-detail-hero">
       <div className="page-shell product-detail-grid">
@@ -52,7 +52,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           <div><small>{cs ? "Přibližná plocha" : "Approx. footprint"}</small><strong>{product.footprint ? `${product.footprint.toFixed(2)} m²` : "—"}</strong></div>
           <div><small>{cs ? "Současní uživatelé" : "Simultaneous users"}</small><strong>{product.simultaneousUsers}</strong></div>
         </div></section>
-        <section><span className="eyebrow">{d.products.muscles}</span><h2>{product.muscles || (cs ? "Více svalových skupin" : "Multiple muscle groups")}</h2>{muscles.length > 0 && <MuscleMap highlighted={muscles} className="muscle-map" />}<div className="movement-list">{product.movementPatterns.split(";").filter(Boolean).map((pattern) => <span key={pattern}><Check size={17}/>{pattern.trim()}</span>)}</div></section>
+        <section><span className="eyebrow">{d.products.muscles}</span><h2>{product.muscles || (cs ? "Více svalových skupin" : "Multiple muscle groups")}</h2>{muscleShapes.length > 0 && <MuscleMap activeShapes={muscleShapes} className="muscle-map" />}<div className="movement-list">{product.movementPatterns.split(";").filter(Boolean).map((pattern) => <span key={pattern}><Check size={17}/>{pattern.trim()}</span>)}</div></section>
         {videoId && <section><span className="eyebrow">{cs ? "Video" : "Video"}</span><h2>{cs ? "Stroj v akci" : "See it in action"}</h2><div className="product-video"><iframe src={`https://www.youtube-nocookie.com/embed/${videoId}`} title={`${name} — video`} allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" allowFullScreen /></div><a className="text-link" href={meta?.youtubeUrl} target="_blank" rel="noreferrer"><Play size={16}/> {cs ? "Otevřít na YouTube" : "Watch on YouTube"}</a></section>}
         {documents.length > 0 && <section><span className="eyebrow">{cs ? "Dokumenty" : "Documents"}</span><h2>{cs ? "Ke stažení" : "Downloads"}</h2><div className="document-list">{documents.map((doc) => <a key={doc.url} href={doc.url} target="_blank" rel="noreferrer"><FileText size={18}/><span>{doc.name}</span></a>)}</div></section>}
         <section><span className="eyebrow">{d.products.materials}</span><div className="material-table"><div><span>{d.products.frame}</span><strong>{product.materials.frame || "—"}</strong></div><div><span>{d.products.rails}</span><strong>{product.materials.rails || "—"}</strong></div><div><span>{d.products.smallParts}</span><strong>{product.materials.smallParts || "—"}</strong></div><div><span>{d.products.finish}</span><strong>{product.materials.finish || "—"}</strong></div></div></section>

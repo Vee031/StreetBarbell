@@ -514,3 +514,19 @@ p { color: var(--muted); line-height: 1.7; }
 .muscle-check-grid input { accent-color: var(--red); width: 16px; height: 16px; }
 .cat-editor-grid { display: grid; grid-template-columns: 1fr 340px; gap: 22px; align-items: start; }
 @media (max-width: 900px) { .cat-editor-grid { grid-template-columns: 1fr; } }
+
+/* ---- interactive muscle editor (/system/catalog) ---- */
+.muscle-editor { display: grid; gap: 12px; }
+.muscle-map-editable { width: min(430px, 100%); display: block; }
+.muscle-map-editable .muscle-hit { fill: rgba(225,40,46,.13); cursor: pointer; transition: fill .12s ease; }
+.muscle-map-editable .muscle-hit:hover { fill: rgba(225,40,46,.45); }
+.muscle-map-editable .muscle-hit.on { fill: #ee2a24; }
+.muscle-map-editable .muscle-hit.on:hover { fill: #c8232a; }
+.muscle-group-buttons { display: flex; flex-wrap: wrap; gap: 7px; }
+.muscle-group-btn { border: 1px solid var(--line); background: var(--surface); border-radius: 999px; padding: 6px 13px; font-size: .82rem; font-weight: 600; color: var(--muted); transition: all .14s ease; }
+.muscle-group-btn:hover { border-color: var(--ink); color: var(--ink); }
+.muscle-group-btn.partial { border-color: var(--red); color: var(--red); }
+.muscle-group-btn.on { background: var(--red); border-color: var(--red); color: white; }
+.muscle-editor-actions { display: flex; gap: 16px; }
+.muscle-plain-btn { background: none; border: none; padding: 0; color: var(--muted); font-size: .84rem; font-weight: 600; text-decoration: underline; }
+.muscle-plain-btn:hover { color: var(--ink); }
