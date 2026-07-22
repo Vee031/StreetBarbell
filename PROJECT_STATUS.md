@@ -303,3 +303,5 @@ with rapid automated fetches (transient "Vercel Security Checkpoint" HTML replac
 - `a1986c3` (2026-07-22) public configurator + team logins (/system/users, /team-login), rules batch 2
 - `3dd4357` (2026-07-22) localized inquiry-email labels
 - (2026-07-22) Pro/Plus split, position editor, menu groups (/system/groups), add product (/system/catalog/new)
+- `cbd5bd8` (2026-07-22) RVL13-style Website management, per-product line moves, unified menu cards
+- `97778d2` (2026-07-22) hero stat: "20 priority points" → ∞ combinations; intro no longer mentions the 20-point matrix
