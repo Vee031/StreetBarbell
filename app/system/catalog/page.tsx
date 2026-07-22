@@ -6,6 +6,7 @@ import { SystemNav } from "@/components/system-nav";
 import { productLines } from "@/lib/data";
 import { getProductName } from "@/lib/data";
 import { fetchProductMetaUncached, isEnabled } from "@/lib/product-meta";
+import { fetchProductGroupsUncached } from "@/lib/product-groups";
 import { getProducts } from "@/lib/products-store";
 
 export const dynamic = "force-dynamic";
@@ -13,8 +14,12 @@ export const dynamic = "force-dynamic";
 export default async function SystemCatalogPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
   if (!(await isAdminAuthenticated())) redirect("/system/login");
   const { error } = await searchParams;
-  const [allProducts, meta] = await Promise.all([getProducts(), fetchProductMetaUncached()]);
+  const [allProducts, meta, groupsData] = await Promise.all([getProducts(), fetchProductMetaUncached(), fetchProductGroupsUncached()]);
   const disabledCount = allProducts.filter((product) => !isEnabled(meta, product.code)).length;
+  // Combination groups list like lines — their products carry the group as category.
+  const groupSections = groupsData.categories.flatMap((category) =>
+    category.groups.filter((g) => g.type === "products").map((g) => ({ slug: g.id, title: `${g.labelEn} (${category.labelEn})` })),
+  );
 
   return (
     <>
@@ -36,14 +41,14 @@ export default async function SystemCatalogPage({ searchParams }: { searchParams
 
       {error === "storage" ? <p className="sys-banner sys-error">Storage is not reachable — changes cannot be saved right now.</p> : null}
 
-      {productLines.map((line) => {
-        const lineProducts = allProducts.filter((product) => product.lineSlug === line.slug);
-        if (lineProducts.length === 0) return null;
+      {[...productLines.map((line) => ({ slug: line.slug, title: line.nameEn })), ...groupSections].map((section) => {
+        const sectionProducts = allProducts.filter((product) => product.lineSlug === section.slug);
+        if (sectionProducts.length === 0) return null;
         return (
-          <section key={line.slug}>
-            <h2 className="cat-line-title">{line.nameEn}</h2>
+          <section key={section.slug}>
+            <h2 className="cat-line-title">{section.title}</h2>
             <div className="cat-grid">
-              {lineProducts.map((product) => {
+              {sectionProducts.map((product) => {
                 const enabled = isEnabled(meta, product.code);
                 return (
                   <Link key={product.code} href={`/system/catalog/${product.slug}`} className={enabled ? "cat-card" : "cat-card is-off"}>

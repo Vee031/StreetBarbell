@@ -10,6 +10,7 @@ import { MUSCLE_SHAPES } from "@/lib/muscle-figure";
 import { fetchProductMetaUncached, META_BLOB_PATH, youtubeVideoId, type ProductMetaMap } from "@/lib/product-meta";
 import { fetchProductGroupsUncached, GROUPS_BLOB_PATH } from "@/lib/product-groups";
 import {
+  buildCategoryMap,
   CUSTOM_PRODUCTS_BLOB_PATH,
   fetchCustomProductsUncached,
   fetchProductOverridesUncached,
@@ -19,7 +20,11 @@ import {
   productSlugFor,
   type CustomProductRecord,
 } from "@/lib/products-store";
-import { productLines } from "@/lib/data";
+
+// Valid category values: the 9 built-in lines + admin-created combination groups.
+async function categorySlugs(): Promise<Set<string>> {
+  return new Set(buildCategoryMap(await fetchProductGroupsUncached()).keys());
+}
 
 // Base + admin-created codes; custom machines are editable here like any other.
 async function lookupProduct(code: string): Promise<{ code: string; slug: string; custom: boolean } | null> {
@@ -119,7 +124,7 @@ export async function saveLine(formData: FormData) {
   await requireAdmin();
   const { code, slug } = await requireProduct(formData);
   const lineSlug = String(formData.get("lineSlug") ?? "").trim();
-  if (!productLines.some((l) => l.slug === lineSlug)) redirect(editorPath(slug));
+  if (!(await categorySlugs()).has(lineSlug)) redirect(editorPath(slug));
   // Same overrides store as the XLSX import ("Line" column) — moving a machine
   // here re-homes it on the website, in product lists and in the configurator.
   const overrides = await fetchProductOverridesUncached();
@@ -208,11 +213,10 @@ export async function createProduct(formData: FormData) {
   const descriptionEn = String(formData.get("descriptionEn") ?? "").trim();
   const descriptionCs = String(formData.get("descriptionCs") ?? "").trim();
   const position = String(formData.get("position") ?? "").trim();
-  const group = String(formData.get("group") ?? "").trim(); // "categoryId/groupId" or ""
 
   if (!/^[A-Za-z0-9 ./-]{2,24}$/.test(code)) redirect("/system/catalog/new?error=code");
   if (!nameEn) redirect("/system/catalog/new?error=name");
-  if (!productLines.some((l) => l.slug === lineSlug)) redirect("/system/catalog/new?error=line");
+  if (!(await categorySlugs()).has(lineSlug)) redirect("/system/catalog/new?error=line");
   if (position && !POSITION_OPTIONS.includes(position)) redirect("/system/catalog/new?error=position");
   if (products.some((p) => p.code === code)) redirect("/system/catalog/new?error=exists");
   const custom = await fetchCustomProductsUncached();
@@ -246,17 +250,6 @@ export async function createProduct(formData: FormData) {
   };
   custom[code] = record;
   await writeBlobJson(CUSTOM_PRODUCTS_BLOB_PATH, custom);
-
-  // Optional group assignment ("categoryId/groupId").
-  if (group.includes("/")) {
-    const [categoryId, groupId] = group.split("/");
-    const data = await fetchProductGroupsUncached();
-    const target = data.categories.find((c) => c.id === categoryId)?.groups.find((g) => g.id === groupId);
-    if (target && target.type === "products" && !(target.productCodes ?? []).includes(code)) {
-      target.productCodes = [...(target.productCodes ?? []), code];
-      await writeBlobJson(GROUPS_BLOB_PATH, data);
-    }
-  }
 
   updateTag(PRODUCTS_CACHE_TAG);
   revalidatePath("/", "layout");

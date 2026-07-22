@@ -1,12 +1,12 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { ArrowDown, ArrowUp, CornerDownRight, Settings2, X } from "lucide-react";
+import { ArrowDown, ArrowUp, CornerDownRight, X } from "lucide-react";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { SystemNav } from "@/components/system-nav";
-import { getProductName, productLines } from "@/lib/data";
+import { productLines } from "@/lib/data";
 import { categoriesLinkToConfigurator, fetchProductGroupsUncached, isActive } from "@/lib/product-groups";
 import { getProducts } from "@/lib/products-store";
-import { createCategory, createGroup, deleteCategory, deleteGroup, moveCategory, moveGroup, saveGroupProducts, toggleCategoryActive, toggleGroupActive } from "./actions";
+import { createCategory, createGroup, deleteCategory, deleteGroup, moveCategory, moveGroup, toggleCategoryActive, toggleGroupActive } from "./actions";
 
 export const dynamic = "force-dynamic";
 
@@ -110,7 +110,7 @@ export default async function WebsiteManagementPage({ searchParams }: { searchPa
                       <small className="wm-meta">link → {group.href}</small>
                     ) : (
                       <small className="wm-meta">
-                        {(group.productCodes ?? []).length} product(s) · <Link href={`/cs/g/${category.id}/${group.id}`} target="_blank" rel="noreferrer">page ↗</Link>
+                        {products.filter((p) => p.lineSlug === group.id).length} product(s) · assign in the <Link href="/system/catalog">Catalogue</Link> · <Link href={`/cs/g/${category.id}/${group.id}`} target="_blank" rel="noreferrer">page ↗</Link>
                       </small>
                     )}
                   </span>
@@ -129,26 +129,6 @@ export default async function WebsiteManagementPage({ searchParams }: { searchPa
                   </span>
                 </div>
 
-                {group.type === "products" && (
-                  <details className="wm-edit">
-                    <summary><Settings2 size={14} /> Edit products in “{group.labelEn}”</summary>
-                    <form action={saveGroupProducts} style={{ marginTop: 10 }}>
-                      <input type="hidden" name="categoryId" value={category.id} />
-                      <input type="hidden" name="groupId" value={group.id} />
-                      <select name="codes" multiple size={10} defaultValue={group.productCodes ?? []} style={{ ...inputStyle, width: "100%", marginBottom: 10 }}>
-                        {byLine.map(({ line, products: lineProducts }) => (
-                          <optgroup key={line.slug} label={line.nameEn}>
-                            {lineProducts.map((p) => <option key={p.code} value={p.code}>{p.code} — {getProductName(p)}</option>)}
-                          </optgroup>
-                        ))}
-                      </select>
-                      <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-                        <button type="submit" className="button button-dark button-small">Save selection</button>
-                        <small className="sys-note">Hold Ctrl (Cmd on Mac) to select multiple machines.</small>
-                      </div>
-                    </form>
-                  </details>
-                )}
               </div>
             ))}
 

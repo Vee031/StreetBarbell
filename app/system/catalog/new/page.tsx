@@ -28,8 +28,9 @@ export default async function NewProductPage({ searchParams }: { searchParams: P
   if (!(await isAdminAuthenticated())) redirect("/system/login");
   const { error } = await searchParams;
   const groupsData = await fetchProductGroupsUncached();
-  const productGroups = groupsData.categories.flatMap((category) =>
-    category.groups.filter((g) => g.type === "products").map((g) => ({ value: `${category.id}/${g.id}`, label: `${category.labelEn} → ${g.labelEn}` })),
+  // Combination groups live in the same category dropdown as the lines.
+  const groupOptions = groupsData.categories.flatMap((category) =>
+    category.groups.filter((g) => g.type === "products").map((g) => ({ value: g.id, label: `${g.labelEn} (${category.labelEn})` })),
   );
 
   return (
@@ -41,7 +42,7 @@ export default async function NewProductPage({ searchParams }: { searchParams: P
           <Link href="/system/catalog" className="back-link">← Catalogue</Link>
           <h1>Add a product</h1>
           <p>
-            Creates a new machine that appears in the chosen product line (and optionally a menu group).
+            Creates a new product that appears in the chosen product line or combination group.
             Photos, documents, video, muscles and on/off are managed afterwards in its catalogue card.
             Admin-created products do not enter the configurator.
           </p>
@@ -58,9 +59,16 @@ export default async function NewProductPage({ searchParams }: { searchParams: P
               <input type="text" name="newCode" placeholder="e.g. MB 8.01" required style={inputStyle} />
             </label>
             <label style={labelStyle}>
-              <small style={smallStyle}>Product line *</small>
+              <small style={smallStyle}>Product line / group *</small>
               <select name="lineSlug" required style={inputStyle}>
-                {productLines.map((line) => <option key={line.slug} value={line.slug}>{line.nameEn}</option>)}
+                <optgroup label="Product lines">
+                  {productLines.map((line) => <option key={line.slug} value={line.slug}>{line.nameEn}</option>)}
+                </optgroup>
+                {groupOptions.length > 0 && (
+                  <optgroup label="Combination groups">
+                    {groupOptions.map((g) => <option key={g.value} value={g.value}>{g.label}</option>)}
+                  </optgroup>
+                )}
               </select>
             </label>
             <label style={labelStyle}>
@@ -80,21 +88,12 @@ export default async function NewProductPage({ searchParams }: { searchParams: P
             <small style={smallStyle}>Description CZ</small>
             <textarea name="descriptionCs" rows={3} style={inputStyle} />
           </label>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
-            <label style={labelStyle}>
-              <small style={smallStyle}>Exercise position</small>
-              <select name="position" defaultValue="Unknown" style={inputStyle}>
-                {POSITION_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
-              </select>
-            </label>
-            <label style={labelStyle}>
-              <small style={smallStyle}>Also show in menu group</small>
-              <select name="group" style={inputStyle}>
-                <option value="">— none —</option>
-                {productGroups.map((g) => <option key={g.value} value={g.value}>{g.label}</option>)}
-              </select>
-            </label>
-          </div>
+          <label style={labelStyle}>
+            <small style={smallStyle}>Exercise position</small>
+            <select name="position" defaultValue="Unknown" style={{ ...inputStyle, maxWidth: 320 }}>
+              {POSITION_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
+            </select>
+          </label>
           <label style={labelStyle}>
             <small style={smallStyle}>Main picture (optional — line photo is used if empty)</small>
             <input type="file" name="image" accept="image/*" />

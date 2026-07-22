@@ -3,8 +3,9 @@ import { notFound } from "next/navigation";
 import { ArrowLeft, ArrowUpRight, Check, FileText, Mail, Play } from "lucide-react";
 import { MuscleMap } from "@/components/muscle-map";
 import { ProductGallery } from "@/components/product-gallery";
-import { getProductDescription, getProductName, products } from "@/lib/data";
+import { getProductDescription, getProductName, productLines, products } from "@/lib/data";
 import { effectiveMuscleShapes, isEnabled, loadProductMeta, youtubeVideoId } from "@/lib/product-meta";
+import { loadProductGroups } from "@/lib/product-groups";
 import { getMergedProduct } from "@/lib/products-store";
 import { isLocale, type Locale } from "@/lib/i18n";
 import { getSiteTexts } from "@/lib/site-texts";
@@ -29,11 +30,18 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   const documents = meta?.documents ?? [];
   const videoId = youtubeVideoId(meta?.youtubeUrl);
   const muscleShapes = effectiveMuscleShapes(product, meta);
+  // Back link: line page for line products, group page for combination-group products.
+  let backHref = `/${locale}/products/${product.lineSlug}`;
+  if (!productLines.some((l) => l.slug === product.lineSlug)) {
+    const groupsData = await loadProductGroups();
+    const owningCategory = groupsData.categories.find((c) => c.groups.some((g) => g.id === product.lineSlug && g.type === "products"));
+    backHref = owningCategory ? `/${locale}/g/${owningCategory.id}/${product.lineSlug}` : `/${locale}/products`;
+  }
   return <>
     <section className="product-detail-hero">
       <div className="page-shell product-detail-grid">
         <div className="product-detail-copy">
-          <Link className="back-link dark" href={`/${locale}/products/${line}`}><ArrowLeft size={16}/>{cs ? product.lineCs : product.line}</Link>
+          <Link className="back-link dark" href={backHref}><ArrowLeft size={16}/>{cs ? product.lineCs : product.line}</Link>
           <span className="eyebrow">{product.code}</span><h1>{name}</h1><p>{getProductDescription(product, locale)}</p>
           <div className="product-tags"><span>{product.bodyFocus}</span><span>{product.position}</span>{product.workoutComplement === "High" && <span>{cs ? "Výborně doplňuje workout" : "Strong workout complement"}</span>}</div>
           <div className="product-price-row"><div><small>{d.products.from}</small><strong>{cs ? "Na vyžádání" : "On request"}</strong><span>{d.products.exVat}</span></div><a className="button button-red" href={`mailto:export@rvl13.com?subject=${encodeURIComponent(`${product.code} ${name}`)}&body=${encodeURIComponent(mailBody)}`}><Mail size={18}/>{d.products.quoteProduct}</a></div>

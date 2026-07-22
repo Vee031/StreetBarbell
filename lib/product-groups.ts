@@ -1,6 +1,6 @@
 ﻿import { unstable_cache } from "next/cache";
 import { readBlobJson } from "./blob-json";
-import { PRODUCTS_CACHE_TAG } from "./products-store";
+import { PRODUCTS_CACHE_TAG } from "./cache-tags";
 
 // Admin-created navigation categories with product groups, managed at
 // /system/groups. Each category renders as a dropdown in the main menu; a
@@ -18,7 +18,10 @@ export type ProductGroup = {
   tooltipCs?: string;
   subtitleEn?: string; // link type: small text under the label in the menu card (e.g. "Infinity combinations")
   subtitleCs?: string;
-  productCodes?: string[]; // products type: assigned machines, in display order
+  // LEGACY (pre 2026-07-22): products used to be assigned per group. Membership is
+  // now the product's own category (product.lineSlug === group.id) — this field is
+  // ignored and kept only so old blob data still parses.
+  productCodes?: string[];
   active?: boolean; // default true; false = hidden from the menu (page 404s), kept in admin
 };
 
@@ -71,15 +74,15 @@ function combinationsLabel(count: number, cs: boolean) {
   return `${count} ${count === 1 ? nounCombinations.en[0] : nounCombinations.en[1]}`;
 }
 
-// enabledCodes: codes of products currently visible on the site — used for the
-// per-group counts shown in the menu cards.
-export function buildGroupNav(data: ProductGroupsData, locale: "en" | "cs", enabledCodes: Set<string>): GroupNavCategory[] {
+// enabledProducts: products currently visible on the site — a group's count is
+// the number of products whose category (lineSlug) is that group.
+export function buildGroupNav(data: ProductGroupsData, locale: "en" | "cs", enabledProducts: { lineSlug: string }[]): GroupNavCategory[] {
   const cs = locale === "cs";
   return data.categories.filter(isActive).map((category) => ({
     id: category.id,
     label: cs ? category.labelCs || category.labelEn : category.labelEn,
     items: category.groups.filter(isActive).map((group) => {
-      const count = (group.productCodes ?? []).filter((code) => enabledCodes.has(code)).length;
+      const count = enabledProducts.filter((p) => p.lineSlug === group.id).length;
       return {
         id: group.id,
         label: cs ? group.labelCs || group.labelEn : group.labelEn,

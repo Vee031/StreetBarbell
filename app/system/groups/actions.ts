@@ -10,7 +10,8 @@ import {
   groupSlug,
   type ProductGroupsData,
 } from "@/lib/product-groups";
-import { getProducts, PRODUCTS_CACHE_TAG } from "@/lib/products-store";
+import { ALL_LINE_SLUGS } from "@/lib/generator-rules";
+import { PRODUCTS_CACHE_TAG } from "@/lib/cache-tags";
 
 async function requireAdmin() {
   if (!(await isAdminAuthenticated())) redirect("/system/login");
@@ -65,10 +66,13 @@ export async function createGroup(formData: FormData) {
   if (type === "link" && !/^\/[a-z0-9/-]*$/i.test(href)) redirect("/system/groups?error=href");
   const id = groupSlug(labelEn);
   if (!id) redirect("/system/groups?error=label");
+  // Group ids share the category namespace with the built-in lines
+  // (product.lineSlug can point at either) — avoid collisions.
+  if (ALL_LINE_SLUGS.includes(id)) redirect("/system/groups?error=exists");
   const data = await fetchProductGroupsUncached();
   const category = data.categories.find((c) => c.id === categoryId);
   if (!category) redirect("/system/groups");
-  if (category.groups.some((g) => g.id === id)) redirect("/system/groups?error=exists");
+  if (data.categories.some((c) => c.groups.some((g) => g.id === id))) redirect("/system/groups?error=exists");
   category.groups.push(
     type === "link"
       ? {
@@ -155,19 +159,3 @@ export async function deleteGroup(formData: FormData) {
   redirect("/system/groups?saved=1");
 }
 
-export async function saveGroupProducts(formData: FormData) {
-  await requireAdmin();
-  const categoryId = text(formData, "categoryId");
-  const groupId = text(formData, "groupId");
-  const validCodes = new Set((await getProducts()).map((p) => p.code));
-  const codes = formData
-    .getAll("codes")
-    .map((v) => String(v))
-    .filter((code) => validCodes.has(code));
-  const data = await fetchProductGroupsUncached();
-  const group = data.categories.find((c) => c.id === categoryId)?.groups.find((g) => g.id === groupId);
-  if (!group || group.type !== "products") redirect("/system/groups");
-  group.productCodes = codes;
-  await saveGroups(data);
-  redirect("/system/groups?saved=1");
-}

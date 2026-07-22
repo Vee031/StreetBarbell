@@ -6,7 +6,9 @@ import ExcelJS from "exceljs";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { writeBlobJson } from "@/lib/blob-json";
 import { products as baseProducts } from "@/lib/data";
+import { fetchProductGroupsUncached } from "@/lib/product-groups";
 import {
+  buildCategoryMap,
   customToProduct,
   fetchCustomProductsUncached,
   productColumns,
@@ -77,7 +79,8 @@ export async function importProducts(formData: FormData) {
 
   // Diffs are computed against the built-in values; for admin-created products the
   // "built-in" is the product as created (so the template round-trips cleanly).
-  const customProducts = Object.values(await fetchCustomProductsUncached()).map(customToProduct);
+  const categories = buildCategoryMap(await fetchProductGroupsUncached());
+  const customProducts = Object.values(await fetchCustomProductsUncached()).map((record) => customToProduct(record, categories));
   const byCode = new Map([...baseProducts, ...customProducts].map((product) => [product.code, product]));
   const envPricelist = getPricelist();
   const overrides: ProductOverrides = {};

@@ -21,10 +21,9 @@ export default async function ProductGroupPage({ params }: { params: Promise<{ l
   const group = category?.groups.find((g) => g.id === groupId && g.type === "products");
   if (!category || !group || !isActive(category) || !isActive(group)) notFound();
 
-  const codes = group.productCodes ?? [];
+  // Membership works exactly like a product line: the group is the product's category.
   const all = await filterEnabled(await getProducts());
-  const byCode = new Map(all.map((p) => [p.code, p]));
-  const groupProducts = codes.map((code) => byCode.get(code)).filter((p): p is NonNullable<typeof p> => Boolean(p));
+  const groupProducts = all.filter((p) => p.lineSlug === group.id);
   const categoryLabel = cs ? category.labelCs || category.labelEn : category.labelEn;
   const groupLabel = cs ? group.labelCs || group.labelEn : group.labelEn;
   const heroImage = groupProducts[0]?.categoryImage || "/images/photos/park-city.webp";

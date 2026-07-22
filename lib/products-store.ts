@@ -1,6 +1,8 @@
 import { unstable_cache } from "next/cache";
 import { readBlobJson } from "./blob-json";
+import { PRODUCTS_CACHE_TAG } from "./cache-tags";
 import { products as baseProducts, productLines, type Product } from "./data";
+import { loadProductGroups, type ProductGroupsData } from "./product-groups";
 
 // Admin bulk-import of product data: an uploaded XLSX becomes a diffs-only
 // overrides JSON in Vercel Blob, merged over data/products.json at read time.
@@ -8,7 +10,29 @@ import { products as baseProducts, productLines, type Product } from "./data";
 export const PRODUCTS_BLOB_PATH = "content/product-overrides.json";
 export const PRODUCTS_REPORT_BLOB_PATH = "content/product-import-report.json";
 export const CUSTOM_PRODUCTS_BLOB_PATH = "content/custom-products.json";
-export const PRODUCTS_CACHE_TAG = "products";
+export { PRODUCTS_CACHE_TAG };
+
+// --- Product categories -----------------------------------------------------
+// A product's category (its `lineSlug`) is either one of the 9 built-in lines or
+// an admin-created product group (e.g. "with-workout") — groups behave exactly
+// like lines: the category is set on the product card, the group page lists its
+// products, and one product belongs to exactly one category.
+export type CategoryDef = { slug: string; nameEn: string; nameCs: string; image?: string };
+
+export function buildCategoryMap(groupsData: ProductGroupsData): Map<string, CategoryDef> {
+  const map = new Map<string, CategoryDef>();
+  for (const line of productLines) map.set(line.slug, { slug: line.slug, nameEn: line.nameEn, nameCs: line.nameCs, image: line.image });
+  for (const category of groupsData.categories) {
+    for (const group of category.groups) {
+      if (group.type === "products" && !map.has(group.id)) {
+        map.set(group.id, { slug: group.id, nameEn: group.labelEn, nameCs: group.labelCs });
+      }
+    }
+  }
+  return map;
+}
+
+const FALLBACK_PRODUCT_IMAGE = "/images/photos/park-city.webp";
 
 // The canonical exercise-position values used across the catalogue. The recommender
 // matches them by keyword (/seat/, /stand/, lying|bench), so all of these work with it.
@@ -103,15 +127,15 @@ export function productSlugFor(code: string, nameEn: string) {
   return `${code} ${nameEn}`.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 }
 
-export function customToProduct(record: CustomProductRecord): Product {
-  const line = productLines.find((l) => l.slug === record.lineSlug);
+export function customToProduct(record: CustomProductRecord, categories: Map<string, CategoryDef>): Product {
+  const category = categories.get(record.lineSlug);
   return {
     code: record.code,
     nameEn: record.nameEn,
     nameCs: record.nameCs || record.nameEn,
     slug: productSlugFor(record.code, record.nameEn),
-    line: line?.nameEn ?? record.lineSlug,
-    lineCs: line?.nameCs ?? record.lineSlug,
+    line: category?.nameEn ?? record.lineSlug,
+    lineCs: category?.nameCs ?? record.lineSlug,
     lineSlug: record.lineSlug,
     descriptionEn: record.descriptionEn,
     descriptionCs: record.descriptionCs || record.descriptionEn,
@@ -137,8 +161,8 @@ export function customToProduct(record: CustomProductRecord): Product {
     materials: { frame: "", rails: "", smallParts: "", finish: "" },
     prices: { pcBase: null, pcDiscount: null, tcBase: null, tcDiscount: null, hdgBase: null, hdgDiscount: null },
     websiteUrl: "",
-    image: record.image || line?.image || "",
-    categoryImage: line?.image || record.image || "",
+    image: record.image || category?.image || FALLBACK_PRODUCT_IMAGE,
+    categoryImage: category?.image || record.image || FALLBACK_PRODUCT_IMAGE,
     detailStatus: "custom",
     classificationConfidence: "",
     custom: true,
@@ -174,13 +198,13 @@ function asNumber(value: string | number | undefined, fallback: number | null) {
   return typeof value === "number" ? value : fallback;
 }
 
-export function applyOverride(product: Product, o: ProductOverride | undefined): Product {
+export function applyOverride(product: Product, o: ProductOverride | undefined, categories: Map<string, CategoryDef>): Product {
   if (!o) return product;
-  // Category (line) move: only valid line slugs apply; names follow the new line.
-  const movedLine = typeof o.lineSlug === "string" ? productLines.find((l) => l.slug === o.lineSlug) : undefined;
+  // Category move: only valid line/group slugs apply; names follow the new category.
+  const movedCategory = typeof o.lineSlug === "string" ? categories.get(o.lineSlug) : undefined;
   return {
     ...product,
-    ...(movedLine ? { lineSlug: movedLine.slug, line: movedLine.nameEn, lineCs: movedLine.nameCs } : {}),
+    ...(movedCategory ? { lineSlug: movedCategory.slug, line: movedCategory.nameEn, lineCs: movedCategory.nameCs } : {}),
     nameEn: asText(o.nameEn, product.nameEn),
     nameCs: asText(o.nameCs, product.nameCs),
     descriptionEn: asText(o.descriptionEn, product.descriptionEn),
@@ -226,9 +250,10 @@ export function applyOverride(product: Product, o: ProductOverride | undefined):
 }
 
 export async function getProducts(): Promise<Product[]> {
-  const [overrides, custom] = await Promise.all([loadProductOverrides(), loadCustomProducts()]);
-  const all = [...baseProducts, ...Object.values(custom).map(customToProduct)];
-  return all.map((product) => applyOverride(product, overrides[product.code]));
+  const [overrides, custom, groupsData] = await Promise.all([loadProductOverrides(), loadCustomProducts(), loadProductGroups()]);
+  const categories = buildCategoryMap(groupsData);
+  const all = [...baseProducts, ...Object.values(custom).map((record) => customToProduct(record, categories))];
+  return all.map((product) => applyOverride(product, overrides[product.code], categories));
 }
 
 export async function getMergedProduct(lineSlug: string, productSlug: string) {

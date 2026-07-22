@@ -8,6 +8,7 @@ import { MuscleEditor } from "@/components/muscle-editor";
 import { detectMuscles } from "@/lib/muscles";
 import { shapeIndicesForKeys } from "@/lib/muscle-figure";
 import { effectiveMuscleShapes, fetchProductMetaUncached, isEnabled } from "@/lib/product-meta";
+import { fetchProductGroupsUncached } from "@/lib/product-groups";
 import { getProducts, POSITION_OPTIONS } from "@/lib/products-store";
 import { deleteCustomProduct, deleteDocument, deleteGalleryImage, saveLine, savePosition, saveVideoAndMuscles, toggleProduct, uploadDocument, uploadGalleryImages } from "../actions";
 
@@ -26,9 +27,13 @@ export default async function CatalogProductPage({ params, searchParams }: { par
   if (!(await isAdminAuthenticated())) redirect("/system/login");
   const { slug } = await params;
   const { saved, error } = await searchParams;
-  const [allProducts, metaMap] = await Promise.all([getProducts(), fetchProductMetaUncached()]);
+  const [allProducts, metaMap, groupsData] = await Promise.all([getProducts(), fetchProductMetaUncached(), fetchProductGroupsUncached()]);
   const product = allProducts.find((p) => p.slug === slug);
   if (!product) notFound();
+  // Combination groups behave exactly like product lines — one dropdown for both.
+  const groupOptions = groupsData.categories.flatMap((category) =>
+    category.groups.filter((g) => g.type === "products").map((g) => ({ id: g.id, label: `${g.labelEn} (${category.labelEn})` })),
+  );
   const meta = metaMap[product.code] ?? {};
   const enabled = isEnabled(metaMap, product.code);
   const name = getProductName(product);
@@ -130,12 +135,19 @@ export default async function CatalogProductPage({ params, searchParams }: { par
           <section className="sys-card">
             <div className="sys-card-head">
               <h2>Category (product line)</h2>
-              <p>The line this machine belongs to — currently <strong>{product.line}</strong>. Changing it moves the machine&apos;s page, product lists and configurator line filtering.</p>
+              <p>The line or combination group this product belongs to — currently <strong>{product.line}</strong>. Changing it moves the product&apos;s page and listings.</p>
             </div>
             <form action={saveLine} className="sys-upload-row">
               <input type="hidden" name="code" value={product.code} />
               <select name="lineSlug" defaultValue={product.lineSlug} style={{ border: "1px solid var(--line)", borderRadius: 10, padding: "10px 13px", background: "var(--bg)", fontSize: ".92rem", minWidth: 220 }}>
-                {productLines.map((line) => <option key={line.slug} value={line.slug}>{line.nameEn}</option>)}
+                <optgroup label="Product lines">
+                  {productLines.map((line) => <option key={line.slug} value={line.slug}>{line.nameEn}</option>)}
+                </optgroup>
+                {groupOptions.length > 0 && (
+                  <optgroup label="Combination groups">
+                    {groupOptions.map((g) => <option key={g.id} value={g.id}>{g.label}</option>)}
+                  </optgroup>
+                )}
               </select>
               <button type="submit" className="button button-red button-small">Save category</button>
             </form>

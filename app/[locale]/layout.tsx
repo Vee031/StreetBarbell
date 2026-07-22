@@ -15,7 +15,7 @@ export default async function LocaleLayout({ children, params }: { children: Rea
   if (!isLocale(rawLocale)) notFound();
   const locale = rawLocale as Locale;
   const [d, groupsData, enabledProducts] = await Promise.all([getSiteTexts(locale), loadProductGroups(), getProducts().then(filterEnabled)]);
-  const groupNav = buildGroupNav(groupsData, locale, new Set(enabledProducts.map((p) => p.code)));
+  const groupNav = buildGroupNav(groupsData, locale, enabledProducts);
   const hideConfigLink = categoriesLinkToConfigurator(groupsData);
   return <><Header locale={locale} d={d} groupNav={groupNav} hideConfigLink={hideConfigLink} /><main>{children}</main><Footer locale={locale} d={d} /><FloatingWhatsApp locale={locale} /></>;
 }
