@@ -311,6 +311,13 @@ with rapid automated fetches (transient "Vercel Security Checkpoint" HTML replac
 - `97778d2` (2026-07-22) hero stat: "20 priority points" → ∞ combinations; intro no longer mentions the 20-point matrix
 - `658f6f6` (2026-07-22) admin dashboard at /system (stat tiles) + permanent SystemNav top bar
   (RVL13-style big tabs); site-texts editor moved to **/system/texts**
+- `696719b` (2026-07-22) **working inquiry pipeline**: the contact form submits server-side
+  into a new admin inbox **/system/inquiries** (each inquiry = own blob under `inquiries/`,
+  no write races; honeypot field; `lib/inquiries.ts`). Product-page quote buttons and the
+  configurator's "Nezávazná poptávka" open the contact form prefilled via `?msg=` — the old
+  `mailto:` buttons did nothing on machines without a default mail app. Dashboard tile +
+  SystemNav tab show the waiting count. No e-mail is sent — to add e-mail notifications,
+  wire an SMTP/Resend key into the submit action.
 - `dada051` (2026-07-22) **combination groups = product categories**: a product's `lineSlug`
   is one namespace (9 lines + product-type group ids, `buildCategoryMap` in products-store,
   cache tag moved to lib/cache-tags). Category is set on the product card / add-product form
