@@ -4,10 +4,11 @@ import { logout } from "@/app/system/login/actions";
 
 // Permanent admin top bar, styled after the owner's RVL13 management system:
 // brand block on the left, big tab buttons, user block + sign-out on the right.
-export type SystemTab = "dashboard" | "texts" | "groups" | "catalog" | "products" | "users";
+export type SystemTab = "dashboard" | "inquiries" | "texts" | "groups" | "catalog" | "products" | "users";
 
 const TABS: { id: SystemTab; href: string; label: string }[] = [
   { id: "dashboard", href: "/system", label: "Dashboard" },
+  { id: "inquiries", href: "/system/inquiries", label: "Inquiries" },
   { id: "texts", href: "/system/texts", label: "Site texts" },
   { id: "groups", href: "/system/groups", label: "Website management" },
   { id: "catalog", href: "/system/catalog", label: "Catalogue" },

@@ -44,7 +44,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
           <Link className="back-link dark" href={backHref}><ArrowLeft size={16}/>{cs ? product.lineCs : product.line}</Link>
           <span className="eyebrow">{product.code}</span><h1>{name}</h1><p>{getProductDescription(product, locale)}</p>
           <div className="product-tags"><span>{product.bodyFocus}</span><span>{product.position}</span>{product.workoutComplement === "High" && <span>{cs ? "Výborně doplňuje workout" : "Strong workout complement"}</span>}</div>
-          <div className="product-price-row"><div><small>{d.products.from}</small><strong>{cs ? "Na vyžádání" : "On request"}</strong><span>{d.products.exVat}</span></div><a className="button button-red" href={`mailto:export@rvl13.com?subject=${encodeURIComponent(`${product.code} ${name}`)}&body=${encodeURIComponent(mailBody)}`}><Mail size={18}/>{d.products.quoteProduct}</a></div>
+          <div className="product-price-row"><div><small>{d.products.from}</small><strong>{cs ? "Na vyžádání" : "On request"}</strong><span>{d.products.exVat}</span></div><Link className="button button-red" href={`/${locale}/contact?msg=${encodeURIComponent(mailBody)}`}><Mail size={18}/>{d.products.quoteProduct}</Link></div>
         </div>
         <ProductGallery images={galleryImages} alt={name} code={product.code} />
       </div>

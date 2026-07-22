@@ -1,8 +1,9 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { FileSpreadsheet, LayoutList, ListTree, PencilLine, Users } from "lucide-react";
+import { FileSpreadsheet, Inbox, LayoutList, ListTree, PencilLine, Users } from "lucide-react";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { SystemNav } from "@/components/system-nav";
+import { countInquiries } from "@/lib/inquiries";
 import { fetchProductMetaUncached, isEnabled } from "@/lib/product-meta";
 import { fetchProductGroupsUncached } from "@/lib/product-groups";
 import { fetchCustomProductsUncached, fetchImportReport } from "@/lib/products-store";
@@ -14,13 +15,14 @@ export const dynamic = "force-dynamic";
 
 export default async function SystemDashboardPage() {
   if (!(await isAdminAuthenticated())) redirect("/system/login");
-  const [meta, groups, custom, report, teamUsers, textOverrides] = await Promise.all([
+  const [meta, groups, custom, report, teamUsers, textOverrides, inquiryCount] = await Promise.all([
     fetchProductMetaUncached().catch(() => ({})),
     fetchProductGroupsUncached().catch(() => ({ categories: [] })),
     fetchCustomProductsUncached().catch(() => ({})),
     fetchImportReport().catch(() => null),
     fetchTeamUsers().catch(() => ({})),
     fetchOverridesUncached().catch(() => ({}) as Awaited<ReturnType<typeof fetchOverridesUncached>>),
+    countInquiries().catch(() => 0),
   ]);
 
   const customCount = Object.keys(custom).length;
@@ -47,6 +49,12 @@ export default async function SystemDashboardPage() {
         </header>
 
         <div className="dash-grid">
+          <Link href="/system/inquiries" className="dash-tile">
+            <Inbox size={26} />
+            <strong>Inquiries</strong>
+            <p>Quote requests and messages from the contact form, configurator and product pages.</p>
+            <span className="dash-stat"><em>{inquiryCount}</em> inquir{inquiryCount === 1 ? "y" : "ies"} waiting</span>
+          </Link>
           <Link href="/system/groups" className="dash-tile">
             <ListTree size={26} />
             <strong>Website management</strong>

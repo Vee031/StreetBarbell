@@ -231,8 +231,9 @@ export function Configurator({ locale }: { locale: Locale }) {
 
   const budgetNum = typeof form.budgetCzk === "number" && form.budgetCzk > 0 ? form.budgetCzk : null;
 
-  // #8 — "Nezávazná poptávka": open the distributor's own mail app to export@rvl13.com
-  // prefilled with the chosen machines and the full brief (so the team can advise alternatives).
+  // #8 — "Nezávazná poptávka": open the contact form prefilled with the chosen
+  // machines and the full brief (submits into /system/inquiries — works for
+  // every visitor, unlike mailto: which needs a configured mail app).
   const inquiryHref = (result: CombinationResult) => {
     const machines = result.products.map((p, i) => `${i + 1}. ${p.code} — ${getProductName(p)}`).join("\n");
     const focusLabels: Record<PrimaryFocus, [string, string]> = { full: ["full body", "celé tělo"], upper: ["upper body", "horní část těla"], lower: ["lower body", "dolní část těla"] };
@@ -247,11 +248,10 @@ export function Configurator({ locale }: { locale: Locale }) {
       `${cs ? "Řady" : "Lines"}: ${includedLines.map(lineLabel).join(", ")}`,
       `${cs ? "Priority (1–5)" : "Priorities (1–5)"}: ${form.balanceSpecialised} / ${form.publicPrivate} / ${form.costUse}`,
     ].join("\n");
-    const subject = cs ? "Nezávazná poptávka — sestava Street Barbell" : "Non-binding inquiry — Street Barbell setup";
-    const intro = cs ? "Dobrý den,\n\nmám zájem o tuto sestavu z konfigurátoru:" : "Hello,\n\nI'm interested in this setup from the configurator:";
+    const intro = cs ? "Mám zájem o tuto sestavu z konfigurátoru:" : "I'm interested in this setup from the configurator:";
     const closing = cs ? "Prosím o cenovou nabídku, případně doporučení alternativ." : "Please send a price quote or alternative recommendations.";
     const body = `${intro}\n\n${machines}\n\n${cs ? "Zadané parametry" : "Entered parameters"}:\n${params}\n\n${closing}`;
-    return `mailto:export@rvl13.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+    return `/${locale}/contact?msg=${encodeURIComponent(body)}`;
   };
 
   return (
