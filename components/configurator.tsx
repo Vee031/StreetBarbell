@@ -231,13 +231,16 @@ export function Configurator({ locale }: { locale: Locale }) {
   // prefilled with the chosen machines and the full brief (so the team can advise alternatives).
   const inquiryHref = (result: CombinationResult) => {
     const machines = result.products.map((p, i) => `${i + 1}. ${p.code} — ${getProductName(p)}`).join("\n");
+    const focusLabels: Record<PrimaryFocus, [string, string]> = { full: ["full body", "celé tělo"], upper: ["upper body", "horní část těla"], lower: ["lower body", "dolní část těla"] };
+    const positionLabels: Record<PositionPreference, [string, string]> = { any: ["doesn't matter", "nezáleží"], seated: ["seated", "vsedě"], standing: ["standing", "ve stoje"] };
+    const lineLabel = (slug: string) => { const line = LINES.find((l) => l.slug === slug); return line ? (cs ? line.cs : line.en) : slug; };
     const params = [
       `${cs ? "Rozpočet" : "Budget"}: ${budgetNum ? `${budgetNum.toLocaleString()} CZK` : cs ? "nevyplněno" : "not filled in"}`,
       `${cs ? "Prostor" : "Space"}: ${typeof form.availableSpace === "number" ? `${form.availableSpace} m²` : cs ? "individuální" : "individual"}`,
       `${cs ? "Počet strojů" : "Machine count"}: ${form.machineCount === "auto" ? (cs ? "automaticky" : "auto") : form.machineCount}`,
-      `${cs ? "Zaměření" : "Focus"}: ${form.primaryFocus}`,
-      `${cs ? "Poloha" : "Position"}: ${form.position}`,
-      `${cs ? "Řady" : "Lines"}: ${includedLines.join(", ")}`,
+      `${cs ? "Zaměření" : "Focus"}: ${focusLabels[form.primaryFocus][cs ? 1 : 0]}`,
+      `${cs ? "Poloha" : "Position"}: ${positionLabels[form.position][cs ? 1 : 0]}`,
+      `${cs ? "Řady" : "Lines"}: ${includedLines.map(lineLabel).join(", ")}`,
       `${cs ? "Priority (1–5)" : "Priorities (1–5)"}: ${form.balanceSpecialised} / ${form.publicPrivate} / ${form.costUse}`,
     ].join("\n");
     const subject = cs ? "Nezávazná poptávka — sestava Street Barbell" : "Non-binding inquiry — Street Barbell setup";
