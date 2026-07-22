@@ -10,7 +10,7 @@ import { shapeIndicesForKeys } from "@/lib/muscle-figure";
 import { effectiveMuscleShapes, fetchProductMetaUncached, isEnabled } from "@/lib/product-meta";
 import { fetchProductGroupsUncached } from "@/lib/product-groups";
 import { getProducts, POSITION_OPTIONS } from "@/lib/products-store";
-import { deleteCustomProduct, deleteDocument, deleteGalleryImage, saveLine, savePosition, saveVideoAndMuscles, toggleProduct, uploadDocument, uploadGalleryImages } from "../actions";
+import { deleteCustomProduct, deleteDocument, deleteGalleryImage, saveIdentity, saveLine, savePosition, saveVideoAndMuscles, toggleProduct, uploadDocument, uploadGalleryImages } from "../actions";
 
 export const dynamic = "force-dynamic";
 
@@ -21,6 +21,9 @@ const ERROR_MESSAGES: Record<string, string> = {
   notimage: "Gallery uploads must be images (JPG, PNG, WebP…).",
   notpdf: "Documents must be PDF files.",
   toobig: "The file is too large (images max 8 MB, PDFs max 25 MB).",
+  code: "Code must be 2–24 characters: letters, numbers, spaces, . / -",
+  name: "The English name is required.",
+  exists: "A product with this code already exists.",
 };
 
 export default async function CatalogProductPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams: Promise<{ saved?: string; error?: string }> }) {
@@ -132,6 +135,35 @@ export default async function CatalogProductPage({ params, searchParams }: { par
         </div>
 
         <div>
+          <section className="sys-card">
+            <div className="sys-card-head">
+              <h2>Code &amp; name</h2>
+              <p>
+                {product.custom
+                  ? "Both are editable for admin-created products. Changing them also changes the product's web address."
+                  : "The code identifies this built-in machine and cannot change; the display names can. Empty a name and save to return to the original."}
+              </p>
+            </div>
+            <form action={saveIdentity} style={{ display: "grid", gap: 10 }}>
+              <input type="hidden" name="code" value={product.code} />
+              <label style={{ display: "grid", gap: 4 }}>
+                <small style={{ color: "var(--muted)", fontWeight: 600, textTransform: "uppercase", fontSize: ".74rem", letterSpacing: ".06em" }}>Code</small>
+                {product.custom
+                  ? <input type="text" name="newCode" defaultValue={product.code} style={{ border: "1px solid var(--line)", borderRadius: 10, padding: "10px 13px", background: "var(--bg)", fontSize: ".92rem" }} />
+                  : <input type="text" value={product.code} disabled style={{ border: "1px solid var(--line)", borderRadius: 10, padding: "10px 13px", background: "#f3f4f6", fontSize: ".92rem", color: "#8a8f98" }} />}
+              </label>
+              <label style={{ display: "grid", gap: 4 }}>
+                <small style={{ color: "var(--muted)", fontWeight: 600, textTransform: "uppercase", fontSize: ".74rem", letterSpacing: ".06em" }}>Name EN (shown on both languages)</small>
+                <input type="text" name="nameEn" defaultValue={product.nameEn} style={{ border: "1px solid var(--line)", borderRadius: 10, padding: "10px 13px", background: "var(--bg)", fontSize: ".92rem" }} />
+              </label>
+              <label style={{ display: "grid", gap: 4 }}>
+                <small style={{ color: "var(--muted)", fontWeight: 600, textTransform: "uppercase", fontSize: ".74rem", letterSpacing: ".06em" }}>Name CZ</small>
+                <input type="text" name="nameCs" defaultValue={product.nameCs} style={{ border: "1px solid var(--line)", borderRadius: 10, padding: "10px 13px", background: "var(--bg)", fontSize: ".92rem" }} />
+              </label>
+              <div><button type="submit" className="button button-red button-small">Save code &amp; name</button></div>
+            </form>
+          </section>
+
           <section className="sys-card">
             <div className="sys-card-head">
               <h2>Category (product line)</h2>

@@ -120,6 +120,63 @@ export async function savePosition(formData: FormData) {
   redirect(editorPath(slug, "?saved=1"));
 }
 
+// Code & name editing. Admin-created products: both editable (a code change
+// re-keys the catalogue meta and XLSX overrides; the slug — and therefore the
+// web address — follows the new code/name). Built-in machines: the code is the
+// permanent identifier (pricing, muscle data) and cannot change; the display
+// names are stored as overrides, empty field = back to the built-in name.
+export async function saveIdentity(formData: FormData) {
+  await requireAdmin();
+  const { code, slug, custom } = await requireProduct(formData);
+  const nameEn = String(formData.get("nameEn") ?? "").trim().slice(0, 120);
+  const nameCs = String(formData.get("nameCs") ?? "").trim().slice(0, 120);
+
+  if (custom) {
+    const newCode = (String(formData.get("newCode") ?? "").trim() || code).slice(0, 24);
+    if (!/^[A-Za-z0-9 ./-]{2,24}$/.test(newCode)) redirect(editorPath(slug, "?error=code"));
+    if (!nameEn) redirect(editorPath(slug, "?error=name"));
+    const customs = await fetchCustomProductsUncached();
+    const record = customs[code];
+    if (!record) redirect("/system/catalog");
+    if (newCode !== code && (products.some((p) => p.code === newCode) || customs[newCode])) redirect(editorPath(slug, "?error=exists"));
+    delete customs[code];
+    customs[newCode] = { ...record, code: newCode, nameEn, nameCs: nameCs || nameEn };
+    await writeBlobJson(CUSTOM_PRODUCTS_BLOB_PATH, customs);
+    if (newCode !== code) {
+      const meta = await fetchProductMetaUncached();
+      if (meta[code]) {
+        meta[newCode] = meta[code];
+        delete meta[code];
+        await writeBlobJson(META_BLOB_PATH, meta);
+      }
+      const overrides = await fetchProductOverridesUncached();
+      if (overrides[code]) {
+        overrides[newCode] = overrides[code];
+        delete overrides[code];
+        await writeBlobJson(PRODUCTS_BLOB_PATH, overrides);
+      }
+    }
+    updateTag(PRODUCTS_CACHE_TAG);
+    revalidatePath("/", "layout");
+    redirect(editorPath(productSlugFor(newCode, nameEn), "?saved=1"));
+  }
+
+  // Built-in machine: names as diffs-only overrides (same store as the XLSX import).
+  const base = products.find((p) => p.code === code);
+  const overrides = await fetchProductOverridesUncached();
+  const entry = { ...(overrides[code] ?? {}) };
+  if (!nameEn || nameEn === base?.nameEn) delete entry.nameEn;
+  else entry.nameEn = nameEn;
+  if (!nameCs || nameCs === base?.nameCs) delete entry.nameCs;
+  else entry.nameCs = nameCs;
+  if (Object.keys(entry).length === 0) delete overrides[code];
+  else overrides[code] = entry;
+  await writeBlobJson(PRODUCTS_BLOB_PATH, overrides);
+  updateTag(PRODUCTS_CACHE_TAG);
+  revalidatePath("/", "layout");
+  redirect(editorPath(slug, "?saved=1"));
+}
+
 export async function saveLine(formData: FormData) {
   await requireAdmin();
   const { code, slug } = await requireProduct(formData);
