@@ -25,7 +25,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           <MotionReveal delay={0.18} className="hero-stat-panel">
             <div><strong>9</strong><span>{d.home.statLines}</span></div>
             <div><strong>116</strong><span>{d.home.statItems}</span></div>
-            <div><strong>20</strong><span>{d.home.statPoints}</span></div>
+            <div><strong className="stat-infinity">∞</strong><span>{d.home.statPoints}</span></div>
           </MotionReveal>
         </div>
         <div className="hero-scroll"><span>{d.home.scroll}</span><i /></div>

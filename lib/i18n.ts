@@ -36,7 +36,7 @@ export const dictionaries = {
       contactText: "Send us the location, available area and approximate budget. We will help you prepare a technically sound setup.",
       statLines: "product lines",
       statItems: "database items",
-      statPoints: "priority points",
+      statPoints: "combinations",
       scroll: "Discover the system",
       advantagesTitle: "Technical quality that makes commercial sense.",
       benefit1Title: "Variable load",
@@ -75,7 +75,7 @@ export const dictionaries = {
     },
     config: {
       title: "Recommended configurations",
-      intro: "Answer the practical questions, distribute exactly 20 priority points and compare combinations that genuinely fit the brief.",
+      intro: "Answer the practical questions, set your priorities and compare combinations that genuinely fit the brief.",
     },
     gallery: {
       title: "Gallery",
@@ -130,7 +130,7 @@ export const dictionaries = {
       contactText: "Pošlete nám lokalitu, dostupnou plochu a přibližný rozpočet. Pomůžeme připravit technicky smysluplnou sestavu.",
       statLines: "produktových řad",
       statItems: "položek v databázi",
-      statPoints: "bodů priorit",
+      statPoints: "kombinací",
       scroll: "Objevte systém",
       advantagesTitle: "Technická kvalita, která dává obchodní smysl.",
       benefit1Title: "Variabilní zátěž",
@@ -169,7 +169,7 @@ export const dictionaries = {
     },
     config: {
       title: "Doporučené sestavy",
-      intro: "Odpovězte na praktické otázky, rozdělte přesně 20 prioritních bodů a porovnejte sestavy, které skutečně odpovídají zadání.",
+      intro: "Odpovězte na praktické otázky, nastavte své priority a porovnejte sestavy, které skutečně odpovídají zadání.",
     },
     gallery: {
       title: "Galerie",
