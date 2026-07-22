@@ -311,3 +311,12 @@ with rapid automated fetches (transient "Vercel Security Checkpoint" HTML replac
 - `97778d2` (2026-07-22) hero stat: "20 priority points" → ∞ combinations; intro no longer mentions the 20-point matrix
 - `658f6f6` (2026-07-22) admin dashboard at /system (stat tiles) + permanent SystemNav top bar
   (RVL13-style big tabs); site-texts editor moved to **/system/texts**
+- `dada051` (2026-07-22) **combination groups = product categories**: a product's `lineSlug`
+  is one namespace (9 lines + product-type group ids, `buildCategoryMap` in products-store,
+  cache tag moved to lib/cache-tags). Category is set on the product card / add-product form
+  (one dropdown, "Combination groups" optgroup); the per-group "Edit products" UI and
+  `saveGroupProducts` are gone; group pages, nav counts and the catalogue listing filter by
+  `lineSlug`; group products' detail pages back-link to /g/<cat>/<group>; legacy
+  `productCodes` in the groups blob is ignored. SB2S1 (owner's first combination) migrated
+  live to `without-workout`. NOTE: assigning a BUILT-IN machine to a group removes it from
+  its line and from the configurator (group ids never match the 9 configurator chips).
