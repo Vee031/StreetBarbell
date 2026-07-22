@@ -1,13 +1,28 @@
 import { unstable_cache } from "next/cache";
 import { readBlobJson } from "./blob-json";
-import { products as baseProducts, type Product } from "./data";
+import { products as baseProducts, productLines, type Product } from "./data";
 
 // Admin bulk-import of product data: an uploaded XLSX becomes a diffs-only
 // overrides JSON in Vercel Blob, merged over data/products.json at read time.
 // An empty cell in the upload reverts that field to the built-in value.
 export const PRODUCTS_BLOB_PATH = "content/product-overrides.json";
 export const PRODUCTS_REPORT_BLOB_PATH = "content/product-import-report.json";
+export const CUSTOM_PRODUCTS_BLOB_PATH = "content/custom-products.json";
 export const PRODUCTS_CACHE_TAG = "products";
+
+// The canonical exercise-position values used across the catalogue. The recommender
+// matches them by keyword (/seat/, /stand/, lying|bench), so all of these work with it.
+export const POSITION_OPTIONS = [
+  "Standing",
+  "Seated",
+  "Likely Seated",
+  "Lying / Bench",
+  "Hanging / Bodyweight",
+  "Mixed / Bodyweight",
+  "Mixed / Multiple",
+  "Not applicable",
+  "Unknown",
+];
 
 export type ProductOverride = Record<string, string | number>;
 export type ProductOverrides = Record<string, ProductOverride>;
@@ -65,6 +80,78 @@ export const productColumns: ColumnSpec[] = [
   { key: "scoreAffordability", header: "Score affordability", type: "number", get: (p) => p.scores.affordability },
   { key: "websiteUrl", header: "Website URL", type: "text", get: (p) => p.websiteUrl },
 ];
+
+// --- Admin-created products -------------------------------------------------
+// Machines added at /system/catalog/new. Stored as a compact record in Blob and
+// expanded into full Product objects at read time. They appear on line/group
+// pages and product detail pages, but NOT in the configurator (no scores/price).
+export type CustomProductRecord = {
+  code: string;
+  nameEn: string;
+  nameCs: string;
+  lineSlug: string;
+  descriptionEn: string;
+  descriptionCs: string;
+  position: string;
+  image: string; // blob URL; "" = fall back to the line photo
+  createdAt: string;
+};
+export type CustomProducts = Record<string, CustomProductRecord>;
+
+export function productSlugFor(code: string, nameEn: string) {
+  return `${code} ${nameEn}`.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
+}
+
+export function customToProduct(record: CustomProductRecord): Product {
+  const line = productLines.find((l) => l.slug === record.lineSlug);
+  return {
+    code: record.code,
+    nameEn: record.nameEn,
+    nameCs: record.nameCs || record.nameEn,
+    slug: productSlugFor(record.code, record.nameEn),
+    line: line?.nameEn ?? record.lineSlug,
+    lineCs: line?.nameCs ?? record.lineSlug,
+    lineSlug: record.lineSlug,
+    descriptionEn: record.descriptionEn,
+    descriptionCs: record.descriptionCs || record.descriptionEn,
+    muscles: "",
+    bodyFocus: "",
+    secondaryFocus: "",
+    movementPatterns: "",
+    position: record.position,
+    positionConfidence: "",
+    workoutOverlap: "",
+    workoutComplement: "",
+    versatility: "",
+    specialization: "",
+    simultaneousUsers: "",
+    footprint: null,
+    spaceEfficiency: "",
+    coverage: { upper: 0, lower: 0, core: 0, cardio: 0 },
+    scores: { variety: 0, beginner: 0, accessibility: 0, throughput: 0, space: 0, complement: 0, affordability: 0 },
+    dimensions: { length: null, width: null, height: null },
+    weightKg: null,
+    loadSpecification: "",
+    totalPlateLoadKg: null,
+    materials: { frame: "", rails: "", smallParts: "", finish: "" },
+    prices: { pcBase: null, pcDiscount: null, tcBase: null, tcDiscount: null, hdgBase: null, hdgDiscount: null },
+    websiteUrl: "",
+    image: record.image || line?.image || "",
+    categoryImage: line?.image || record.image || "",
+    detailStatus: "custom",
+    classificationConfidence: "",
+    custom: true,
+  };
+}
+
+export async function fetchCustomProductsUncached(): Promise<CustomProducts> {
+  return (await readBlobJson<CustomProducts>(CUSTOM_PRODUCTS_BLOB_PATH)) ?? {};
+}
+
+export const loadCustomProducts = unstable_cache(fetchCustomProductsUncached, ["custom-products"], {
+  tags: [PRODUCTS_CACHE_TAG],
+  revalidate: 300,
+});
 
 export async function fetchProductOverridesUncached(): Promise<ProductOverrides> {
   return (await readBlobJson<ProductOverrides>(PRODUCTS_BLOB_PATH)) ?? {};
@@ -135,8 +222,9 @@ export function applyOverride(product: Product, o: ProductOverride | undefined):
 }
 
 export async function getProducts(): Promise<Product[]> {
-  const overrides = await loadProductOverrides();
-  return baseProducts.map((product) => applyOverride(product, overrides[product.code]));
+  const [overrides, custom] = await Promise.all([loadProductOverrides(), loadCustomProducts()]);
+  const all = [...baseProducts, ...Object.values(custom).map(customToProduct)];
+  return all.map((product) => applyOverride(product, overrides[product.code]));
 }
 
 export async function getMergedProduct(lineSlug: string, productSlug: string) {

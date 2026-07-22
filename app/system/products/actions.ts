@@ -7,6 +7,8 @@ import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { writeBlobJson } from "@/lib/blob-json";
 import { products as baseProducts } from "@/lib/data";
 import {
+  customToProduct,
+  fetchCustomProductsUncached,
   productColumns,
   PRODUCTS_BLOB_PATH,
   PRODUCTS_CACHE_TAG,
@@ -73,7 +75,10 @@ export async function importProducts(formData: FormData) {
   });
   if (!codeIndex) redirect("/system/products?error=nocode");
 
-  const byCode = new Map(baseProducts.map((product) => [product.code, product]));
+  // Diffs are computed against the built-in values; for admin-created products the
+  // "built-in" is the product as created (so the template round-trips cleanly).
+  const customProducts = Object.values(await fetchCustomProductsUncached()).map(customToProduct);
+  const byCode = new Map([...baseProducts, ...customProducts].map((product) => [product.code, product]));
   const envPricelist = getPricelist();
   const overrides: ProductOverrides = {};
   const errors: string[] = [];

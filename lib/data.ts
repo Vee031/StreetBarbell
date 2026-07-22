@@ -47,6 +47,7 @@ export type Product = {
   categoryImage: string;
   detailStatus: string;
   classificationConfidence: string;
+  custom?: boolean; // true = created in /system (admin), not part of the built-in 116
 };
 
 export type ProductLine = {

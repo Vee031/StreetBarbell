@@ -126,10 +126,14 @@ export function Configurator({ locale }: { locale: Locale }) {
         case "light-line":
           triggerPulse("q-weightlifting");
           return { ...f, weightlifting: !f.weightlifting };
-        case "pro-line":
         case "plus-line":
+          // Plus is on from cost 4 up; turning it off drops back to neutral (also drops Pro).
           triggerPulse("q-cost");
           return { ...f, costUse: f.costUse >= 4 ? 3 : 4 };
+        case "pro-line":
+          // Pro is on only at cost 5 ("no limit"); turning it off keeps Plus (cost 4).
+          triggerPulse("q-cost");
+          return { ...f, costUse: f.costUse >= 5 ? 4 : 5 };
         case "workout-line":
           triggerPulse("q-bodyweight");
           return { ...f, bodyweight: !f.bodyweight };

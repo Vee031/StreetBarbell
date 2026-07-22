@@ -68,8 +68,10 @@ b. **Public ↔ Private** — labels: `Public` · `No preference` · `Private`.
 c. **Cost ↔ Use** — labels: `As cheap as possible` · `No preference` · `No limit`.
    - 1–2: prefer Light over Standard, **avoid Pro & Plus**, avoid converging/diverging machines.
    - 3: no filtering (default).
-   - 4–5: prefer Standard/Pro/Plus, **use converging/diverging** machines (MB 7.52, 7.53, 7.54,
-     7.55, 7.100).
+   - 4: adds the **Plus** line, prefers Standard/Plus + converging/diverging machines
+     (MB 7.52, 7.53, 7.54, 7.55, 7.100).
+   - 5 ("no limit"): additionally adds the **Pro** line — Pro is proposed **only** at 5
+     (owner 2026-07-22; Pro and Plus are separate, no longer one block).
 
 ## 5. Results
 
@@ -78,7 +80,7 @@ strengths, trade-off, PDF).
 
 ## Interpretation notes (flag to owner if wrong)
 
-- "Standard + Light lit by default" wins over "cost = 3 filters nothing": **Pro & Plus are
-  excluded until the cost slider ≥ 4** (or wheelchair/seated pulls Plus in). Easy to flip.
+- "Standard + Light lit by default" wins over "cost = 3 filters nothing": **Plus is excluded
+  until the cost slider ≥ 4, Pro until it is 5** (or wheelchair/seated pulls Plus in). Easy to flip.
 - "Box series" = the **Boxing line** (owner confirmed).
 - Deprioritise list above is the owner's named machines mapped to the closest codes; editable.

@@ -41,6 +41,7 @@ export default async function SystemPage({ searchParams }: { searchParams: Promi
         <div className="sys-header-actions">
           <Link href="/system/catalog">Catalogue →</Link>
           <Link href="/system/products">Products import →</Link>
+          <Link href="/system/groups">Menu &amp; groups →</Link>
           <Link href="/system/users">Team members →</Link>
           <Link href="/en" target="_blank" rel="noreferrer">Open website ↗</Link>
           <form action={logout}><button type="submit">Sign out</button></form>

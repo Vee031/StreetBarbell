@@ -9,7 +9,34 @@
 
 Everything requested so far is **built, deployed and verified live**. No half-finished work.
 
-**2026-07-22**: the configurator became **public** — the distributor access-code gate is
+**2026-07-22 (later the same day)** — five owner requests in one batch:
+
+1. **Pro/Plus separated in the generator**: Plus line joins at Cost↔Use ≥ 4, **Pro only at 5**
+   ("no limit") — `COST_PRO_THRESHOLD` in `lib/generator-rules.ts`; the Pro/Plus chips
+   toggle independently (Pro chip = cost 5 ↔ 4, Plus chip = cost 4 ↔ 3). Spec updated.
+2. **Exercise position editable** per machine in `/system/catalog/<slug>` (9 canonical
+   values, `POSITION_OPTIONS` in `lib/products-store.ts`). Saved into the same
+   `content/product-overrides.json` store the XLSX import uses, so the spreadsheet
+   template round-trips it.
+3. **Menu categories & product groups** (`/system/groups`, `lib/product-groups.ts`, blob
+   `content/product-groups.json`): admin creates categories (nav dropdowns) holding
+   product groups (pages at `/{locale}/g/<category>/<group>`) and/or link items with an
+   optional hover tooltip (`.nav-tooltip`). The built-in "Recommended configurations" nav
+   link hides itself when a category links to `/configurations` (no duplicate). Seeded
+   live: category **Recommended setups / Doporučené sestavy** → S workoutem (2 machines),
+   Bez workoutu (empty), Konfigurátor sestav → /configurations with tooltip "Vytvořte si
+   vlastní sestavu dle vlastních preferencí".
+4. **Add product** (`/system/catalog/new`): admin-created machines stored in blob
+   `content/custom-products.json`, expanded via `customToProduct()` and merged into
+   `getProducts()`. They appear in their line, product lists, detail page, groups and the
+   XLSX template (import accepts their codes; diffs computed against the created values),
+   are fully editable in the catalogue card (photos/docs/video/muscles/position/on-off,
+   plus **Delete product**, which also cleans meta/overrides/group refs) — but are
+   **excluded from the configurator** (no scores/prices; filtered in /api/recommend).
+5. Group pages & custom products render on demand (`force-dynamic`); nav data flows
+   `layout.tsx → buildGroupNav() → Header` (client) as a serializable prop.
+
+Earlier that day: the configurator became **public** — the distributor access-code gate is
 gone (`app/api/access` + `lib/server-auth.ts` deleted, `STREETBARBELL_DISTRIBUTOR_CODE`
 unused). Real prices are shown **only to signed-in team members**: per-email accounts
 managed by the admin at `/system/users`, sign-in at `/{locale}/team-login` (subtle link in
@@ -255,4 +282,6 @@ with rapid automated fetches (transient "Vercel Security Checkpoint" HTML replac
 - `c40df6f` (2026-07-21) simplified generator per GENERATOR_SPEC.md
 - `d58c73b` (2026-07-21) all generator rules consolidated into lib/generator-rules.ts
 - `ab3ecc5` (2026-07-21) generator rules batch 1: grouping, de-dup, no-bodyweight, layout
-- (2026-07-22) public configurator + team logins (/system/users, /team-login), rules batch 2
+- `a1986c3` (2026-07-22) public configurator + team logins (/system/users, /team-login), rules batch 2
+- `3dd4357` (2026-07-22) localized inquiry-email labels
+- (2026-07-22) Pro/Plus split, position editor, menu groups (/system/groups), add product (/system/catalog/new)

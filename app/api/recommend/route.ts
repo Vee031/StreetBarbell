@@ -31,7 +31,9 @@ export async function POST(request: Request) {
     const validationError = validateInput(body.input);
     if (validationError || !body.input) return NextResponse.json({ error: validationError }, { status: 400 });
     const priced = await isTeamMember();
-    const result = recommend(await attachPrices(await filterEnabled(await getProducts())), body.input, body.locale === "cs" ? "cs" : "en");
+    // Admin-created products carry no scores/prices — the generator skips them.
+    const pool = (await filterEnabled(await getProducts())).filter((p) => !p.custom);
+    const result = recommend(await attachPrices(pool), body.input, body.locale === "cs" ? "cs" : "en");
     const results = result.map((r) => ({
       ...r,
       products: r.products.map((p) => ({ ...p, priceCzk: null, prices: undefined })),

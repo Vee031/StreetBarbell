@@ -7,8 +7,8 @@ import { MuscleEditor } from "@/components/muscle-editor";
 import { detectMuscles } from "@/lib/muscles";
 import { shapeIndicesForKeys } from "@/lib/muscle-figure";
 import { effectiveMuscleShapes, fetchProductMetaUncached, isEnabled } from "@/lib/product-meta";
-import { getProducts } from "@/lib/products-store";
-import { deleteDocument, deleteGalleryImage, saveVideoAndMuscles, toggleProduct, uploadDocument, uploadGalleryImages } from "../actions";
+import { getProducts, POSITION_OPTIONS } from "@/lib/products-store";
+import { deleteCustomProduct, deleteDocument, deleteGalleryImage, savePosition, saveVideoAndMuscles, toggleProduct, uploadDocument, uploadGalleryImages } from "../actions";
 
 export const dynamic = "force-dynamic";
 
@@ -50,6 +50,14 @@ export default async function CatalogProductPage({ params, searchParams }: { par
               {enabled ? "Switch off (hide from site)" : "Switch on (show on site)"}
             </button>
           </form>
+          {product.custom && (
+            <form action={deleteCustomProduct}>
+              <input type="hidden" name="code" value={product.code} />
+              <button type="submit" className="button button-small" style={{ border: "1px solid var(--red)", color: "var(--red)", background: "transparent" }}>
+                Delete product
+              </button>
+            </form>
+          )}
         </div>
       </header>
 
@@ -116,6 +124,21 @@ export default async function CatalogProductPage({ params, searchParams }: { par
         </div>
 
         <div>
+          <section className="sys-card">
+            <div className="sys-card-head">
+              <h2>Exercise position</h2>
+              <p>How the machine is used (seated / standing / …). Shown on the product page and used by the configurator&apos;s position preference.</p>
+            </div>
+            <form action={savePosition} className="sys-upload-row">
+              <input type="hidden" name="code" value={product.code} />
+              <select name="position" defaultValue={product.position} style={{ border: "1px solid var(--line)", borderRadius: 10, padding: "10px 13px", background: "var(--bg)", fontSize: ".92rem", minWidth: 220 }}>
+                {POSITION_OPTIONS.map((option) => <option key={option} value={option}>{option}</option>)}
+                {!POSITION_OPTIONS.includes(product.position) && <option value={product.position}>{product.position}</option>}
+              </select>
+              <button type="submit" className="button button-red button-small">Save position</button>
+            </form>
+          </section>
+
           <section className="sys-card">
             <div className="sys-card-head">
               <h2>Video &amp; muscles</h2>

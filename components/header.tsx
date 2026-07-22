@@ -6,6 +6,7 @@ import { ChevronDown, Languages, Menu, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { productLines } from "@/lib/data";
 import { countNoun, nounMachines, type Locale } from "@/lib/i18n";
+import type { GroupNavCategory } from "@/lib/product-groups";
 import type { SiteTexts } from "@/lib/site-texts";
 import { teamLogout } from "@/app/[locale]/team-login/actions";
 
@@ -16,14 +17,17 @@ function switchLocale(pathname: string, locale: Locale) {
   return `/${parts.join("/")}`;
 }
 
-export function Header({ locale, d }: { locale: Locale; d: SiteTexts }) {
+type HeaderProps = { locale: Locale; d: SiteTexts; groupNav?: GroupNavCategory[]; hideConfigLink?: boolean };
+
+export function Header({ locale, d, groupNav = [], hideConfigLink = false }: HeaderProps) {
   const pathname = usePathname();
-  return <HeaderContent key={pathname} locale={locale} d={d} pathname={pathname} />;
+  return <HeaderContent key={pathname} locale={locale} d={d} groupNav={groupNav} hideConfigLink={hideConfigLink} pathname={pathname} />;
 }
 
-function HeaderContent({ locale, d, pathname }: { locale: Locale; d: SiteTexts; pathname: string }) {
+function HeaderContent({ locale, d, groupNav, hideConfigLink, pathname }: HeaderProps & { groupNav: GroupNavCategory[]; hideConfigLink: boolean; pathname: string }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [productsOpen, setProductsOpen] = useState(false);
+  const [openCategory, setOpenCategory] = useState<string | null>(null);
   const [teamEmail, setTeamEmail] = useState<string | null>(null);
   const cs = locale === "cs";
 
@@ -63,7 +67,22 @@ function HeaderContent({ locale, d, pathname }: { locale: Locale; d: SiteTexts; 
               </div>
             </div>
           </div>
-          <Link className="nav-link" href={`/${locale}/configurations`}>{d.nav.configurations}</Link>
+          {groupNav.map((category) => (
+            <div className="nav-dropdown" key={category.id} onMouseEnter={() => setOpenCategory(category.id)} onMouseLeave={() => setOpenCategory((v) => (v === category.id ? null : v))}>
+              <button className="nav-link nav-button" onClick={() => setOpenCategory((v) => (v === category.id ? null : category.id))} aria-expanded={openCategory === category.id}>
+                {category.label} <ChevronDown size={15} />
+              </button>
+              <div className={`group-menu ${openCategory === category.id ? "is-open" : ""}`}>
+                {category.items.map((item) => (
+                  <Link key={item.id} href={item.href} className="group-menu-item">
+                    <span>{item.label}</span>
+                    {item.tooltip && <span className="nav-tooltip" role="tooltip">{item.tooltip}</span>}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          ))}
+          {!hideConfigLink && <Link className="nav-link" href={`/${locale}/configurations`}>{d.nav.configurations}</Link>}
           <Link className="nav-link" href={`/${locale}/gallery`}>{d.nav.gallery}</Link>
           <Link className="nav-link" href={`/${locale}/contact`}>{d.nav.contact}</Link>
         </nav>
@@ -97,7 +116,13 @@ function HeaderContent({ locale, d, pathname }: { locale: Locale; d: SiteTexts; 
             {productLines.map((line) => <Link key={line.slug} href={`/${locale}/products/${line.slug}`}>{locale === "cs" ? line.nameCs : line.nameEn}</Link>)}
           </div>
         )}
-        <Link href={`/${locale}/configurations`}>{d.nav.configurations}</Link>
+        {groupNav.map((category) => (
+          <div className="mobile-group" key={category.id}>
+            <span className="mobile-group-label">{category.label}</span>
+            {category.items.map((item) => <Link key={item.id} href={item.href}>{item.label}</Link>)}
+          </div>
+        ))}
+        {!hideConfigLink && <Link href={`/${locale}/configurations`}>{d.nav.configurations}</Link>}
         <Link href={`/${locale}/gallery`}>{d.nav.gallery}</Link>
         <Link href={`/${locale}/contact`}>{d.nav.contact}</Link>
         <Link className="button button-red" href={`/${locale}/contact`}>{d.nav.quote}</Link>

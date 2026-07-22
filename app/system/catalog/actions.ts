@@ -8,10 +8,26 @@ import { writeBlobJson } from "@/lib/blob-json";
 import { products } from "@/lib/data";
 import { MUSCLE_SHAPES } from "@/lib/muscle-figure";
 import { fetchProductMetaUncached, META_BLOB_PATH, youtubeVideoId, type ProductMetaMap } from "@/lib/product-meta";
-import { PRODUCTS_CACHE_TAG } from "@/lib/products-store";
+import { fetchProductGroupsUncached, GROUPS_BLOB_PATH } from "@/lib/product-groups";
+import {
+  CUSTOM_PRODUCTS_BLOB_PATH,
+  fetchCustomProductsUncached,
+  fetchProductOverridesUncached,
+  POSITION_OPTIONS,
+  PRODUCTS_BLOB_PATH,
+  PRODUCTS_CACHE_TAG,
+  productSlugFor,
+  type CustomProductRecord,
+} from "@/lib/products-store";
+import { productLines } from "@/lib/data";
 
-const codeSet = new Set(products.map((product) => product.code));
-const slugByCode = new Map(products.map((product) => [product.code, product.slug]));
+// Base + admin-created codes; custom machines are editable here like any other.
+async function lookupProduct(code: string): Promise<{ code: string; slug: string; custom: boolean } | null> {
+  const base = products.find((p) => p.code === code);
+  if (base) return { code: base.code, slug: base.slug, custom: false };
+  const custom = (await fetchCustomProductsUncached())[code];
+  return custom ? { code: custom.code, slug: productSlugFor(custom.code, custom.nameEn), custom: true } : null;
+}
 
 function mediaPath(code: string, kind: "gallery" | "docs", fileName: string) {
   const safeCode = code.replace(/[^a-z0-9]+/gi, "-").toLowerCase();
@@ -24,25 +40,27 @@ async function requireAdmin() {
   if (!process.env.BLOB_READ_WRITE_TOKEN) redirect("/system/catalog?error=storage");
 }
 
-function editorPath(code: string, suffix = "") {
-  return `/system/catalog/${slugByCode.get(code)}${suffix}`;
-}
-
 async function saveMeta(meta: ProductMetaMap) {
   await writeBlobJson(META_BLOB_PATH, meta);
   updateTag(PRODUCTS_CACHE_TAG);
   revalidatePath("/", "layout");
 }
 
-function requireCode(formData: FormData): string {
+// Resolves the submitted code to {code, slug, custom} or bails to the catalogue list.
+async function requireProduct(formData: FormData) {
   const code = String(formData.get("code") ?? "").trim();
-  if (!codeSet.has(code)) redirect("/system/catalog");
-  return code;
+  const product = await lookupProduct(code);
+  if (!product) redirect("/system/catalog");
+  return product;
+}
+
+function editorPath(slug: string, suffix = "") {
+  return `/system/catalog/${slug}${suffix}`;
 }
 
 export async function toggleProduct(formData: FormData) {
   await requireAdmin();
-  const code = requireCode(formData);
+  const { code, slug } = await requireProduct(formData);
   const enable = String(formData.get("enable")) === "true";
   const meta = await fetchProductMetaUncached();
   const entry = { ...(meta[code] ?? {}) };
@@ -50,14 +68,14 @@ export async function toggleProduct(formData: FormData) {
   else entry.enabled = false;
   meta[code] = entry;
   await saveMeta(meta);
-  redirect(editorPath(code, "?saved=1"));
+  redirect(editorPath(slug, "?saved=1"));
 }
 
 export async function saveVideoAndMuscles(formData: FormData) {
   await requireAdmin();
-  const code = requireCode(formData);
+  const { code, slug } = await requireProduct(formData);
   const youtubeUrl = String(formData.get("youtubeUrl") ?? "").trim();
-  if (youtubeUrl && !youtubeVideoId(youtubeUrl)) redirect(editorPath(code, "?error=youtube"));
+  if (youtubeUrl && !youtubeVideoId(youtubeUrl)) redirect(editorPath(slug, "?error=youtube"));
   const shapes = [
     ...new Set(
       String(formData.get("muscleShapes") ?? "")
@@ -74,18 +92,38 @@ export async function saveVideoAndMuscles(formData: FormData) {
   delete entry.muscles; // superseded by the explicit per-region selection
   meta[code] = entry;
   await saveMeta(meta);
-  redirect(editorPath(code, "?saved=1"));
+  redirect(editorPath(slug, "?saved=1"));
+}
+
+export async function savePosition(formData: FormData) {
+  await requireAdmin();
+  const { code, slug } = await requireProduct(formData);
+  const position = String(formData.get("position") ?? "").trim();
+  if (position && !POSITION_OPTIONS.includes(position)) redirect(editorPath(slug));
+  // Stored in the same overrides set as the XLSX import, so the public page, the
+  // configurator and the downloaded products.xlsx template all pick it up.
+  const overrides = await fetchProductOverridesUncached();
+  const entry = { ...(overrides[code] ?? {}) };
+  const base = products.find((p) => p.code === code);
+  if (!position || position === base?.position) delete entry.position;
+  else entry.position = position;
+  if (Object.keys(entry).length === 0) delete overrides[code];
+  else overrides[code] = entry;
+  await writeBlobJson(PRODUCTS_BLOB_PATH, overrides);
+  updateTag(PRODUCTS_CACHE_TAG);
+  revalidatePath("/", "layout");
+  redirect(editorPath(slug, "?saved=1"));
 }
 
 export async function uploadGalleryImages(formData: FormData) {
   await requireAdmin();
-  const code = requireCode(formData);
+  const { code, slug } = await requireProduct(formData);
   const files = formData.getAll("images").filter((f): f is File => f instanceof File && f.size > 0);
-  if (files.length === 0) redirect(editorPath(code, "?error=nofile"));
+  if (files.length === 0) redirect(editorPath(slug, "?error=nofile"));
   const urls: string[] = [];
   for (const file of files) {
-    if (!file.type.startsWith("image/")) redirect(editorPath(code, "?error=notimage"));
-    if (file.size > 8 * 1024 * 1024) redirect(editorPath(code, "?error=toobig"));
+    if (!file.type.startsWith("image/")) redirect(editorPath(slug, "?error=notimage"));
+    if (file.size > 8 * 1024 * 1024) redirect(editorPath(slug, "?error=toobig"));
     const blob = await put(mediaPath(code, "gallery", file.name), file, {
       access: "public",
       addRandomSuffix: true,
@@ -99,12 +137,12 @@ export async function uploadGalleryImages(formData: FormData) {
   entry.gallery = [...(entry.gallery ?? []), ...urls];
   meta[code] = entry;
   await saveMeta(meta);
-  redirect(editorPath(code, "?saved=1"));
+  redirect(editorPath(slug, "?saved=1"));
 }
 
 export async function deleteGalleryImage(formData: FormData) {
   await requireAdmin();
-  const code = requireCode(formData);
+  const { code, slug } = await requireProduct(formData);
   const url = String(formData.get("url") ?? "");
   const meta = await fetchProductMetaUncached();
   const entry = { ...(meta[code] ?? {}) };
@@ -112,17 +150,17 @@ export async function deleteGalleryImage(formData: FormData) {
   meta[code] = entry;
   await saveMeta(meta);
   try { await del(url); } catch { /* blob already gone — the reference is removed either way */ }
-  redirect(editorPath(code, "?saved=1"));
+  redirect(editorPath(slug, "?saved=1"));
 }
 
 export async function uploadDocument(formData: FormData) {
   await requireAdmin();
-  const code = requireCode(formData);
+  const { code, slug } = await requireProduct(formData);
   const file = formData.get("file");
-  if (!(file instanceof File) || file.size === 0) redirect(editorPath(code, "?error=nofile"));
+  if (!(file instanceof File) || file.size === 0) redirect(editorPath(slug, "?error=nofile"));
   const isPdf = file.type === "application/pdf" || /\.pdf$/i.test(file.name);
-  if (!isPdf) redirect(editorPath(code, "?error=notpdf"));
-  if (file.size > 25 * 1024 * 1024) redirect(editorPath(code, "?error=toobig"));
+  if (!isPdf) redirect(editorPath(slug, "?error=notpdf"));
+  if (file.size > 25 * 1024 * 1024) redirect(editorPath(slug, "?error=toobig"));
   const displayName = String(formData.get("name") ?? "").trim() || file.name.replace(/\.pdf$/i, "");
   const blob = await put(mediaPath(code, "docs", file.name), file, {
     access: "public",
@@ -135,12 +173,115 @@ export async function uploadDocument(formData: FormData) {
   entry.documents = [...(entry.documents ?? []), { name: displayName, url: blob.url }];
   meta[code] = entry;
   await saveMeta(meta);
-  redirect(editorPath(code, "?saved=1"));
+  redirect(editorPath(slug, "?saved=1"));
+}
+
+// --- Admin-created products -------------------------------------------------
+
+export async function createProduct(formData: FormData) {
+  await requireAdmin();
+  const code = String(formData.get("newCode") ?? "").trim();
+  const nameEn = String(formData.get("nameEn") ?? "").trim();
+  const nameCs = String(formData.get("nameCs") ?? "").trim();
+  const lineSlug = String(formData.get("lineSlug") ?? "").trim();
+  const descriptionEn = String(formData.get("descriptionEn") ?? "").trim();
+  const descriptionCs = String(formData.get("descriptionCs") ?? "").trim();
+  const position = String(formData.get("position") ?? "").trim();
+  const group = String(formData.get("group") ?? "").trim(); // "categoryId/groupId" or ""
+
+  if (!/^[A-Za-z0-9 ./-]{2,24}$/.test(code)) redirect("/system/catalog/new?error=code");
+  if (!nameEn) redirect("/system/catalog/new?error=name");
+  if (!productLines.some((l) => l.slug === lineSlug)) redirect("/system/catalog/new?error=line");
+  if (position && !POSITION_OPTIONS.includes(position)) redirect("/system/catalog/new?error=position");
+  if (products.some((p) => p.code === code)) redirect("/system/catalog/new?error=exists");
+  const custom = await fetchCustomProductsUncached();
+  if (custom[code]) redirect("/system/catalog/new?error=exists");
+
+  // Optional main picture.
+  let image = "";
+  const file = formData.get("image");
+  if (file instanceof File && file.size > 0) {
+    if (!file.type.startsWith("image/")) redirect("/system/catalog/new?error=notimage");
+    if (file.size > 8 * 1024 * 1024) redirect("/system/catalog/new?error=toobig");
+    const blob = await put(mediaPath(code, "gallery", `main-${file.name}`), file, {
+      access: "public",
+      addRandomSuffix: true,
+      contentType: file.type,
+      abortSignal: AbortSignal.timeout(30000),
+    });
+    image = blob.url;
+  }
+
+  const record: CustomProductRecord = {
+    code,
+    nameEn,
+    nameCs: nameCs || nameEn,
+    lineSlug,
+    descriptionEn,
+    descriptionCs: descriptionCs || descriptionEn,
+    position: position || "Unknown",
+    image,
+    createdAt: new Date().toISOString(),
+  };
+  custom[code] = record;
+  await writeBlobJson(CUSTOM_PRODUCTS_BLOB_PATH, custom);
+
+  // Optional group assignment ("categoryId/groupId").
+  if (group.includes("/")) {
+    const [categoryId, groupId] = group.split("/");
+    const data = await fetchProductGroupsUncached();
+    const target = data.categories.find((c) => c.id === categoryId)?.groups.find((g) => g.id === groupId);
+    if (target && target.type === "products" && !(target.productCodes ?? []).includes(code)) {
+      target.productCodes = [...(target.productCodes ?? []), code];
+      await writeBlobJson(GROUPS_BLOB_PATH, data);
+    }
+  }
+
+  updateTag(PRODUCTS_CACHE_TAG);
+  revalidatePath("/", "layout");
+  redirect(editorPath(productSlugFor(code, nameEn), "?saved=1"));
+}
+
+export async function deleteCustomProduct(formData: FormData) {
+  await requireAdmin();
+  const { code, custom } = await requireProduct(formData);
+  if (!custom) redirect("/system/catalog"); // built-in machines can only be switched off
+
+  const customProducts = await fetchCustomProductsUncached();
+  delete customProducts[code];
+  await writeBlobJson(CUSTOM_PRODUCTS_BLOB_PATH, customProducts);
+
+  // Clean references: catalogue meta, XLSX overrides, group assignments.
+  const meta = await fetchProductMetaUncached();
+  if (meta[code]) {
+    delete meta[code];
+    await writeBlobJson(META_BLOB_PATH, meta);
+  }
+  const overrides = await fetchProductOverridesUncached();
+  if (overrides[code]) {
+    delete overrides[code];
+    await writeBlobJson(PRODUCTS_BLOB_PATH, overrides);
+  }
+  const groups = await fetchProductGroupsUncached();
+  let groupsChanged = false;
+  for (const category of groups.categories) {
+    for (const group of category.groups) {
+      if (group.productCodes?.includes(code)) {
+        group.productCodes = group.productCodes.filter((c) => c !== code);
+        groupsChanged = true;
+      }
+    }
+  }
+  if (groupsChanged) await writeBlobJson(GROUPS_BLOB_PATH, groups);
+
+  updateTag(PRODUCTS_CACHE_TAG);
+  revalidatePath("/", "layout");
+  redirect("/system/catalog?saved=1");
 }
 
 export async function deleteDocument(formData: FormData) {
   await requireAdmin();
-  const code = requireCode(formData);
+  const { code, slug } = await requireProduct(formData);
   const url = String(formData.get("url") ?? "");
   const meta = await fetchProductMetaUncached();
   const entry = { ...(meta[code] ?? {}) };
@@ -148,5 +289,5 @@ export async function deleteDocument(formData: FormData) {
   meta[code] = entry;
   await saveMeta(meta);
   try { await del(url); } catch { /* blob already gone — the reference is removed either way */ }
-  redirect(editorPath(code, "?saved=1"));
+  redirect(editorPath(slug, "?saved=1"));
 }

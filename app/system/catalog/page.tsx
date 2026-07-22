@@ -28,6 +28,8 @@ export default async function SystemCatalogPage({ searchParams }: { searchParams
         <div className="sys-header-actions">
           <Link href="/system">Site texts</Link>
           <Link href="/system/products">Bulk import</Link>
+          <Link href="/system/groups">Menu &amp; groups</Link>
+          <Link href="/system/catalog/new" className="button button-red button-small">+ Add product</Link>
         </div>
       </header>
 

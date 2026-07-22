@@ -570,3 +570,15 @@ p { color: var(--muted); line-height: 1.7; }
 .result-product-text small { color: #878b92; font-size: .65rem; display: block; }
 .result-price .price-empty { color: var(--red); font-size: 1.5rem; }
 .result-footer-actions { display: flex; gap: 10px; flex-wrap: wrap; }
+
+/* ---- admin-created nav categories (product groups) ---- */
+.group-menu { position: absolute; top: 82px; left: 50%; min-width: 250px; transform: translate(-50%, -12px); padding: 10px; display: grid; gap: 2px; background: rgba(13,16,22,.98); border: 1px solid rgba(255,255,255,.12); border-radius: 0 0 16px 16px; box-shadow: 0 26px 60px rgba(0,0,0,.4); opacity: 0; visibility: hidden; transition: opacity .2s, transform .2s, visibility .2s; }
+.group-menu.is-open { opacity: 1; visibility: visible; transform: translate(-50%, 0); }
+.group-menu-item { position: relative; display: block; padding: 12px 15px; border-radius: 10px; color: #e8eaee; font-size: .86rem; font-weight: 700; white-space: nowrap; }
+.group-menu-item:hover { background: rgba(255,255,255,.08); color: white; }
+.nav-tooltip { position: absolute; top: 50%; left: calc(100% + 12px); transform: translateY(-50%) translateX(-4px); max-width: 240px; padding: 9px 13px; background: var(--red); color: white; font-size: .74rem; font-weight: 600; line-height: 1.45; letter-spacing: .01em; border-radius: 9px; box-shadow: 0 12px 30px rgba(0,0,0,.35); white-space: normal; width: max-content; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity .18s, transform .18s, visibility .18s; z-index: 60; }
+.nav-tooltip::before { content: ""; position: absolute; top: 50%; right: 100%; transform: translateY(-50%); border: 6px solid transparent; border-right-color: var(--red); }
+.group-menu-item:hover .nav-tooltip, .group-menu-item:focus-visible .nav-tooltip { opacity: 1; visibility: visible; transform: translateY(-50%) translateX(0); }
+.mobile-group { display: grid; border-bottom: 1px solid rgba(255,255,255,.1); padding: 10px 0; }
+.mobile-group-label { padding: 5px 4px; color: #7e8490; font-size: .7rem; font-weight: 800; text-transform: uppercase; letter-spacing: .09em; }
+.mobile-group a { padding: 11px 4px 11px 15px; color: #e8eaee; font-weight: 700; font-size: .9rem; }

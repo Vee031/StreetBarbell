@@ -29,10 +29,14 @@ export const FALLBACK_EXCHANGE_RATE = 25; // used until the CNB rate loads / if 
 export const SPACE_PER_MACHINE_M2 = 6; // soft preference: setups above space/6 machines are penalised
 
 // --- Which product lines each answer enables -------------------------------
-// Weightlifting = Yes turns on the base lines; the two "premium" lines only join
-// when the Cost↔Use slider reaches COST_PREMIUM_THRESHOLD ("no limit" end).
+// Weightlifting = Yes turns on the base lines. The premium lines join separately
+// (owner 2026-07-22): Plus from COST_PREMIUM_THRESHOLD (4–5), Pro ONLY at
+// COST_PRO_THRESHOLD (5, "no limit").
 export const WEIGHTLIFTING_BASE_LINES = ["standard-line", "light-line"];
-export const WEIGHTLIFTING_PREMIUM_LINES = ["pro-line", "plus-line"];
+export const WEIGHTLIFTING_PLUS_LINES = ["plus-line"];
+export const WEIGHTLIFTING_PRO_LINES = ["pro-line"];
+// Both premium lines together — used by scoring and the seated filter.
+export const WEIGHTLIFTING_PREMIUM_LINES = [...WEIGHTLIFTING_PRO_LINES, ...WEIGHTLIFTING_PLUS_LINES];
 export const BODYWEIGHT_LINES = ["workout-line"];
 export const CARDIO_STRETCHING_LINES = ["cardio-line", "gymnastics-line"];
 export const KIDS_LINES = ["kids-line"];
@@ -105,7 +109,8 @@ export function exerciseFamily(code: string, nameEn: string, effectiveLine: stri
 
 // --- Slider thresholds (1..5, 3 = neutral) ---------------------------------
 export const COST_CHEAP_MAX = 2; // 1–2 = "as cheap as possible" band (avoid Pro/Plus + conv/div)
-export const COST_PREMIUM_THRESHOLD = 4; // 4–5 = "no limit" band (add Pro/Plus, prefer conv/div)
+export const COST_PREMIUM_THRESHOLD = 4; // 4–5 adds the Plus line (and prefers conv/div)
+export const COST_PRO_THRESHOLD = 5; // ONLY 5 ("no limit") adds the Pro line
 export const PUBLIC_MAX = 2; // 1–2 = "public" band (avoid dumbbells + boxing)
 
 // --- Slider end/middle labels ----------------------------------------------
@@ -133,7 +138,8 @@ export function deriveLines(s: LineSelectionInput): string[] {
   const set = new Set<string>();
   if (s.weightlifting) {
     WEIGHTLIFTING_BASE_LINES.forEach((l) => set.add(l));
-    if (s.costUse >= COST_PREMIUM_THRESHOLD) WEIGHTLIFTING_PREMIUM_LINES.forEach((l) => set.add(l));
+    if (s.costUse >= COST_PREMIUM_THRESHOLD) WEIGHTLIFTING_PLUS_LINES.forEach((l) => set.add(l));
+    if (s.costUse >= COST_PRO_THRESHOLD) WEIGHTLIFTING_PRO_LINES.forEach((l) => set.add(l));
   }
   if (s.bodyweight && !s.existingWorkout) BODYWEIGHT_LINES.forEach((l) => set.add(l));
   if (s.cardioStretching) CARDIO_STRETCHING_LINES.forEach((l) => set.add(l));
