@@ -115,6 +115,27 @@ export async function savePosition(formData: FormData) {
   redirect(editorPath(slug, "?saved=1"));
 }
 
+export async function saveLine(formData: FormData) {
+  await requireAdmin();
+  const { code, slug } = await requireProduct(formData);
+  const lineSlug = String(formData.get("lineSlug") ?? "").trim();
+  if (!productLines.some((l) => l.slug === lineSlug)) redirect(editorPath(slug));
+  // Same overrides store as the XLSX import ("Line" column) — moving a machine
+  // here re-homes it on the website, in product lists and in the configurator.
+  const overrides = await fetchProductOverridesUncached();
+  const entry = { ...(overrides[code] ?? {}) };
+  const custom = (await fetchCustomProductsUncached())[code];
+  const baseLine = custom?.lineSlug ?? products.find((p) => p.code === code)?.lineSlug;
+  if (lineSlug === baseLine) delete entry.lineSlug;
+  else entry.lineSlug = lineSlug;
+  if (Object.keys(entry).length === 0) delete overrides[code];
+  else overrides[code] = entry;
+  await writeBlobJson(PRODUCTS_BLOB_PATH, overrides);
+  updateTag(PRODUCTS_CACHE_TAG);
+  revalidatePath("/", "layout");
+  redirect(editorPath(slug, "?saved=1"));
+}
+
 export async function uploadGalleryImages(formData: FormData) {
   await requireAdmin();
   const { code, slug } = await requireProduct(formData);

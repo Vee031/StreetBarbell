@@ -73,12 +73,15 @@ function HeaderContent({ locale, d, groupNav, hideConfigLink, pathname }: Header
                 {category.label} <ChevronDown size={15} />
               </button>
               <div className={`group-menu ${openCategory === category.id ? "is-open" : ""}`}>
-                {category.items.map((item) => (
-                  <Link key={item.id} href={item.href} className="group-menu-item">
-                    <span>{item.label}</span>
-                    {item.tooltip && <span className="nav-tooltip" role="tooltip">{item.tooltip}</span>}
-                  </Link>
-                ))}
+                <div className="group-menu-grid">
+                  {category.items.map((item) => (
+                    <Link key={item.id} href={item.href} className="mega-item group-menu-item">
+                      <span>{item.label}</span>
+                      <small>{item.subtitle}</small>
+                      {item.tooltip && <span className="nav-tooltip" role="tooltip">{item.tooltip}</span>}
+                    </Link>
+                  ))}
+                </div>
               </div>
             </div>
           ))}

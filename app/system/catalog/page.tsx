@@ -21,14 +21,15 @@ export default async function SystemCatalogPage({ searchParams }: { searchParams
         <div>
           <h1>Catalogue</h1>
           <p>
-            Every machine has its own card: switch it on or off, upload photos and PDF documents, set the
-            YouTube video and the highlighted muscles. {disabledCount > 0 ? `${disabledCount} machine(s) are currently switched off.` : "All machines are currently visible."}
+            Overview of all products including admin-created combinations. Every machine has its own card:
+            category, position, on/off, photos, PDF documents, YouTube video and the highlighted muscles.
+            {" "}{disabledCount > 0 ? `${disabledCount} machine(s) are currently switched off.` : "All machines are currently visible."}
           </p>
         </div>
         <div className="sys-header-actions">
           <Link href="/system">Site texts</Link>
           <Link href="/system/products">Bulk import</Link>
-          <Link href="/system/groups">Menu &amp; groups</Link>
+          <Link href="/system/groups">Website management</Link>
           <Link href="/system/catalog/new" className="button button-red button-small">+ Add product</Link>
         </div>
       </header>
@@ -47,6 +48,7 @@ export default async function SystemCatalogPage({ searchParams }: { searchParams
                 return (
                   <Link key={product.code} href={`/system/catalog/${product.slug}`} className={enabled ? "cat-card" : "cat-card is-off"}>
                     <span className={enabled ? "cat-badge" : "cat-badge off"}>{enabled ? "On" : "Off"}</span>
+                    {product.custom && <span className="cat-badge custom">Custom</span>}
                     <div className="cat-card-image">
                       <Image src={product.image || product.categoryImage} alt={getProductName(product)} fill sizes="220px" />
                     </div>

@@ -2,13 +2,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
-import { getProductName } from "@/lib/data";
+import { getProductName, productLines } from "@/lib/data";
 import { MuscleEditor } from "@/components/muscle-editor";
 import { detectMuscles } from "@/lib/muscles";
 import { shapeIndicesForKeys } from "@/lib/muscle-figure";
 import { effectiveMuscleShapes, fetchProductMetaUncached, isEnabled } from "@/lib/product-meta";
 import { getProducts, POSITION_OPTIONS } from "@/lib/products-store";
-import { deleteCustomProduct, deleteDocument, deleteGalleryImage, savePosition, saveVideoAndMuscles, toggleProduct, uploadDocument, uploadGalleryImages } from "../actions";
+import { deleteCustomProduct, deleteDocument, deleteGalleryImage, saveLine, savePosition, saveVideoAndMuscles, toggleProduct, uploadDocument, uploadGalleryImages } from "../actions";
 
 export const dynamic = "force-dynamic";
 
@@ -124,6 +124,20 @@ export default async function CatalogProductPage({ params, searchParams }: { par
         </div>
 
         <div>
+          <section className="sys-card">
+            <div className="sys-card-head">
+              <h2>Category (product line)</h2>
+              <p>The line this machine belongs to — currently <strong>{product.line}</strong>. Changing it moves the machine&apos;s page, product lists and configurator line filtering.</p>
+            </div>
+            <form action={saveLine} className="sys-upload-row">
+              <input type="hidden" name="code" value={product.code} />
+              <select name="lineSlug" defaultValue={product.lineSlug} style={{ border: "1px solid var(--line)", borderRadius: 10, padding: "10px 13px", background: "var(--bg)", fontSize: ".92rem", minWidth: 220 }}>
+                {productLines.map((line) => <option key={line.slug} value={line.slug}>{line.nameEn}</option>)}
+              </select>
+              <button type="submit" className="button button-red button-small">Save category</button>
+            </form>
+          </section>
+
           <section className="sys-card">
             <div className="sys-card-head">
               <h2>Exercise position</h2>

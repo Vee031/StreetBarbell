@@ -16,7 +16,10 @@ export type ProductGroup = {
   href?: string; // link type: site-relative path without locale, e.g. "/configurations"
   tooltipEn?: string;
   tooltipCs?: string;
+  subtitleEn?: string; // link type: small text under the label in the menu card (e.g. "Infinity combinations")
+  subtitleCs?: string;
   productCodes?: string[]; // products type: assigned machines, in display order
+  active?: boolean; // default true; false = hidden from the menu (page 404s), kept in admin
 };
 
 export type GroupCategory = {
@@ -24,7 +27,10 @@ export type GroupCategory = {
   labelEn: string;
   labelCs: string;
   groups: ProductGroup[];
+  active?: boolean; // default true; false = whole dropdown hidden from the menu
 };
+
+export const isActive = (item: { active?: boolean }) => item.active !== false;
 
 export type ProductGroupsData = { categories: GroupCategory[] };
 
@@ -50,31 +56,49 @@ export const loadProductGroups = unstable_cache(fetchProductGroupsUncached, ["pr
 });
 
 // The serializable shape the (client) header needs: locale already applied.
+// Cards mirror the Products mega menu: label + a small subtitle line
+// (product groups: "<n> combinations"; link items: their configured subtitle).
 export type GroupNavCategory = {
   id: string;
   label: string;
-  items: { id: string; label: string; href: string; tooltip?: string }[];
+  items: { id: string; label: string; subtitle: string; href: string; tooltip?: string }[];
 };
 
-export function buildGroupNav(data: ProductGroupsData, locale: "en" | "cs"): GroupNavCategory[] {
+const nounCombinations = { en: ["combination", "combinations"] as [string, string], cs: ["kombinace", "kombinace", "kombinací"] as [string, string, string] };
+
+function combinationsLabel(count: number, cs: boolean) {
+  if (cs) return `${count} ${count === 1 ? nounCombinations.cs[0] : count >= 2 && count <= 4 ? nounCombinations.cs[1] : nounCombinations.cs[2]}`;
+  return `${count} ${count === 1 ? nounCombinations.en[0] : nounCombinations.en[1]}`;
+}
+
+// enabledCodes: codes of products currently visible on the site — used for the
+// per-group counts shown in the menu cards.
+export function buildGroupNav(data: ProductGroupsData, locale: "en" | "cs", enabledCodes: Set<string>): GroupNavCategory[] {
   const cs = locale === "cs";
-  return data.categories.map((category) => ({
+  return data.categories.filter(isActive).map((category) => ({
     id: category.id,
     label: cs ? category.labelCs || category.labelEn : category.labelEn,
-    items: category.groups.map((group) => ({
-      id: group.id,
-      label: cs ? group.labelCs || group.labelEn : group.labelEn,
-      href:
-        group.type === "link"
-          ? `/${locale}${group.href ?? "/"}`
-          : `/${locale}/g/${category.id}/${group.id}`,
-      tooltip: (cs ? group.tooltipCs || group.tooltipEn : group.tooltipEn) || undefined,
-    })),
+    items: category.groups.filter(isActive).map((group) => {
+      const count = (group.productCodes ?? []).filter((code) => enabledCodes.has(code)).length;
+      return {
+        id: group.id,
+        label: cs ? group.labelCs || group.labelEn : group.labelEn,
+        subtitle:
+          group.type === "link"
+            ? (cs ? group.subtitleCs || group.subtitleEn : group.subtitleEn) || ""
+            : combinationsLabel(count, cs),
+        href:
+          group.type === "link"
+            ? `/${locale}${group.href ?? "/"}`
+            : `/${locale}/g/${category.id}/${group.id}`,
+        tooltip: (cs ? group.tooltipCs || group.tooltipEn : group.tooltipEn) || undefined,
+      };
+    }),
   }));
 }
 
 // The built-in "Recommended configurations" nav link hides itself when an
-// admin category already links to the configurator (avoids a duplicate entry).
+// active admin category already links to the configurator (avoids a duplicate entry).
 export function categoriesLinkToConfigurator(data: ProductGroupsData) {
-  return data.categories.some((category) => category.groups.some((group) => group.type === "link" && group.href === "/configurations"));
+  return data.categories.filter(isActive).some((category) => category.groups.filter(isActive).some((group) => group.type === "link" && group.href === "/configurations"));
 }

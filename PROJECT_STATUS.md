@@ -9,7 +9,25 @@
 
 Everything requested so far is **built, deployed and verified live**. No half-finished work.
 
-**2026-07-22 (later the same day)** — five owner requests in one batch:
+**2026-07-22 (third batch — admin restyle + line moves + menu unify):**
+
+1. `/system/groups` is now **"Website management"** styled after the owner's RVL13 admin
+   (system.rvl13.com "Menu a stránky"): hierarchical table (name / status pill / level /
+   actions) showing built-in Products→lines (read-only, products managed in Catalogue) plus
+   the custom categories & groups with **Aktivní/Neaktivní toggles** (inactive = hidden from
+   the menu, page 404s, data kept), **↑/↓ reorder**, delete, inline product selection, and
+   link items with menu-card **subtitle** fields (subtitleEn/Cs) on top of the tooltip.
+2. **Category (line) change per product**: catalog card has a "Category (product line)"
+   dropdown (plus a "Line" column in the XLSX template) — writes `lineSlug` into the
+   overrides store; `applyOverride` re-homes line/lineCs/lineSlug. **MB 7.47 Multi Workout
+   Station was moved Standard→Workout live** (owner's example; matches the generator's
+   internal PRODUCT_LINE_OVERRIDES rule).
+3. **Front-end menu unified**: category dropdowns render the same card design as the
+   Products mega menu (`.mega-item` reused) — label + subtitle ("N kombinací/combinations"
+   for product groups, configured subtitle for links, e.g. "Nekonečno kombinací" on the
+   configurator card). Seeded order now: Bez workoutu · S workoutem · Konfigurátor sestav.
+
+**2026-07-22 (second batch)** — five owner requests:
 
 1. **Pro/Plus separated in the generator**: Plus line joins at Cost↔Use ≥ 4, **Pro only at 5**
    ("no limit") — `COST_PRO_THRESHOLD` in `lib/generator-rules.ts`; the Pro/Plus chips

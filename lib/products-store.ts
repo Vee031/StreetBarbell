@@ -46,6 +46,7 @@ export type ColumnSpec = {
 // Flat column model for the spreadsheet; nested fields get explicit keys.
 export const productColumns: ColumnSpec[] = [
   { key: "priceCzk", header: "Price CZK excl. VAT", type: "number", get: () => null }, // filled from pricelist at template time
+  { key: "lineSlug", header: "Line", type: "text", get: (p) => p.lineSlug }, // move a machine between lines (valid slugs only)
   { key: "nameEn", header: "Name EN", type: "text", get: (p) => p.nameEn },
   { key: "nameCs", header: "Name CS", type: "text", get: (p) => p.nameCs },
   { key: "descriptionEn", header: "Description EN", type: "text", get: (p) => p.descriptionEn },
@@ -175,8 +176,11 @@ function asNumber(value: string | number | undefined, fallback: number | null) {
 
 export function applyOverride(product: Product, o: ProductOverride | undefined): Product {
   if (!o) return product;
+  // Category (line) move: only valid line slugs apply; names follow the new line.
+  const movedLine = typeof o.lineSlug === "string" ? productLines.find((l) => l.slug === o.lineSlug) : undefined;
   return {
     ...product,
+    ...(movedLine ? { lineSlug: movedLine.slug, line: movedLine.nameEn, lineCs: movedLine.nameCs } : {}),
     nameEn: asText(o.nameEn, product.nameEn),
     nameCs: asText(o.nameCs, product.nameCs),
     descriptionEn: asText(o.descriptionEn, product.descriptionEn),

@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { ArrowLeft } from "lucide-react";
 import { ProductCard } from "@/components/product-card";
 import { filterEnabled } from "@/lib/product-meta";
-import { loadProductGroups } from "@/lib/product-groups";
+import { isActive, loadProductGroups } from "@/lib/product-groups";
 import { getProducts } from "@/lib/products-store";
 import { countNoun, isLocale, nounMachines, type Locale } from "@/lib/i18n";
 import { getSiteTexts } from "@/lib/site-texts";
@@ -19,7 +19,7 @@ export default async function ProductGroupPage({ params }: { params: Promise<{ l
   const [d, groupsData] = await Promise.all([getSiteTexts(locale), loadProductGroups()]);
   const category = groupsData.categories.find((c) => c.id === categoryId);
   const group = category?.groups.find((g) => g.id === groupId && g.type === "products");
-  if (!category || !group) notFound();
+  if (!category || !group || !isActive(category) || !isActive(group)) notFound();
 
   const codes = group.productCodes ?? [];
   const all = await filterEnabled(await getProducts());
