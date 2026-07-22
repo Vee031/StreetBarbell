@@ -1,9 +1,10 @@
 "use client";
 
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { jsPDF } from "jspdf";
-import { ArrowRight, Check, Download, Info, RotateCcw, Sparkles } from "lucide-react";
+import { ArrowRight, Check, Download, Info, Mail, RotateCcw, Sparkles } from "lucide-react";
 import { getProductName } from "@/lib/data";
 import { pdfFontBold, pdfFontNormal } from "@/lib/pdf-font";
 import type { CombinationResult, ConfigInput, MetricKey, PositionPreference, PrimaryFocus } from "@/lib/recommender";
@@ -11,7 +12,7 @@ import { DEFAULT_BUDGET_CZK, FALLBACK_EXCHANGE_RATE, LINES, deriveLines, sliderL
 import { countNoun, nounMachines, type Locale } from "@/lib/i18n";
 
 type FormState = {
-  budgetCzk: number;
+  budgetCzk: number | "";
   exchangeRate: number;
   machineCount: "auto" | number;
   spaceA: number | "";
@@ -88,14 +89,11 @@ export function Configurator({ locale }: { locale: Locale }) {
   const [pulse, setPulse] = useState<string>("");
   const [resultsVisible, setResultsVisible] = useState(false);
   const [results, setResults] = useState<CombinationResult[]>([]);
-  const [accessState, setAccessState] = useState<"loading" | "locked" | "ready">("loading");
-  const [accessCode, setAccessCode] = useState("");
-  const [accessError, setAccessError] = useState("");
+  const [resultsPriced, setResultsPriced] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState("");
 
   useEffect(() => {
-    fetch("/api/access").then((r) => r.json()).then((d) => setAccessState(d.authenticated ? "ready" : "locked")).catch(() => setAccessState("locked"));
     fetch("/api/exchange-rate")
       .then((r) => r.json())
       .then((d) => {
@@ -168,7 +166,7 @@ export function Configurator({ locale }: { locale: Locale }) {
     setIsGenerating(true);
     setGenerationError("");
     const input: ConfigInput = {
-      budgetCzk: form.budgetCzk,
+      budgetCzk: typeof form.budgetCzk === "number" ? form.budgetCzk : 0, // 0 = left blank
       exchangeRate: form.exchangeRate,
       machineCount: form.machineCount,
       availableSpace: typeof form.availableSpace === "number" ? form.availableSpace : 0,
@@ -188,6 +186,7 @@ export function Configurator({ locale }: { locale: Locale }) {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || "Recommendation failed.");
       setResults(data.results as CombinationResult[]);
+      setResultsPriced(Boolean(data.priced));
       setResultsVisible(true);
       setStep(4);
       setTimeout(() => document.getElementById("configuration-results")?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
@@ -196,15 +195,6 @@ export function Configurator({ locale }: { locale: Locale }) {
     } finally {
       setIsGenerating(false);
     }
-  };
-
-  const unlock = async (event: FormEvent) => {
-    event.preventDefault();
-    setAccessError("");
-    const response = await fetch("/api/access", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ code: accessCode }) });
-    const data = await response.json();
-    if (!response.ok) { setAccessError(data.error || (cs ? "Neplatný přístupový kód." : "Invalid access code.")); return; }
-    setAccessState("ready");
   };
 
   const downloadPdf = (resultIndex: number) => {
@@ -235,19 +225,27 @@ export function Configurator({ locale }: { locale: Locale }) {
 
   const reset = () => { setForm({ ...DEFAULTS, exchangeRate: form.exchangeRate }); setResultsVisible(false); setResults([]); setStep(1); };
 
-  if (accessState === "loading") return <div className="config-access loading"><span className="eyebrow">Street Barbell Distributor Tool</span><h2>{cs ? "Ověřuji přístup…" : "Checking access…"}</h2></div>;
+  const budgetNum = typeof form.budgetCzk === "number" && form.budgetCzk > 0 ? form.budgetCzk : null;
 
-  if (accessState === "locked") return (
-    <div className="config-access">
-      <div className="access-icon"><Sparkles size={28} /></div>
-      <span className="eyebrow">Street Barbell Distributor Tool</span>
-      <h2>{cs ? "Konfigurátor je určen distributorům" : "Distributor access required"}</h2>
-      <p>{cs ? "Zadejte přístupový kód. Ceny a obchodní logika zůstávají mimo veřejný GitHub repozitář." : "Enter your access code. Pricing and commercial logic remain protected from the public GitHub repository."}</p>
-      <form onSubmit={unlock}><input type="password" value={accessCode} onChange={(e) => setAccessCode(e.target.value)} placeholder={cs ? "Přístupový kód" : "Access code"} autoFocus /><button className="button button-red" type="submit">{cs ? "Odemknout konfigurátor" : "Unlock configurator"}<ArrowRight size={18} /></button></form>
-      {accessError && <p className="access-error">{accessError}</p>}
-      <small>{cs ? "Přístupový kód poskytuje exportní tým RVL13." : "Access codes are provided by the RVL13 export team."}</small>
-    </div>
-  );
+  // #8 — "Nezávazná poptávka": open the distributor's own mail app to export@rvl13.com
+  // prefilled with the chosen machines and the full brief (so the team can advise alternatives).
+  const inquiryHref = (result: CombinationResult) => {
+    const machines = result.products.map((p, i) => `${i + 1}. ${p.code} — ${getProductName(p)}`).join("\n");
+    const params = [
+      `${cs ? "Rozpočet" : "Budget"}: ${budgetNum ? `${budgetNum.toLocaleString()} CZK` : cs ? "nevyplněno" : "not filled in"}`,
+      `${cs ? "Prostor" : "Space"}: ${typeof form.availableSpace === "number" ? `${form.availableSpace} m²` : cs ? "individuální" : "individual"}`,
+      `${cs ? "Počet strojů" : "Machine count"}: ${form.machineCount === "auto" ? (cs ? "automaticky" : "auto") : form.machineCount}`,
+      `${cs ? "Zaměření" : "Focus"}: ${form.primaryFocus}`,
+      `${cs ? "Poloha" : "Position"}: ${form.position}`,
+      `${cs ? "Řady" : "Lines"}: ${includedLines.join(", ")}`,
+      `${cs ? "Priority (1–5)" : "Priorities (1–5)"}: ${form.balanceSpecialised} / ${form.publicPrivate} / ${form.costUse}`,
+    ].join("\n");
+    const subject = cs ? "Nezávazná poptávka — sestava Street Barbell" : "Non-binding inquiry — Street Barbell setup";
+    const intro = cs ? "Dobrý den,\n\nmám zájem o tuto sestavu z konfigurátoru:" : "Hello,\n\nI'm interested in this setup from the configurator:";
+    const closing = cs ? "Prosím o cenovou nabídku, případně doporučení alternativ." : "Please send a price quote or alternative recommendations.";
+    const body = `${intro}\n\n${machines}\n\n${cs ? "Zadané parametry" : "Entered parameters"}:\n${params}\n\n${closing}`;
+    return `mailto:export@rvl13.com?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+  };
 
   return (
     <div className="configurator-shell">
@@ -267,7 +265,7 @@ export function Configurator({ locale }: { locale: Locale }) {
       <section className={step === 1 ? "config-step active" : "config-step"}>
         <div className="config-step-heading"><span>01</span><div><h2>{cs ? "Rozpočet a prostor" : "Budget and space"}</h2><p>{cs ? "Rozpočet je pevný filtr. Pokud zvolíte počet strojů, rozpočet se ignoruje." : "Budget is a hard filter. If you choose a machine count, the budget is ignored."}</p></div></div>
         <div className="field-grid three-columns">
-          <label><span>{cs ? "Celkový rozpočet (CZK)" : "Total budget (CZK)"}</span><input type="number" min="10000" step="10000" value={form.budgetCzk} disabled={form.machineCount !== "auto"} onChange={(e) => update("budgetCzk", Number(e.target.value))} /></label>
+          <label><span>{cs ? "Celkový rozpočet (CZK)" : "Total budget (CZK)"}</span><input type="number" min="0" step="10000" placeholder={cs ? "nevyplněno" : "not filled in"} value={form.budgetCzk} disabled={form.machineCount !== "auto"} onChange={(e) => update("budgetCzk", numOrBlank(e.target.value))} /></label>
           <label><span>{cs ? "Kurz CZK / EUR (ČNB)" : "CZK / EUR rate (CNB)"}</span><input type="number" min="1" step="0.001" value={form.exchangeRate} onChange={(e) => { update("exchangeRate", Number(e.target.value)); setRateSource("manual"); }} /></label>
           <label><span>{cs ? "Počet strojů" : "Machine count"}</span><select value={form.machineCount} onChange={(e) => update("machineCount", e.target.value === "auto" ? "auto" : Number(e.target.value))}><option value="auto">{cs ? "Automaticky (dle rozpočtu)" : "Auto (from budget)"}</option>{[1, 2, 3, 4, 5, 6].map((n) => <option value={n} key={n}>{n}</option>)}</select></label>
         </div>
@@ -320,12 +318,34 @@ export function Configurator({ locale }: { locale: Locale }) {
               <article className="result-card" key={result.id}>
                 <div className="result-rank"><span>#{index + 1}</span><strong>{result.score.toFixed(1)}</strong><small>/ 10</small></div>
                 <div className="result-content">
-                  <div className="result-title-row"><div><small>{result.products.length} {countNoun(result.products.length, locale, nounMachines)}</small><h3>{result.products.map((p) => getProductName(p)).join(" + ")}</h3></div><div className="result-price"><small>{cs ? "Odhad ceny" : "Estimated price"}</small><strong>{Math.round(result.totalCzk).toLocaleString()} CZK</strong><span>≈ €{Math.round(result.totalEur).toLocaleString()}</span></div></div>
+                  <div className="result-title-row">
+                    <div><small>{result.products.length} {countNoun(result.products.length, locale, nounMachines)}</small><h3>{result.products.map((p) => getProductName(p)).join(" + ")}</h3></div>
+                    <div className="result-price">
+                      {resultsPriced ? (
+                        <><small>{cs ? "Odhad ceny" : "Estimated price"}</small><strong>{Math.round(result.totalCzk).toLocaleString()} CZK</strong><span>≈ €{Math.round(result.totalEur).toLocaleString()}</span></>
+                      ) : budgetNum ? (
+                        <><small>{cs ? "POD" : "UNDER"}</small><strong>{budgetNum.toLocaleString()} CZK</strong></>
+                      ) : (
+                        <><small>{cs ? "POD" : "UNDER"}</small><strong className="price-empty">{cs ? "NEVYPLNĚNO" : "NOT FILLED IN"}</strong><span>{cs ? "Doplňte v prvním kroku" : "Fill in the first step"}</span></>
+                      )}
+                    </div>
+                  </div>
                   <p className="result-purpose">{result.purpose}</p>
-                  <div className="result-products">{result.products.map((product) => <Link key={product.code} href={`/${locale}/products/${product.lineSlug}/${product.slug}`}><span>{product.code}</span><strong>{getProductName(product)}</strong><small>{product.bodyFocus}</small></Link>)}</div>
+                  <div className="result-products">{result.products.map((product) => (
+                    <Link key={product.code} href={`/${locale}/products/${product.lineSlug}/${product.slug}`} className="result-product">
+                      <span className="result-thumb"><Image src={product.image || product.categoryImage} alt="" fill sizes="80px" /></span>
+                      <span className="result-product-text"><span>{product.code}</span><strong>{getProductName(product)}</strong><small>{product.bodyFocus}</small></span>
+                    </Link>
+                  ))}</div>
                   <div className="metric-bars">{(Object.entries(result.metrics) as [MetricKey, number][]).map(([key, value]) => <div key={key}><span>{metricLabels[locale][key]}</span><i><b style={{ width: `${value * 10}%` }} /></i><strong>{value.toFixed(1)}</strong></div>)}</div>
                   <div className="result-notes"><div>{result.strengths.map((strength) => <p key={strength}><Check size={16} /> {strength}</p>)}</div><p className="weakness"><Info size={16} /> {result.weakness}</p></div>
-                  <div className="result-footer"><span>{result.footprint ? `${cs ? "Přibližná plocha strojů" : "Approx. machine footprint"}: ${result.footprint.toFixed(1)} m²` : (cs ? "Pro část strojů chybí rozměrová data." : "Some machine footprint data is unavailable.")}</span><button className="button button-dark button-small" onClick={() => downloadPdf(index)}><Download size={17} /> PDF</button></div>
+                  <div className="result-footer">
+                    <span>{result.footprint ? `${cs ? "Přibližná plocha strojů" : "Approx. machine footprint"}: ${result.footprint.toFixed(1)} m²` : (cs ? "Pro část strojů chybí rozměrová data." : "Some machine footprint data is unavailable.")}</span>
+                    <div className="result-footer-actions">
+                      <a className="button button-red button-small" href={inquiryHref(result)}><Mail size={16} /> {cs ? "Nezávazná poptávka" : "Request a quote"}</a>
+                      {resultsPriced && <button className="button button-dark button-small" onClick={() => downloadPdf(index)}><Download size={17} /> PDF</button>}
+                    </div>
+                  </div>
                 </div>
               </article>
             ))}

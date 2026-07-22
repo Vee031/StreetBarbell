@@ -76,7 +76,18 @@ export const DEPRIORITIZE_WHEN_WORKOUT_CODES = ["MB 7.38", "MB 7.55", "MB 7.47",
 // The family is derived from the machine name by stripping variant words below.
 // Workout-line structures (ladders, bars…) are left un-deduped — a park can hold
 // several. FAMILY_OVERRIDES pins any name the auto-rule gets wrong (code -> family).
-export const FAMILY_OVERRIDES: Record<string, string> = {};
+export const FAMILY_OVERRIDES: Record<string, string> = {
+  // Vertical Press and Shoulder Press are the same movement (owner 2026-07-21).
+  "MB 7.29": "shoulder press", // Vertical Press
+  "MB 7.54": "shoulder press", // Convergent Vertical Press
+  "MB 7.63": "shoulder press", // Shoulder Press (Light)
+  "MB 7.29.3": "shoulder press", // Shoulder Press (Plus)
+  // Lat Pull and Lat Pulldown stay separate — different muscle groups (owner 2026-07-21).
+};
+
+// Premium "converging/diverging" variants are the best version and are preferred as
+// the family's pick from neutral cost upward; only the cheap band drops them for Light.
+export const PREFER_PREMIUM_FROM_NEUTRAL = true;
 const FAMILY_STRIP =
   /\b(light|heavy|version|wch|roofless|roof|assisted|converging|convergent|diverging|divergent|reverse|seated|standing|flat|incline|inclined|adjustable|outdoor|machine|combined|combination|start|variable|load|leverage|type [a-h]|for kids|kids)\b/g;
 

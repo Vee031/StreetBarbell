@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { ChevronDown, Languages, Menu, X } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { productLines } from "@/lib/data";
 import { countNoun, nounMachines, type Locale } from "@/lib/i18n";
 import type { SiteTexts } from "@/lib/site-texts";
+import { teamLogout } from "@/app/[locale]/team-login/actions";
 
 function switchLocale(pathname: string, locale: Locale) {
   const parts = pathname.split("/").filter(Boolean);
@@ -23,6 +24,14 @@ export function Header({ locale, d }: { locale: Locale; d: SiteTexts }) {
 function HeaderContent({ locale, d, pathname }: { locale: Locale; d: SiteTexts; pathname: string }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [productsOpen, setProductsOpen] = useState(false);
+  const [teamEmail, setTeamEmail] = useState<string | null>(null);
+  const cs = locale === "cs";
+
+  useEffect(() => {
+    let active = true;
+    fetch("/api/team-status").then((r) => r.json()).then((data) => { if (active) setTeamEmail(data.email ?? null); }).catch(() => {});
+    return () => { active = false; };
+  }, [pathname]);
 
   return (
     <header className="site-header">
@@ -60,6 +69,11 @@ function HeaderContent({ locale, d, pathname }: { locale: Locale; d: SiteTexts; 
         </nav>
 
         <div className="header-actions">
+          {teamEmail ? (
+            <form action={teamLogout} className="team-signin"><input type="hidden" name="locale" value={locale} /><button type="submit" title={teamEmail}>{cs ? "Odhlásit" : "Sign out"}</button></form>
+          ) : (
+            <Link className="team-signin" href={`/${locale}/team-login`}>{cs ? "Přihlášení týmu" : "Team sign in"}</Link>
+          )}
           <div className="language-switch" aria-label="Language switcher">
             <Languages size={16} />
             <Link className={locale === "en" ? "active" : ""} href={switchLocale(pathname, "en")}>EN</Link>

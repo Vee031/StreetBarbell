@@ -8,6 +8,7 @@ import {
   EXISTING_WORKOUT_EXCLUDE_LINES,
   MAX_OTHER_SHARE,
   PREFERRED_CORE_LINES,
+  PREFER_PREMIUM_FROM_NEUTRAL,
   PUBLIC_AVOID_CODES,
   PUBLIC_AVOID_LINES,
   PUBLIC_MAX,
@@ -113,16 +114,19 @@ function productScore(product: PricedProduct, input: ConfigInput) {
   score += product.scores.variety * 0.28 + product.scores.beginner * 0.12;
   score += positionFit(product, input.position);
 
-  // Cost axis: cheap prefers Light + affordability; no-limit prefers Standard/Pro/Plus + conv/div.
+  // Cost axis: cheap prefers Light + affordability; no-limit prefers Standard/Pro/Plus.
   const line = lineOf(product);
+  const isConvDiv = CONV_DIV_CODES.has(product.code);
   if (cost < 0) {
     if (line === "light-line") score += 1.1 * -cost;
     if (PREMIUM_LINE_SET.has(line)) score -= 0.9 * -cost;
-    if (CONV_DIV_CODES.has(product.code)) score -= 1.0 * -cost;
+    if (isConvDiv) score -= 1.0 * -cost; // cheap band: avoid converging/diverging
     score += product.scores.affordability * 0.25 * -cost;
-  } else if (cost > 0) {
-    if (CONV_DIV_CODES.has(product.code)) score += 1.2 * cost;
-    if (line === "standard-line" || PREMIUM_LINE_SET.has(line)) score += 0.6 * cost;
+  } else {
+    // Neutral and up: the converging/diverging variant is the "best" version, so it is
+    // preferred as its family's pick (owner 2026-07-21) — stronger toward "no limit".
+    if (isConvDiv && PREFER_PREMIUM_FROM_NEUTRAL) score += 0.9 + 1.0 * cost;
+    if (cost > 0 && (line === "standard-line" || PREMIUM_LINE_SET.has(line))) score += 0.6 * cost;
   }
   // #6 — nudge Standard/Light up so setups lean on the core lines.
   if (CORE_LINE_SET.has(line)) score += 0.4;
@@ -282,8 +286,9 @@ function explanations(metrics: Record<MetricKey, number>, input: ConfigInput, lo
 
 export function recommend(products: PricedProduct[], input: ConfigInput, locale: "en" | "cs"): CombinationResult[] {
   const fixedCount = input.machineCount !== "auto";
-  const budget = fixedCount ? 0 : input.budgetCzk;
-  const budgetCap = fixedCount ? null : input.budgetCzk;
+  const hasBudget = !fixedCount && input.budgetCzk > 0; // budget 0 = left blank
+  const budget = hasBudget ? input.budgetCzk : 0;
+  const budgetCap = hasBudget ? input.budgetCzk : null;
 
   let candidates = products
     .filter((product) => passesFilters(product, input))
@@ -298,11 +303,13 @@ export function recommend(products: PricedProduct[], input: ConfigInput, locale:
   let counts: number[];
   if (fixedCount) {
     counts = [Math.min(Number(input.machineCount), candidates.length)];
-  } else {
+  } else if (hasBudget) {
     const prices = candidates.map((p) => p.priceCzk ?? 0).filter((v) => v > 0).sort((a, b) => a - b);
     const reference = prices.length ? prices[Math.floor((prices.length - 1) * 0.78)] : input.budgetCzk;
     const inferred = Math.max(1, Math.min(5, Math.floor(input.budgetCzk / Math.max(1, reference))));
     counts = [inferred];
+  } else {
+    counts = [Math.min(3, candidates.length)]; // blank budget → a sensible default setup size
   }
 
   const scored: CombinationResult[] = [];

@@ -2,18 +2,32 @@
 
 > **Read this first in any follow-up session.** It is the authoritative status doc for the
 > Street Barbell web app, written so the project can be picked up (or rebuilt) from scratch.
-> Last checkpoint: **2026-07-21**. It supersedes the older
+> Last checkpoint: **2026-07-22**. It supersedes the older
 > `STREETBARBELL_CODEX_HANDOVER_COMPLETE.md` (one folder tree up, kept for history).
 
-## Where we left off (2026-07-21)
+## Where we left off (2026-07-22)
 
 Everything requested so far is **built, deployed and verified live**. No half-finished work.
+
+**2026-07-22**: the configurator became **public** — the distributor access-code gate is
+gone (`app/api/access` + `lib/server-auth.ts` deleted, `STREETBARBELL_DISTRIBUTOR_CODE`
+unused). Real prices are shown **only to signed-in team members**: per-email accounts
+managed by the admin at `/system/users`, sign-in at `/{locale}/team-login` (subtle link in
+the header). Anonymous users get the same setups with prices replaced by "UNDER <budget>"
+(or "NOT FILLED IN" when the budget was left blank), no PDF button, and a "Request a quote"
+mailto to export@rvl13.com prefilled with the machines + the full brief. Also in the same
+batch ("generator rules batch 2"): budget may be left blank (blank → 3-machine default
+setup size), converging/diverging variants preferred as their family's pick from neutral
+cost upward (`PREFER_PREMIUM_FROM_NEUTRAL`), Vertical/Shoulder Press pinned to one family
+via `FAMILY_OVERRIDES`, and result cards show machine thumbnails.
 
 **2026-07-21**: the recommended-configurations generator was redesigned per the owner's
 `GENERATOR edit.docx` — see **`docs/GENERATOR_SPEC.md`** for the full spec (budget/space/
 category-bar/questions/sliders) and the owner's clarifying answers baked into it. Commit
-`c40df6f`. This replaces the old 9-point-priorities / EUR-manual-rate configurator described
-in older notes below — if anything here conflicts with GENERATOR_SPEC.md, the spec wins.
+`c40df6f`, then all rules consolidated into `lib/generator-rules.ts` (`d58c73b`) and
+"rules batch 1" — family grouping/de-dup, no-bodyweight, layout (`ab3ecc5`). This replaces
+the old 9-point-priorities / EUR-manual-rate configurator described in older notes below —
+if anything here conflicts with GENERATOR_SPEC.md, the spec wins.
 
 Also shipped earlier the same week: `/system` admin (login + site-text editor + product
 catalogue with per-product visibility/gallery/docs/video/muscle-map), English machine names on
@@ -22,12 +36,13 @@ click-to-edit muscle figure (exact catalog artwork).
 
 Open follow-ups (nice-to-haves, none urgent):
 
-1. Distributor code is still the temporary `SB-8C7EFF74` — changing it = swap the
-   `STREETBARBELL_DISTRIBUTOR_CODE` env var in Vercel (no redeploy needed for env swap +
-   redeploy button, or push any commit). Consider per-distributor codes later.
-2. More gallery photos can be curated from the Google Drive "Photos" folder (399 available,
+1. More gallery photos can be curated from the Google Drive "Photos" folder (399 available,
    folder id `1FtMcSEhwRMt3VyEzMbJvuxRuTa5RSyBQ`).
-3. `/system` login has no rate-limiting (fine for single-admin; add lockout if ever needed).
+2. `/system` and `/team-login` logins have no rate-limiting (fine for now; add lockout if
+   ever needed).
+3. Removing a team member does **not** invalidate an already-issued session cookie (the
+   cookie is signature-only, up to 30 days) — acceptable trade-off chosen to avoid a blob
+   read per request; rotate `STREETBARBELL_APP_SECRET` to force-logout everyone.
 
 ## What this is
 
@@ -57,8 +72,8 @@ and in Vercel → Settings → Environment Variables (Production). Local dev use
 
 | Variable | Purpose |
 |---|---|
-| `STREETBARBELL_DISTRIBUTOR_CODE` | Unlock code for the configurator (`/api/access`) |
-| `STREETBARBELL_APP_SECRET` | HMAC secret for both session cookies (distributor + admin) |
+| `STREETBARBELL_DISTRIBUTOR_CODE` | **Unused since 2026-07-22** (access-code gate removed; still set in Vercel, harmless) |
+| `STREETBARBELL_APP_SECRET` | HMAC secret for all session cookies (admin + team) and team password hashes |
 | `STREETBARBELL_PRICELIST_JSON` | **Active configurator pricing** — 2026 pricelist, one CZK price (excl. VAT) per code |
 | `STREETBARBELL_PRICING_JSON` | Legacy 6-variant EUR distributor prices — no longer read by code, kept as the source for regenerating the pricelist fallback |
 | `STREETBARBELL_ADMIN_PASSWORD` | Login for the `/system` text editor |
@@ -71,18 +86,24 @@ Gotcha: adding env values via PowerShell piping appends `\r` that Vercel keeps. 
 
 - `app/[locale]/…` — public pages (en/cs): home, products, products/[line], products/[line]/[slug],
   configurations (configurator), gallery, contact. All SSG via `generateStaticParams`.
-- `app/api/access` — distributor unlock → sets HMAC cookie. `app/api/recommend` — scored
-  recommendations with prices (requires the cookie). `app/api/exchange-rate` — daily CZK/EUR
-  mid rate from the Czech National Bank fixing (12h cache, hardcoded 25 fallback on fetch error).
+- `app/api/recommend` — scored recommendations, **public** since 2026-07-22; totals are
+  returned only when a team-member cookie is present (`priced` flag in the response),
+  per-machine prices are never returned at all. `app/api/team-status` — who is signed in
+  (used by the header). `app/api/exchange-rate` — daily CZK/EUR mid rate from the Czech
+  National Bank fixing (12h cache, hardcoded 25 fallback on fetch error).
+- `app/[locale]/team-login` — team sign-in (server actions login/logout). `app/system/users`
+  — admin CRUD for team members. `lib/team-auth.ts` — signed session cookie
+  `streetbarbell_team` (HMAC of email, 30 days). `lib/team-users.ts` — users in Blob
+  `content/team-users.json`, passwords stored only as HMAC hashes (never readable back).
 - `app/system` — **admin text editor** (see below). `app/system/login` — password login.
 - `lib/i18n.ts` — the full EN/CS dictionary of site texts (single source of default wording,
   including footer/menu/benefit/gallery-filter texts) + Czech plural helper `countNoun`.
 - `lib/site-texts.ts` — `getSiteTexts(locale)`: merges admin overrides (Vercel Blob JSON at
   `content/site-texts.json`) over the dictionary; `unstable_cache` with tag `site-texts`;
   blob reads are timeboxed (5s) and cache-busted with `?v=<uploadedAt>`.
-- `lib/admin-auth.ts` / `lib/server-auth.ts` — same pattern twice: HMAC(secret, message) as a
-  cookie value, timing-safe compares. Admin cookie `streetbarbell_admin`, distributor cookie
-  `streetbarbell_distributor`.
+- `lib/admin-auth.ts` / `lib/team-auth.ts` — same pattern twice: HMAC(secret, message) as a
+  cookie value, timing-safe compares. Admin cookie `streetbarbell_admin`, team cookie
+  `streetbarbell_team`. (The old distributor cookie/`lib/server-auth.ts` was removed 2026-07-22.)
 - `lib/data.ts` — products/lines from `data/products.json` + `data/lines.json`.
   **`getProductName()` always returns the English name — owner decision 2026-07-17: machine
   names are shown in original English on both language versions.** Descriptions/lines stay localized.
@@ -206,7 +227,8 @@ with rapid automated fetches (transient "Vercel Security Checkpoint" HTML replac
 ## Verification checklist (all green 2026-07-17)
 
 - `https://streetbarbell.cz/{en,cs}` + products/lines/gallery/configurations/contact → 200
-- `/api/access` with the current distributor code → `{"authenticated":true}`
+- `/api/recommend` without a cookie → 200, `priced:false`, all prices null; with a valid
+  team cookie → `priced:true`, totals present, per-machine prices still null
 - `/api/recommend` (2026 CZK pricing) sample: budget 450,000 CZK, default priorities → top result
   MB 7.47.3 + MB 7.02 + MB 7.71 = 198,000 CZK (62,000 + 38,000 + 98,000), score ≈ 7.0
   (the old EUR sample "MB 7.47.3 + MB 7.71 €5,317" predates the pricelist switch)
@@ -230,3 +252,7 @@ with rapid automated fetches (transient "Vercel Security Checkpoint" HTML replac
 - `2db5c86` (2026-07-18) /system/catalog: per-product visibility, gallery, PDFs, video, muscle map
 - `5659190` (2026-07-20) muscle figure = official catalog vector artwork
 - (2026-07-20) per-region click-to-edit muscle editor (muscleShapes indices); fuller thigh auto-detect
+- `c40df6f` (2026-07-21) simplified generator per GENERATOR_SPEC.md
+- `d58c73b` (2026-07-21) all generator rules consolidated into lib/generator-rules.ts
+- `ab3ecc5` (2026-07-21) generator rules batch 1: grouping, de-dup, no-bodyweight, layout
+- (2026-07-22) public configurator + team logins (/system/users, /team-login), rules batch 2

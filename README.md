@@ -11,7 +11,7 @@ The project is designed for deployment at **streetbarbell.cz** through Vercel an
 - Product mega-menu with all product lines
 - Product-line pages and individual product pages
 - 116 normalized products and 232 bilingual product detail routes
-- Distributor-only recommendation configurator
+- Public recommendation configurator (real prices shown only to signed-in team members)
 - Budget, workout-structure, body-focus, sport and position filters
 - Exact 20-point priority matrix
 - Server-side combination ranking with soft duplication rules
@@ -44,36 +44,38 @@ npm run dev
 
 Open `http://localhost:3000`. The root redirects to `/en`.
 
-The configurator will remain locked until valid environment variables are added.
+The configurator is public; prices appear only after a team member signs in at `/en/team-login` (accounts are managed in `/system/users`).
 
 ## Required environment variables
 
-Create these in `.env.local` for local development and in Vercel for Preview and Production:
+See `PROJECT_STATUS.md` (authoritative) for the full inventory. Create these in `.env.local` for local development and in Vercel for Production:
 
 ```text
-STREETBARBELL_DISTRIBUTOR_CODE=
 STREETBARBELL_APP_SECRET=
-STREETBARBELL_PRICING_JSON=
+STREETBARBELL_PRICELIST_JSON=
+STREETBARBELL_ADMIN_PASSWORD=
+BLOB_READ_WRITE_TOKEN=
 ```
 
-- `STREETBARBELL_DISTRIBUTOR_CODE`: code shared with approved distributors.
-- `STREETBARBELL_APP_SECRET`: long random secret used to derive the secure access cookie.
-- `STREETBARBELL_PRICING_JSON`: private product-code-to-price mapping.
+- `STREETBARBELL_APP_SECRET`: long random secret used to derive the secure session cookies.
+- `STREETBARBELL_PRICELIST_JSON`: private product-code-to-CZK-price mapping.
+- `STREETBARBELL_ADMIN_PASSWORD`: `/system` admin login.
+- `BLOB_READ_WRITE_TOKEN`: Vercel Blob store for admin content overrides and team users.
 
-**Never commit `.env.local`, a real access code, the app secret or private pricing.**
+**Never commit `.env.local`, the app secret or private pricing.**
 
 ## Vercel deployment
 
 1. Push this repository to GitHub.
 2. Open the existing Vercel project **StreetBarbell**.
 3. In **Settings → Git**, connect `Vee031/StreetBarbell`.
-4. In **Settings → Environment Variables**, add all three private variables for Production and Preview.
+4. In **Settings → Environment Variables**, add the private variables for Production and Preview.
 5. Deploy the `main` branch.
 6. In **Settings → Domains**, add:
    - `streetbarbell.cz`
    - optionally `www.streetbarbell.cz`
 7. Follow Vercel's displayed DNS records at the domain registrar.
-8. Test `/en/configurations` with the distributor code before announcing the site.
+8. Test `/en/configurations` (and price visibility with a team login) before announcing the site.
 
 No custom Build Command is needed. Vercel should detect Next.js automatically.
 
@@ -150,5 +152,4 @@ The first build uses selected existing Street Barbell web images through remote 
 - Add branded machine images to the generated PDF
 - Add a server-side email/CRM workflow
 - Add analytics and consent management
-- Add distributor management instead of one shared access code
 - Add an editable admin data pipeline for future price/product updates

@@ -553,3 +553,20 @@ p { color: var(--muted); line-height: 1.7; }
 @keyframes cfg-pulse { 0% { transform: translateY(0); } 30% { transform: translateY(-6px); } 100% { transform: translateY(0); } }
 .choice-group.pulse, .slider-item.pulse, #q-cost.pulse { animation: cfg-pulse .5s ease; }
 .choice-group.pulse > span, .slider-item.pulse { color: var(--red); }
+
+/* ---- team sign in (subtle, dark on dark header) ---- */
+.team-signin, .team-signin button { background: none; border: none; padding: 0; color: rgba(255,255,255,.32); font-size: .74rem; font-weight: 600; letter-spacing: .02em; transition: color .16s ease; cursor: pointer; }
+.team-signin:hover, .team-signin button:hover { color: rgba(255,255,255,.8); }
+.team-login-wrap { padding: 130px 20px 70px; display: flex; justify-content: center; }
+
+/* ---- results: machine thumbnails, masked price, inquiry ---- */
+.result-products { display: flex; flex-wrap: wrap; gap: 8px; }
+.result-product { display: flex; align-items: center; gap: 10px; flex: 1 1 200px; min-width: 180px; padding: 8px 10px; border: 1px solid #e1e3e5; border-radius: 9px; background: #fafafa; }
+.result-thumb { position: relative; width: 52px; height: 40px; flex-shrink: 0; border-radius: 6px; overflow: hidden; background: white; }
+.result-thumb img { object-fit: contain; }
+.result-product-text { min-width: 0; }
+.result-product-text span { color: var(--red); font-size: .68rem; font-weight: 800; display: block; }
+.result-product-text strong { margin: 3px 0; font-size: .82rem; display: block; }
+.result-product-text small { color: #878b92; font-size: .65rem; display: block; }
+.result-price .price-empty { color: var(--red); font-size: 1.5rem; }
+.result-footer-actions { display: flex; gap: 10px; flex-wrap: wrap; }
