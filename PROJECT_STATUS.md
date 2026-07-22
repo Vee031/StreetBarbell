@@ -169,9 +169,13 @@ Gotcha: adding env values via PowerShell piping appends `\r` that Vercel keeps. 
   `t={d.products}`), line-card, configurator (client), contact-form, motion-reveal.
 - `scripts/check-public-data.mjs` — CI guard: public products.json must contain no prices.
 
-## /system admin (added 2026-07-17, commit 679546e)
+## /system admin (added 2026-07-17, commit 679546e; dashboard + top bar 2026-07-22)
 
-- `streetbarbell.cz/system` — password login (30-day httpOnly cookie), noindex.
+- `streetbarbell.cz/system` — password login (30-day httpOnly cookie), noindex. Since
+  `658f6f6`, `/system` is a **dashboard** (stat tiles per section) and every admin page
+  carries the sticky `SystemNav` top bar (components/system-nav.tsx — brand block, big
+  tabs with red active highlight, open-website, sign-out). The **site-texts editor lives
+  at `/system/texts`** now.
 - Editor: 8 section cards (nav, home, products, config, gallery, contact, common, footer),
   every dictionary key editable in EN and CS side by side. **Empty a field + save = reset to
   the built-in default.** Overridden fields show a red "· edited" tag.
@@ -305,3 +309,5 @@ with rapid automated fetches (transient "Vercel Security Checkpoint" HTML replac
 - (2026-07-22) Pro/Plus split, position editor, menu groups (/system/groups), add product (/system/catalog/new)
 - `cbd5bd8` (2026-07-22) RVL13-style Website management, per-product line moves, unified menu cards
 - `97778d2` (2026-07-22) hero stat: "20 priority points" → ∞ combinations; intro no longer mentions the 20-point matrix
+- `658f6f6` (2026-07-22) admin dashboard at /system (stat tiles) + permanent SystemNav top bar
+  (RVL13-style big tabs); site-texts editor moved to **/system/texts**
