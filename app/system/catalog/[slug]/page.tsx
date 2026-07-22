@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
+import { SystemNav } from "@/components/system-nav";
 import { getProductName, productLines } from "@/lib/data";
 import { MuscleEditor } from "@/components/muscle-editor";
 import { detectMuscles } from "@/lib/muscles";
@@ -35,6 +36,8 @@ export default async function CatalogProductPage({ params, searchParams }: { par
   const autoShapes = shapeIndicesForKeys(detectMuscles(product.muscles));
 
   return (
+    <>
+    <SystemNav active="catalog" />
     <div className="sys-shell">
       <header className="sys-header">
         <div>
@@ -177,5 +180,6 @@ export default async function CatalogProductPage({ params, searchParams }: { par
         </div>
       </div>
     </div>
+    </>
   );
 }

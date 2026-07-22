@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
+import { SystemNav } from "@/components/system-nav";
 import { fetchTeamUsers } from "@/lib/team-users";
 import { addTeamUser, deleteTeamUser } from "./actions";
 
@@ -18,15 +18,13 @@ export default async function SystemUsersPage({ searchParams }: { searchParams: 
   const users = Object.values(await fetchTeamUsers()).sort((a, b) => a.email.localeCompare(b.email));
 
   return (
+    <>
+    <SystemNav active="users" />
     <div className="sys-shell">
       <header className="sys-header">
         <div>
           <h1>Team members</h1>
           <p>People who can sign in to see real prices in the configurator. Everyone else uses it price-free.</p>
-        </div>
-        <div className="sys-header-actions">
-          <Link href="/system">Site texts</Link>
-          <Link href="/system/catalog">Catalogue</Link>
         </div>
       </header>
 
@@ -64,5 +62,6 @@ export default async function SystemUsersPage({ searchParams }: { searchParams: 
         )}
       </section>
     </div>
+    </>
   );
 }

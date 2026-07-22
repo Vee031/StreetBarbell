@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
+import { SystemNav } from "@/components/system-nav";
 import { productLines } from "@/lib/data";
 import { fetchProductGroupsUncached } from "@/lib/product-groups";
 import { POSITION_OPTIONS } from "@/lib/products-store";
@@ -32,6 +33,8 @@ export default async function NewProductPage({ searchParams }: { searchParams: P
   );
 
   return (
+    <>
+    <SystemNav active="catalog" />
     <div className="sys-shell">
       <header className="sys-header">
         <div>
@@ -102,5 +105,6 @@ export default async function NewProductPage({ searchParams }: { searchParams: P
         </form>
       </section>
     </div>
+    </>
   );
 }

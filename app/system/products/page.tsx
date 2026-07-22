@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
+import { SystemNav } from "@/components/system-nav";
 import { fetchImportReport, fetchProductOverridesUncached, productColumns } from "@/lib/products-store";
 import { importProducts } from "./actions";
 
@@ -23,15 +24,13 @@ export default async function SystemProductsPage({ searchParams }: { searchParam
   const overriddenProducts = Object.keys(overrides).length;
 
   return (
+    <>
+    <SystemNav active="products" />
     <div className="sys-shell">
       <header className="sys-header">
         <div>
           <h1>Products import</h1>
-          <p>Update all 116 machines at once — price, descriptions, specifications — from one Excel file.</p>
-        </div>
-        <div className="sys-header-actions">
-          <Link href="/system">← Site texts</Link>
-          <Link href="/system/catalog">Catalogue →</Link>
+          <p>Update all machines at once — price, descriptions, specifications — from one Excel file.</p>
         </div>
       </header>
 
@@ -85,5 +84,6 @@ export default async function SystemProductsPage({ searchParams }: { searchParam
         </section>
       ) : null}
     </div>
+    </>
   );
 }

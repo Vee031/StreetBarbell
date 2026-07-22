@@ -2,6 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
+import { SystemNav } from "@/components/system-nav";
 import { productLines } from "@/lib/data";
 import { getProductName } from "@/lib/data";
 import { fetchProductMetaUncached, isEnabled } from "@/lib/product-meta";
@@ -16,6 +17,8 @@ export default async function SystemCatalogPage({ searchParams }: { searchParams
   const disabledCount = allProducts.filter((product) => !isEnabled(meta, product.code)).length;
 
   return (
+    <>
+    <SystemNav active="catalog" />
     <div className="sys-shell">
       <header className="sys-header">
         <div>
@@ -27,9 +30,6 @@ export default async function SystemCatalogPage({ searchParams }: { searchParams
           </p>
         </div>
         <div className="sys-header-actions">
-          <Link href="/system">Site texts</Link>
-          <Link href="/system/products">Bulk import</Link>
-          <Link href="/system/groups">Website management</Link>
           <Link href="/system/catalog/new" className="button button-red button-small">+ Add product</Link>
         </div>
       </header>
@@ -64,5 +64,6 @@ export default async function SystemCatalogPage({ searchParams }: { searchParams
         );
       })}
     </div>
+    </>
   );
 }

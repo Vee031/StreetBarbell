@@ -2,6 +2,7 @@ import Link from "next/link";
 import { redirect } from "next/navigation";
 import { ArrowDown, ArrowUp, CornerDownRight, Settings2, X } from "lucide-react";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
+import { SystemNav } from "@/components/system-nav";
 import { getProductName, productLines } from "@/lib/data";
 import { categoriesLinkToConfigurator, fetchProductGroupsUncached, isActive } from "@/lib/product-groups";
 import { getProducts } from "@/lib/products-store";
@@ -30,6 +31,8 @@ export default async function WebsiteManagementPage({ searchParams }: { searchPa
   const configReplaced = categoriesLinkToConfigurator(data);
 
   return (
+    <>
+    <SystemNav active="groups" />
     <div className="sys-shell">
       <header className="sys-header">
         <div>
@@ -39,11 +42,6 @@ export default async function WebsiteManagementPage({ searchParams }: { searchPa
             Built-in parts (Products, Gallery…) are fixed; your categories are fully editable — status,
             order, contents. Products themselves are managed in the <Link href="/system/catalog">Catalogue</Link>.
           </p>
-        </div>
-        <div className="sys-header-actions">
-          <Link href="/system">Site texts</Link>
-          <Link href="/system/catalog">Catalogue</Link>
-          <Link href="/system/users">Team members</Link>
         </div>
       </header>
 
@@ -203,5 +201,6 @@ export default async function WebsiteManagementPage({ searchParams }: { searchPa
         </div>
       </div>
     </div>
+    </>
   );
 }

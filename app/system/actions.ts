@@ -10,8 +10,8 @@ import { fetchOverridesUncached, TEXTS_BLOB_PATH, TEXTS_CACHE_TAG, type SectionK
 export async function saveSection(formData: FormData) {
   if (!(await isAdminAuthenticated())) redirect("/system/login");
   const section = String(formData.get("section") ?? "") as SectionKey;
-  if (!(section in dictionaries.en)) redirect("/system");
-  if (!process.env.BLOB_READ_WRITE_TOKEN) redirect("/system?error=storage");
+  if (!(section in dictionaries.en)) redirect("/system/texts");
+  if (!process.env.BLOB_READ_WRITE_TOKEN) redirect("/system/texts?error=storage");
 
   const overrides = await fetchOverridesUncached();
   for (const locale of locales) {
@@ -34,9 +34,9 @@ export async function saveSection(formData: FormData) {
   try {
     await writeBlobJson(TEXTS_BLOB_PATH, overrides);
   } catch {
-    redirect("/system?error=storage");
+    redirect("/system/texts?error=storage");
   }
   updateTag(TEXTS_CACHE_TAG);
   revalidatePath("/", "layout");
-  redirect(`/system?saved=${section}`);
+  redirect(`/system/texts?saved=${section}`);
 }
