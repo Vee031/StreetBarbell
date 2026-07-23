@@ -15,13 +15,15 @@ export const dynamic = "force-dynamic";
 
 export default async function SystemDashboardPage() {
   if (!(await isAdminAuthenticated())) redirect("/system/login");
+  // No silent fallbacks: if the blob store is unreachable, throwing here shows
+  // the clear "storage unreachable" page instead of a dashboard full of zeros.
   const [meta, groups, custom, report, teamUsers, textOverrides, inquiryCount] = await Promise.all([
-    fetchProductMetaUncached().catch(() => ({})),
-    fetchProductGroupsUncached().catch(() => ({ categories: [] })),
-    fetchCustomProductsUncached().catch(() => ({})),
+    fetchProductMetaUncached(),
+    fetchProductGroupsUncached(),
+    fetchCustomProductsUncached(),
     fetchImportReport().catch(() => null),
-    fetchTeamUsers().catch(() => ({})),
-    fetchOverridesUncached().catch(() => ({}) as Awaited<ReturnType<typeof fetchOverridesUncached>>),
+    fetchTeamUsers(),
+    fetchOverridesUncached(),
     countInquiries().catch(() => 0),
   ]);
 

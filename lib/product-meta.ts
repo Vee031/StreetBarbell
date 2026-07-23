@@ -1,5 +1,5 @@
 import { unstable_cache } from "next/cache";
-import { readBlobJson } from "./blob-json";
+import { readBlobJsonForUpdate } from "./blob-json";
 import type { MuscleKey } from "./muscles";
 import { detectMuscles } from "./muscles";
 import { MUSCLE_SHAPES, shapeIndicesForKeys } from "./muscle-figure";
@@ -24,16 +24,24 @@ export type ProductMeta = {
 
 export type ProductMetaMap = Record<string, ProductMeta>;
 
+// Strict (throws when the store is unreachable) — admin actions read through
+// this; an outage can never make a save wipe the catalogue meta.
 export async function fetchProductMetaUncached(): Promise<ProductMetaMap> {
-  return (await readBlobJson<ProductMetaMap>(META_BLOB_PATH)) ?? {};
+  return (await readBlobJsonForUpdate<ProductMetaMap>(META_BLOB_PATH)) ?? {};
 }
 
-// revalidate: a transient bad read (CDN staleness, bot-check page) heals itself
-// within 5 minutes even without an admin save triggering updateTag.
-export const loadProductMeta = unstable_cache(fetchProductMetaUncached, ["product-meta"], {
-  tags: [PRODUCTS_CACHE_TAG],
-  revalidate: 300,
-});
+// Lenient cached path for public rendering; revalidate self-heals bad reads.
+export const loadProductMeta = unstable_cache(
+  async (): Promise<ProductMetaMap> => {
+    try {
+      return await fetchProductMetaUncached();
+    } catch {
+      return {};
+    }
+  },
+  ["product-meta"],
+  { tags: [PRODUCTS_CACHE_TAG], revalidate: 300 },
+);
 
 export function isEnabled(meta: ProductMetaMap, code: string) {
   return meta[code]?.enabled !== false;

@@ -1,5 +1,5 @@
 import { createHmac, timingSafeEqual } from "node:crypto";
-import { readBlobJson, writeBlobJson } from "./blob-json";
+import { readBlobJsonForUpdate, writeBlobJson } from "./blob-json";
 
 // Team members (RVL13 staff) who can see real prices in the configurator. Stored
 // in Vercel Blob with the password kept only as a keyed hash — the store is
@@ -25,12 +25,19 @@ function safeEqual(a: string, b: string) {
   return bufA.length === bufB.length && timingSafeEqual(bufA, bufB);
 }
 
+// Strict (throws when the store is unreachable) — admin user management reads
+// through this; an outage can never make a save wipe the member list.
 export async function fetchTeamUsers(): Promise<TeamUsers> {
-  return (await readBlobJson<TeamUsers>(TEAM_USERS_BLOB_PATH)) ?? {};
+  return (await readBlobJsonForUpdate<TeamUsers>(TEAM_USERS_BLOB_PATH)) ?? {};
 }
 
 export async function verifyLogin(email: string, password: string): Promise<boolean> {
-  const users = await fetchTeamUsers();
+  let users: TeamUsers;
+  try {
+    users = await fetchTeamUsers();
+  } catch {
+    return false; // store unreachable → sign-in temporarily unavailable
+  }
   const user = users[normalizeEmail(email)];
   if (!user || !password) return false;
   return safeEqual(user.hash, hashPassword(email, password));

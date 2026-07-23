@@ -1,5 +1,5 @@
 import { unstable_cache } from "next/cache";
-import { readBlobJson } from "./blob-json";
+import { readBlobJson, readBlobJsonForUpdate } from "./blob-json";
 import { PRODUCTS_CACHE_TAG } from "./cache-tags";
 import { products as baseProducts, productLines, type Product } from "./data";
 import { loadProductGroups, type ProductGroupsData } from "./product-groups";
@@ -170,14 +170,23 @@ export function customToProduct(record: CustomProductRecord, categories: Map<str
   };
 }
 
+// Strict (throws when the store is unreachable) — admin actions read through
+// this; an outage can never make a save wipe the admin-created products.
 export async function fetchCustomProductsUncached(): Promise<CustomProducts> {
-  return (await readBlobJson<CustomProducts>(CUSTOM_PRODUCTS_BLOB_PATH)) ?? {};
+  return (await readBlobJsonForUpdate<CustomProducts>(CUSTOM_PRODUCTS_BLOB_PATH)) ?? {};
 }
 
-export const loadCustomProducts = unstable_cache(fetchCustomProductsUncached, ["custom-products"], {
-  tags: [PRODUCTS_CACHE_TAG],
-  revalidate: 300,
-});
+export const loadCustomProducts = unstable_cache(
+  async (): Promise<CustomProducts> => {
+    try {
+      return await fetchCustomProductsUncached();
+    } catch {
+      return {};
+    }
+  },
+  ["custom-products"],
+  { tags: [PRODUCTS_CACHE_TAG], revalidate: 300 },
+);
 
 // --- Display order ----------------------------------------------------------
 // Admin-set sequence per category (line or group): drag & drop in
@@ -186,13 +195,20 @@ export const loadCustomProducts = unstable_cache(fetchCustomProductsUncached, ["
 export type ProductOrder = Record<string, string[]>;
 
 export async function fetchProductOrderUncached(): Promise<ProductOrder> {
-  return (await readBlobJson<ProductOrder>(PRODUCT_ORDER_BLOB_PATH)) ?? {};
+  return (await readBlobJsonForUpdate<ProductOrder>(PRODUCT_ORDER_BLOB_PATH)) ?? {};
 }
 
-export const loadProductOrder = unstable_cache(fetchProductOrderUncached, ["product-order"], {
-  tags: [PRODUCTS_CACHE_TAG],
-  revalidate: 300,
-});
+export const loadProductOrder = unstable_cache(
+  async (): Promise<ProductOrder> => {
+    try {
+      return await fetchProductOrderUncached();
+    } catch {
+      return {};
+    }
+  },
+  ["product-order"],
+  { tags: [PRODUCTS_CACHE_TAG], revalidate: 300 },
+);
 
 function applyCategoryOrder(all: Product[], order: ProductOrder): Product[] {
   const result = [...all];
@@ -217,17 +233,25 @@ function applyCategoryOrder(all: Product[], order: ProductOrder): Product[] {
 }
 
 export async function fetchProductOverridesUncached(): Promise<ProductOverrides> {
-  return (await readBlobJson<ProductOverrides>(PRODUCTS_BLOB_PATH)) ?? {};
+  return (await readBlobJsonForUpdate<ProductOverrides>(PRODUCTS_BLOB_PATH)) ?? {};
 }
 
+// Display-only — lenient is fine.
 export async function fetchImportReport(): Promise<ImportReport | null> {
   return readBlobJson<ImportReport>(PRODUCTS_REPORT_BLOB_PATH);
 }
 
-export const loadProductOverrides = unstable_cache(fetchProductOverridesUncached, ["product-overrides"], {
-  tags: [PRODUCTS_CACHE_TAG],
-  revalidate: 300,
-});
+export const loadProductOverrides = unstable_cache(
+  async (): Promise<ProductOverrides> => {
+    try {
+      return await fetchProductOverridesUncached();
+    } catch {
+      return {};
+    }
+  },
+  ["product-overrides"],
+  { tags: [PRODUCTS_CACHE_TAG], revalidate: 300 },
+);
 
 function asText(value: string | number | undefined, fallback: string) {
   return typeof value === "string" ? value : fallback;

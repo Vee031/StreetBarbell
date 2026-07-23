@@ -1,5 +1,5 @@
 ﻿import { unstable_cache } from "next/cache";
-import { readBlobJson } from "./blob-json";
+import { readBlobJsonForUpdate } from "./blob-json";
 import { PRODUCTS_CACHE_TAG } from "./cache-tags";
 
 // Admin-created navigation categories with product groups, managed at
@@ -46,17 +46,26 @@ export function groupSlug(text: string) {
     .replace(/^-+|-+$/g, "");
 }
 
+// Strict (throws when the store is unreachable) — every admin group action
+// reads through this, so a save can never wipe the menu with an empty read.
 export async function fetchProductGroupsUncached(): Promise<ProductGroupsData> {
-  const data = await readBlobJson<ProductGroupsData>(GROUPS_BLOB_PATH);
+  const data = await readBlobJsonForUpdate<ProductGroupsData>(GROUPS_BLOB_PATH);
   return data && Array.isArray(data.categories) ? data : { categories: [] };
 }
 
-// Same caching pattern as the other blob stores: tag-invalidated on admin saves,
-// revalidate self-heals transient bad reads.
-export const loadProductGroups = unstable_cache(fetchProductGroupsUncached, ["product-groups"], {
-  tags: [PRODUCTS_CACHE_TAG],
-  revalidate: 300,
-});
+// Lenient cached path for public rendering: on failure the menu falls back to
+// the built-in items instead of crashing the page.
+export const loadProductGroups = unstable_cache(
+  async (): Promise<ProductGroupsData> => {
+    try {
+      return await fetchProductGroupsUncached();
+    } catch {
+      return { categories: [] };
+    }
+  },
+  ["product-groups"],
+  { tags: [PRODUCTS_CACHE_TAG], revalidate: 300 },
+);
 
 // The serializable shape the (client) header needs: locale already applied.
 // Cards mirror the Products mega menu: label + a small subtitle line
