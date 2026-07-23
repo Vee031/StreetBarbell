@@ -316,6 +316,11 @@ with rapid automated fetches (transient "Vercel Security Checkpoint" HTML replac
   EN/CZ names; built-in machines keep their code (permanent ID) but names are editable as
   diffs-only overrides (empty = revert). Local verify was skipped this once — the machine's
   file I/O was crawling (Avast/Dropbox); Vercel's build (incl. TypeScript) was the gate.
+- `544f3b3` (2026-07-23) **generator results reworked** (see GENERATOR_SPEC §5): 3 metric
+  bars mirror the 3 sliders (pole-blend scoring), rank badge = % match (sorts results),
+  fact-based EN/CZ purpose/strengths/trade-off from actual setup composition, picture-first
+  machine cards (~208×130 thumbs), PDF shows match %; product pages lost the old
+  "Recommendation profile" aside.
 - `ceae3af` (2026-07-23) **drag & drop product ordering**: each catalogue section is a
   draggable grid (components/catalog-order-grid.tsx); "Save order" persists per-category
   sequences to blob `content/product-order.json`; `getProducts` applies them, so public
