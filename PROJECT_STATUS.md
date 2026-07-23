@@ -316,6 +316,10 @@ with rapid automated fetches (transient "Vercel Security Checkpoint" HTML replac
   EN/CZ names; built-in machines keep their code (permanent ID) but names are editable as
   diffs-only overrides (empty = revert). Local verify was skipped this once — the machine's
   file I/O was crawling (Avast/Dropbox); Vercel's build (incl. TypeScript) was the gate.
+- `ceae3af` (2026-07-23) **drag & drop product ordering**: each catalogue section is a
+  draggable grid (components/catalog-order-grid.tsx); "Save order" persists per-category
+  sequences to blob `content/product-order.json`; `getProducts` applies them, so public
+  line/group pages follow. Unlisted products keep default order after the ordered ones.
 - `b46e52f` (2026-07-23) **editable product texts in the catalogue card**: Description EN/CZ,
   target muscles (re-drives the auto muscle figure), movement patterns (semicolon-separated) —
   diffs-only overrides, empty field reverts, XLSX template round-trips them.
