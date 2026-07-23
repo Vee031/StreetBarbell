@@ -2,6 +2,7 @@
 
 import { redirect } from "next/navigation";
 import { saveInquiry } from "@/lib/inquiries";
+import { sendInquiryEmail } from "@/lib/notify";
 
 const clip = (value: FormDataEntryValue | null, max: number) => String(value ?? "").trim().slice(0, max);
 
@@ -34,5 +35,7 @@ export async function submitInquiry(formData: FormData) {
   } catch {
     redirect(`/${locale}/contact?error=storage`);
   }
+  // Instant e-mail heads-up (Resend); failure is non-fatal — the inbox has it.
+  await sendInquiryEmail(inquiry);
   redirect(`/${locale}/contact?sent=1`);
 }
