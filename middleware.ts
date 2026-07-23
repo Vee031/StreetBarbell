@@ -11,7 +11,10 @@ export function middleware(request: NextRequest) {
   const wantsCzech = country
     ? country === "CZ"
     : /(^|,)\s*cs\b/i.test(request.headers.get("accept-language") ?? "");
-  return NextResponse.redirect(new URL(wantsCzech ? "/cs" : "/en", request.url), 307);
+  const response = NextResponse.redirect(new URL(wantsCzech ? "/cs" : "/en", request.url), 307);
+  // Diagnostic: which country the edge reported (visible with curl -I).
+  response.headers.set("x-detected-country", country ?? "none");
+  return response;
 }
 
 export const config = { matcher: "/" };
