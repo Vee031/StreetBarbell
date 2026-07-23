@@ -9,8 +9,8 @@ import { detectMuscles } from "@/lib/muscles";
 import { shapeIndicesForKeys } from "@/lib/muscle-figure";
 import { effectiveMuscleShapes, fetchProductMetaUncached, isEnabled } from "@/lib/product-meta";
 import { fetchProductGroupsUncached } from "@/lib/product-groups";
-import { getProducts, POSITION_OPTIONS } from "@/lib/products-store";
-import { deleteCustomProduct, deleteDocument, deleteGalleryImage, saveIdentity, saveLine, savePosition, saveVideoAndMuscles, toggleProduct, uploadDocument, uploadGalleryImages } from "../actions";
+import { fetchCustomProductsUncached, getProducts, POSITION_OPTIONS } from "@/lib/products-store";
+import { deleteCustomProduct, deleteDocument, deleteGalleryImage, makeMainImage, saveIdentity, saveLine, savePosition, saveVideoAndMuscles, toggleProduct, uploadDocument, uploadGalleryImages } from "../actions";
 
 export const dynamic = "force-dynamic";
 
@@ -30,9 +30,12 @@ export default async function CatalogProductPage({ params, searchParams }: { par
   if (!(await isAdminAuthenticated())) redirect("/system/login");
   const { slug } = await params;
   const { saved, error } = await searchParams;
-  const [allProducts, metaMap, groupsData] = await Promise.all([getProducts(), fetchProductMetaUncached(), fetchProductGroupsUncached()]);
+  const [allProducts, metaMap, groupsData, customRecords] = await Promise.all([getProducts(), fetchProductMetaUncached(), fetchProductGroupsUncached(), fetchCustomProductsUncached()]);
   const product = allProducts.find((p) => p.slug === slug);
   if (!product) notFound();
+  // Custom products: does the record carry its OWN main picture, or is the shown
+  // image just the line/stock fallback?
+  const hasOwnMainImage = product.custom ? Boolean(customRecords[product.code]?.image) : true;
   // Combination groups behave exactly like product lines — one dropdown for both.
   const groupOptions = groupsData.categories.flatMap((category) =>
     category.groups.filter((g) => g.type === "products").map((g) => ({ id: g.id, label: `${g.labelEn} (${category.labelEn})` })),
@@ -81,21 +84,34 @@ export default async function CatalogProductPage({ params, searchParams }: { par
           <section className="sys-card">
             <div className="sys-card-head">
               <h2>Pictures</h2>
-              <p>The official render is always the dominant picture. Uploaded photos appear in the mini gallery under it.</p>
+              <p>
+                {product.custom
+                  ? "The first photo you upload becomes the main picture; use “Make main” to switch it anytime. Other photos show in the mini gallery."
+                  : "The official render is always the dominant picture. Uploaded photos appear in the mini gallery under it."}
+              </p>
             </div>
             <div className="cat-media-grid">
               <div className="cat-media-item">
                 <div className="thumb"><Image src={product.image || product.categoryImage} alt={name} fill sizes="130px" /></div>
-                <small>Main render</small>
+                <small>{product.custom ? (hasOwnMainImage ? "Main picture" : "Stock photo — upload to replace") : "Main render"}</small>
               </div>
               {(meta.gallery ?? []).map((url) => (
                 <div className="cat-media-item" key={url}>
                   <div className="thumb"><Image src={url} alt="" fill sizes="130px" /></div>
-                  <form action={deleteGalleryImage}>
-                    <input type="hidden" name="code" value={product.code} />
-                    <input type="hidden" name="url" value={url} />
-                    <button type="submit">Remove</button>
-                  </form>
+                  <div style={{ display: "flex", gap: 8, justifyContent: "center" }}>
+                    {product.custom && (
+                      <form action={makeMainImage}>
+                        <input type="hidden" name="code" value={product.code} />
+                        <input type="hidden" name="url" value={url} />
+                        <button type="submit">Make main</button>
+                      </form>
+                    )}
+                    <form action={deleteGalleryImage}>
+                      <input type="hidden" name="code" value={product.code} />
+                      <input type="hidden" name="url" value={url} />
+                      <button type="submit">Remove</button>
+                    </form>
+                  </div>
                 </div>
               ))}
             </div>

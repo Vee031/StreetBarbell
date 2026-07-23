@@ -200,7 +200,7 @@ export async function saveLine(formData: FormData) {
 
 export async function uploadGalleryImages(formData: FormData) {
   await requireAdmin();
-  const { code, slug } = await requireProduct(formData);
+  const { code, slug, custom } = await requireProduct(formData);
   const files = formData.getAll("images").filter((f): f is File => f instanceof File && f.size > 0);
   if (files.length === 0) redirect(editorPath(slug, "?error=nofile"));
   const urls: string[] = [];
@@ -215,10 +215,46 @@ export async function uploadGalleryImages(formData: FormData) {
     });
     urls.push(blob.url);
   }
+  // Admin-created products without an own main picture: the FIRST uploaded photo
+  // becomes the main picture (otherwise the line's stock photo stays dominant and
+  // uploads look like they "disappear" into the mini gallery).
+  if (custom) {
+    const customs = await fetchCustomProductsUncached();
+    const record = customs[code];
+    if (record && !record.image && urls.length > 0) {
+      record.image = urls.shift() as string;
+      customs[code] = record;
+      await writeBlobJson(CUSTOM_PRODUCTS_BLOB_PATH, customs);
+    }
+  }
   const meta = await fetchProductMetaUncached();
   const entry = { ...(meta[code] ?? {}) };
   entry.gallery = [...(entry.gallery ?? []), ...urls];
   meta[code] = entry;
+  await saveMeta(meta);
+  redirect(editorPath(slug, "?saved=1"));
+}
+
+// Custom products: promote a gallery photo to the main picture; the previous
+// main picture (if any) moves into the gallery so nothing is lost.
+export async function makeMainImage(formData: FormData) {
+  await requireAdmin();
+  const { code, slug, custom } = await requireProduct(formData);
+  if (!custom) redirect(editorPath(slug));
+  const url = String(formData.get("url") ?? "");
+  const customs = await fetchCustomProductsUncached();
+  const record = customs[code];
+  if (!record) redirect("/system/catalog");
+  const meta = await fetchProductMetaUncached();
+  const entry = { ...(meta[code] ?? {}) };
+  const gallery = entry.gallery ?? [];
+  if (!gallery.includes(url)) redirect(editorPath(slug));
+  entry.gallery = gallery.filter((item) => item !== url);
+  if (record.image) entry.gallery = [record.image, ...entry.gallery];
+  meta[code] = entry;
+  record.image = url;
+  customs[code] = record;
+  await writeBlobJson(CUSTOM_PRODUCTS_BLOB_PATH, customs);
   await saveMeta(meta);
   redirect(editorPath(slug, "?saved=1"));
 }
