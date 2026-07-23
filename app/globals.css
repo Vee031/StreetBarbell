@@ -532,6 +532,13 @@ p { color: var(--muted); line-height: 1.7; }
 .cat-badge { position: absolute; top: 9px; right: 9px; z-index: 1; border-radius: 999px; padding: 3px 10px; font-size: .7rem; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; background: var(--green); color: white; }
 .cat-badge.off { background: var(--dark); }
 .cat-badge.custom { right: auto; left: 9px; background: #3565d8; }
+/* drag & drop ordering in the catalogue */
+.cat-card-wrap { cursor: grab; }
+.cat-card-wrap:active { cursor: grabbing; }
+.cat-card-wrap .cat-card { height: 100%; }
+.cat-drag-handle { position: absolute; bottom: 9px; right: 9px; z-index: 1; display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 6px; background: rgba(255,255,255,.88); border: 1px solid var(--line); color: #8a8f98; }
+.order-save { position: sticky; top: 74px; z-index: 40; display: flex; align-items: center; gap: 12px; margin-bottom: 14px; padding: 10px 14px; border: 1px solid #f3c2c4; border-radius: 12px; background: #fdf3f3; }
+.order-save small { color: #8a4a4d; font-weight: 600; }
 .cat-line-title { margin: 26px 0 12px; font-family: var(--display); font-size: 1.35rem; text-transform: uppercase; }
 .cat-media-grid { display: flex; flex-wrap: wrap; gap: 12px; }
 .cat-media-item { position: relative; width: 130px; }

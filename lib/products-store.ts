@@ -10,6 +10,7 @@ import { loadProductGroups, type ProductGroupsData } from "./product-groups";
 export const PRODUCTS_BLOB_PATH = "content/product-overrides.json";
 export const PRODUCTS_REPORT_BLOB_PATH = "content/product-import-report.json";
 export const CUSTOM_PRODUCTS_BLOB_PATH = "content/custom-products.json";
+export const PRODUCT_ORDER_BLOB_PATH = "content/product-order.json";
 export { PRODUCTS_CACHE_TAG };
 
 // --- Product categories -----------------------------------------------------
@@ -178,6 +179,43 @@ export const loadCustomProducts = unstable_cache(fetchCustomProductsUncached, ["
   revalidate: 300,
 });
 
+// --- Display order ----------------------------------------------------------
+// Admin-set sequence per category (line or group): drag & drop in
+// /system/catalog. Codes listed first in the saved order, any product not in
+// the list keeps its default position after them.
+export type ProductOrder = Record<string, string[]>;
+
+export async function fetchProductOrderUncached(): Promise<ProductOrder> {
+  return (await readBlobJson<ProductOrder>(PRODUCT_ORDER_BLOB_PATH)) ?? {};
+}
+
+export const loadProductOrder = unstable_cache(fetchProductOrderUncached, ["product-order"], {
+  tags: [PRODUCTS_CACHE_TAG],
+  revalidate: 300,
+});
+
+function applyCategoryOrder(all: Product[], order: ProductOrder): Product[] {
+  const result = [...all];
+  for (const [category, codes] of Object.entries(order)) {
+    if (!Array.isArray(codes) || codes.length === 0) continue;
+    const positions: number[] = [];
+    result.forEach((product, index) => {
+      if (product.lineSlug === category) positions.push(index);
+    });
+    if (positions.length < 2) continue;
+    const rank = new Map(codes.map((code, index) => [code, index]));
+    const members = positions.map((index) => result[index]);
+    // Stable sort: listed codes in saved order first, the rest keep their default order.
+    const sorted = [...members].sort(
+      (a, b) => (rank.get(a.code) ?? Number.MAX_SAFE_INTEGER) - (rank.get(b.code) ?? Number.MAX_SAFE_INTEGER),
+    );
+    positions.forEach((index, i) => {
+      result[index] = sorted[i];
+    });
+  }
+  return result;
+}
+
 export async function fetchProductOverridesUncached(): Promise<ProductOverrides> {
   return (await readBlobJson<ProductOverrides>(PRODUCTS_BLOB_PATH)) ?? {};
 }
@@ -250,10 +288,10 @@ export function applyOverride(product: Product, o: ProductOverride | undefined, 
 }
 
 export async function getProducts(): Promise<Product[]> {
-  const [overrides, custom, groupsData] = await Promise.all([loadProductOverrides(), loadCustomProducts(), loadProductGroups()]);
+  const [overrides, custom, groupsData, order] = await Promise.all([loadProductOverrides(), loadCustomProducts(), loadProductGroups(), loadProductOrder()]);
   const categories = buildCategoryMap(groupsData);
   const all = [...baseProducts, ...Object.values(custom).map((record) => customToProduct(record, categories))];
-  return all.map((product) => applyOverride(product, overrides[product.code], categories));
+  return applyCategoryOrder(all.map((product) => applyOverride(product, overrides[product.code], categories)), order);
 }
 
 export async function getMergedProduct(lineSlug: string, productSlug: string) {

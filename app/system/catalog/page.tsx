@@ -1,7 +1,7 @@
-import Image from "next/image";
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
+import { CatalogOrderGrid } from "@/components/catalog-order-grid";
 import { SystemNav } from "@/components/system-nav";
 import { productLines } from "@/lib/data";
 import { getProductName } from "@/lib/data";
@@ -11,9 +11,9 @@ import { getProducts } from "@/lib/products-store";
 
 export const dynamic = "force-dynamic";
 
-export default async function SystemCatalogPage({ searchParams }: { searchParams: Promise<{ error?: string }> }) {
+export default async function SystemCatalogPage({ searchParams }: { searchParams: Promise<{ error?: string; ordered?: string }> }) {
   if (!(await isAdminAuthenticated())) redirect("/system/login");
-  const { error } = await searchParams;
+  const { error, ordered } = await searchParams;
   const [allProducts, meta, groupsData] = await Promise.all([getProducts(), fetchProductMetaUncached(), fetchProductGroupsUncached()]);
   const disabledCount = allProducts.filter((product) => !isEnabled(meta, product.code)).length;
   // Combination groups list like lines — their products carry the group as category.
@@ -40,6 +40,7 @@ export default async function SystemCatalogPage({ searchParams }: { searchParams
       </header>
 
       {error === "storage" ? <p className="sys-banner sys-error">Storage is not reachable — changes cannot be saved right now.</p> : null}
+      {ordered ? <p className="sys-banner sys-saved">Order saved — the website now shows this sequence.</p> : null}
 
       {[...productLines.map((line) => ({ slug: line.slug, title: line.nameEn })), ...groupSections].map((section) => {
         const sectionProducts = allProducts.filter((product) => product.lineSlug === section.slug);
@@ -47,24 +48,17 @@ export default async function SystemCatalogPage({ searchParams }: { searchParams
         return (
           <section key={section.slug}>
             <h2 className="cat-line-title">{section.title}</h2>
-            <div className="cat-grid">
-              {sectionProducts.map((product) => {
-                const enabled = isEnabled(meta, product.code);
-                return (
-                  <Link key={product.code} href={`/system/catalog/${product.slug}`} className={enabled ? "cat-card" : "cat-card is-off"}>
-                    <span className={enabled ? "cat-badge" : "cat-badge off"}>{enabled ? "On" : "Off"}</span>
-                    {product.custom && <span className="cat-badge custom">Custom</span>}
-                    <div className="cat-card-image">
-                      <Image src={product.image || product.categoryImage} alt={getProductName(product)} fill sizes="220px" />
-                    </div>
-                    <div className="cat-card-body">
-                      <small>{product.code}</small>
-                      <strong>{getProductName(product)}</strong>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
+            <CatalogOrderGrid
+              category={section.slug}
+              items={sectionProducts.map((product) => ({
+                code: product.code,
+                slug: product.slug,
+                name: getProductName(product),
+                image: product.image || product.categoryImage,
+                enabled: isEnabled(meta, product.code),
+                custom: product.custom,
+              }))}
+            />
           </section>
         );
       })}

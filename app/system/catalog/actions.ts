@@ -14,8 +14,11 @@ import {
   customToProduct,
   CUSTOM_PRODUCTS_BLOB_PATH,
   fetchCustomProductsUncached,
+  fetchProductOrderUncached,
   fetchProductOverridesUncached,
+  getProducts,
   POSITION_OPTIONS,
+  PRODUCT_ORDER_BLOB_PATH,
   PRODUCTS_BLOB_PATH,
   PRODUCTS_CACHE_TAG,
   productSlugFor,
@@ -176,6 +179,27 @@ export async function saveIdentity(formData: FormData) {
   updateTag(PRODUCTS_CACHE_TAG);
   revalidatePath("/", "layout");
   redirect(editorPath(slug, "?saved=1"));
+}
+
+// Persists the drag-and-drop sequence of one catalogue section (line or group).
+// The order drives the public line/group pages and the catalogue listing.
+export async function saveProductOrder(formData: FormData) {
+  await requireAdmin();
+  const category = String(formData.get("category") ?? "").trim();
+  if (!(await categorySlugs()).has(category)) redirect("/system/catalog");
+  const submitted = String(formData.get("codes") ?? "")
+    .split("|")
+    .map((code) => code.trim())
+    .filter(Boolean);
+  // Only codes that genuinely belong to this category are stored.
+  const memberCodes = new Set((await getProducts()).filter((p) => p.lineSlug === category).map((p) => p.code));
+  const ordered = submitted.filter((code) => memberCodes.has(code));
+  const order = await fetchProductOrderUncached();
+  order[category] = ordered;
+  await writeBlobJson(PRODUCT_ORDER_BLOB_PATH, order);
+  updateTag(PRODUCTS_CACHE_TAG);
+  revalidatePath("/", "layout");
+  redirect("/system/catalog?ordered=1");
 }
 
 // The wording on the product page: descriptions, target-muscles line, movement
