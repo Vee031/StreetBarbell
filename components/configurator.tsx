@@ -276,11 +276,12 @@ export function Configurator({ locale }: { locale: Locale }) {
 
   const reset = () => { setForm({ ...DEFAULTS, exchangeRate: form.exchangeRate }); setResultsVisible(false); setResults([]); setChosen([]); setAvoided([]); setCandidates(null); setStep(1); };
 
-  // Entering step 4 via the progress chips still needs the machine list.
-  useEffect(() => {
-    if (step === 4 && candidates === null) void loadCandidates();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [step]);
+  // Progress-chip navigation: step 4 always (re)loads the machine list so the
+  // choose/avoid options match the current inputs.
+  const goToStep = (n: number) => {
+    if (n === 4) goToPreferences();
+    else setStep(n);
+  };
 
   const budgetNum = typeof form.budgetCzk === "number" && form.budgetCzk > 0 ? form.budgetCzk : null;
 
@@ -310,7 +311,7 @@ export function Configurator({ locale }: { locale: Locale }) {
   return (
     <div className="configurator-shell">
       <div className="config-progress">
-        {[1, 2, 3, 4, 5].map((n) => <button key={n} className={step >= n ? "active" : ""} onClick={() => setStep(n)}><span>{step > n ? <Check size={15} /> : n}</span><small>{[cs ? "Rozsah" : "Scope", cs ? "Zadání" : "Brief", cs ? "Priority" : "Priorities", cs ? "Preference" : "Preferences", cs ? "Výsledky" : "Results"][n - 1]}</small></button>)}
+        {[1, 2, 3, 4, 5].map((n) => <button key={n} className={step >= n ? "active" : ""} onClick={() => goToStep(n)}><span>{step > n ? <Check size={15} /> : n}</span><small>{[cs ? "Rozsah" : "Scope", cs ? "Zadání" : "Brief", cs ? "Priority" : "Priorities", cs ? "Preference" : "Preferences", cs ? "Výsledky" : "Results"][n - 1]}</small></button>)}
       </div>
 
       {/* Category bar — reflects (and drives) which product lines are in the search. */}
