@@ -6,6 +6,7 @@ import {
   DEPRIORITIZE_WHEN_WORKOUT_CODES,
   EXCLUDE_WHEN_NO_BODYWEIGHT_CODES,
   EXISTING_WORKOUT_EXCLUDE_LINES,
+  LINES,
   MAX_OTHER_SHARE,
   PREFERRED_CORE_LINES,
   PREFER_PREMIUM_FROM_NEUTRAL,
@@ -39,7 +40,9 @@ export type ConfigInput = {
   resultCount: number;
 };
 
-export type MetricKey = "coverage" | "focusFit" | "value" | "space";
+// The three result bars mirror the three priority sliders 1:1 — each metric is
+// "how well this setup matches the slider as you set it" (0–10).
+export type MetricKey = "bodyCoverage" | "installation" | "costUse";
 
 export type CombinationResult = {
   id: string;
@@ -47,7 +50,8 @@ export type CombinationResult = {
   totalEur: number;
   totalCzk: number;
   footprint: number | null;
-  score: number;
+  score: number; // internal ranking value
+  match: number; // 0–100 % — average of the three slider-match metrics, shown to the user
   metrics: Record<MetricKey, number>;
   strengths: string[];
   weakness: string;
@@ -175,18 +179,41 @@ function coreLinePenalty(combo: PricedProduct[], input: ConfigInput) {
   return others > maxOthers ? (others - maxOthers) * 4 : 0;
 }
 
+// Each metric answers: "how well does this combination match the slider AS SET?"
+// The two poles of a slider are scored separately, then blended by the slider
+// position (1 → pure left pole, 5 → pure right pole, 3 → the average of both).
 function metricsFor(combo: PricedProduct[], input: ConfigInput, totalPrice: number, budget: number): Record<MetricKey, number> {
+  const blend = (left: number, right: number, axis: number) => {
+    const t = (axis + 1) / 2; // -1..1 → 0..1
+    return clamp(left * (1 - t) + right * t);
+  };
+
+  // Body coverage: balanced pole = even upper/lower/core spread, specialised pole
+  // = concentration on the chosen focus region.
   const upper = combo.reduce((s, p) => s + p.coverage.upper, 0);
   const lower = combo.reduce((s, p) => s + p.coverage.lower, 0);
   const core = combo.reduce((s, p) => s + p.coverage.core, 0);
   const cardio = combo.reduce((s, p) => s + p.coverage.cardio, 0);
-  const coverage = clamp((Math.min(upper, lower, core) / Math.max(1, combo.length)) * 3 + Math.min(2, cardio * 0.4));
-  const focusFit = clamp(average(combo.map((p) => focusCoverage(p, input.primaryFocus))) + (specAxis(input) > 0 ? 1 : 0));
-  const value = clamp((1 - totalPrice / Math.max(budget, totalPrice)) * 6 + average(combo.map((p) => p.scores.affordability)) * 0.4);
-  const knownFootprints = combo.map((p) => p.footprint).filter((v): v is number => typeof v === "number");
-  const footprint = knownFootprints.reduce((a, b) => a + b, 0);
-  const space = knownFootprints.length ? clamp(10 - Math.max(0, footprint - input.availableSpace) * 0.4) : 5;
-  return { coverage, focusFit, value, space };
+  const balancedPole = clamp((Math.min(upper, lower, core) / Math.max(1, combo.length)) * 3 + Math.min(2, cardio * 0.4));
+  const specialisedPole = clamp(average(combo.map((p) => focusCoverage(p, input.primaryFocus))) * 1.2);
+  const bodyCoverage = blend(balancedPole, specialisedPole, specAxis(input));
+
+  // Installation: public pole = robust, high-throughput, beginner-friendly machines
+  // (loose dumbbells/boxing are already filtered out at the public end); private
+  // pole = freedom to use specialised equipment.
+  const publicPole = clamp(average(combo.map((p) => p.scores.beginner * 0.55 + p.scores.throughput * 0.45)) + 1);
+  const specialCount = combo.filter((p) => CONV_DIV_CODES.has(p.code) || DUMBBELL_CODES.has(p.code) || PREMIUM_LINE_SET.has(lineOf(p))).length;
+  const privatePole = clamp(5.5 + average(combo.map((p) => p.scores.variety)) * 0.25 + specialCount * 1.2);
+  const installation = blend(publicPole, privatePole, privacyAxis(input));
+
+  // Cost & use: cheap pole = affordability + budget headroom, no-limit pole =
+  // premium machines (Pro/Plus, converging/diverging).
+  const cheapPole = clamp(average(combo.map((p) => p.scores.affordability)) * 0.75 + (budget > 0 ? (1 - totalPrice / Math.max(budget, totalPrice)) * 5 : 2.5) + 2);
+  const premiumCount = combo.filter((p) => CONV_DIV_CODES.has(p.code) || PREMIUM_LINE_SET.has(lineOf(p))).length;
+  const premiumPole = clamp(4 + (premiumCount / Math.max(1, combo.length)) * 7);
+  const costUse = blend(cheapPole, premiumPole, costAxis(input));
+
+  return { bodyCoverage, installation, costUse };
 }
 
 function spacePenalty(comboLength: number, input: ConfigInput) {
@@ -210,7 +237,7 @@ function scoreCombination(combo: PricedProduct[], input: ConfigInput, totalPrice
   }
   const spec = specAxis(input);
   let score = base + patterns.size * 0.14 - duplicates * Math.max(0, 0.5 - spec * 0.5) * 0.6;
-  score += metrics.coverage * (0.25 - spec * 0.15);
+  score += metrics.bodyCoverage * (0.25 - spec * 0.15);
   score -= spacePenalty(combo.length, input);
   score -= coreLinePenalty(combo, input);
   if (budget > 0) score += Math.min(0.4, (totalPrice / Math.max(1, budget)) * 0.4);
@@ -252,36 +279,84 @@ function jaccard(a: Product[], b: Product[]) {
   return intersection / (setA.size + setB.size - intersection);
 }
 
-function explanations(metrics: Record<MetricKey, number>, input: ConfigInput, locale: "en" | "cs") {
-  const labelsEn: Record<MetricKey, string> = {
-    coverage: "balanced body coverage",
-    focusFit: input.primaryFocus === "upper" ? "upper-body focus" : input.primaryFocus === "lower" ? "lower-body focus" : "all-round training",
-    value: "value for money",
-    space: "efficient use of space",
+// Fact-based texts: every sentence is derived from the actual machines in the
+// setup and the sliders as set — no generic filler. Wording is assembled from
+// verified facts (line composition, region coverage, premium machines, budget
+// fit, space fit), so two different results read differently.
+function explanations(combo: PricedProduct[], input: ConfigInput, totalPrice: number, budget: number, footprint: number | null, locale: "en" | "cs") {
+  const cs = locale === "cs";
+  const lineLabel = (slug: string) => {
+    const line = LINES.find((l) => l.slug === slug);
+    return line ? (cs ? line.cs : line.en) : slug;
   };
-  const labelsCs: Record<MetricKey, string> = {
-    coverage: "vyvážené zapojení těla",
-    focusFit: input.primaryFocus === "upper" ? "zaměření na horní část" : input.primaryFocus === "lower" ? "zaměření na dolní část" : "všestranný trénink",
-    value: "poměr ceny a užitku",
-    space: "efektivní využití prostoru",
-  };
-  const labels = locale === "cs" ? labelsCs : labelsEn;
-  const sorted = (Object.entries(metrics) as [MetricKey, number][]).sort((a, b) => b[1] - a[1]);
-  const strong = sorted.slice(0, 2).map(([k]) => labels[k]);
-  const weak = sorted.at(-1)?.[0] ?? "coverage";
-  const focusName = input.primaryFocus === "upper" ? (locale === "cs" ? "horní část těla" : "upper body") : input.primaryFocus === "lower" ? (locale === "cs" ? "dolní část těla" : "lower body") : (locale === "cs" ? "celé tělo" : "full body");
-  if (locale === "cs") {
-    return {
-      purpose: `Sestava pro ${focusName}, která vyniká v ${strong.join(" a ")}.`,
-      strengths: strong.map((v) => `Silná stránka: ${v}.`),
-      weakness: `Hlavní kompromis: nižší hodnocení pro ${labels[weak]}.`,
-    };
+
+  // Facts about the combination.
+  const lineCounts = new Map<string, number>();
+  for (const p of combo) lineCounts.set(lineOf(p), (lineCounts.get(lineOf(p)) ?? 0) + 1);
+  const lineList = [...lineCounts.entries()].sort((a, b) => b[1] - a[1]).map(([slug, n]) => (n > 1 ? `${n}× ${lineLabel(slug)}` : lineLabel(slug))).join(", ");
+  const upper = combo.reduce((s, p) => s + p.coverage.upper, 0) / combo.length;
+  const lower = combo.reduce((s, p) => s + p.coverage.lower, 0) / combo.length;
+  const core = combo.reduce((s, p) => s + p.coverage.core, 0) / combo.length;
+  const convDiv = combo.filter((p) => CONV_DIV_CODES.has(p.code));
+  const premium = combo.filter((p) => PREMIUM_LINE_SET.has(lineOf(p)));
+  const lightCount = combo.filter((p) => lineOf(p) === "light-line").length;
+  const complementAvg = average(combo.map((p) => p.scores.complement));
+  const patterns = new Set(combo.flatMap((p) => p.movementPatterns.split(";").map((v) => v.trim()).filter(Boolean)));
+  const focusName = input.primaryFocus === "upper" ? (cs ? "horní část těla" : "the upper body") : input.primaryFocus === "lower" ? (cs ? "dolní část těla" : "the lower body") : (cs ? "celé tělo" : "the whole body");
+  const machinesNoun = cs ? (combo.length === 1 ? "stroj" : combo.length <= 4 ? "stroje" : "strojů") : combo.length === 1 ? "machine" : "machines";
+
+  const purpose = cs
+    ? `${combo.length} ${machinesNoun} pro ${focusName} — složení: ${lineList}.`
+    : `${combo.length} ${machinesNoun} for ${focusName} — built from: ${lineList}.`;
+
+  // Strengths: only claims that are true for THIS setup, ordered by relevance
+  // to the sliders as set. Take the first three.
+  const strengths: string[] = [];
+  if (input.publicPrivate <= 2) {
+    strengths.push(cs ? "Vhodné pro veřejný prostor — bez volných jednoruček a boxovacího vybavení." : "Suitable for public installation — no loose dumbbell sets or boxing equipment.");
+  } else if (input.publicPrivate >= 4 && (convDiv.length > 0 || premium.length > 0)) {
+    strengths.push(cs ? "Využívá volnost soukromé instalace včetně specializovanějších strojů." : "Takes advantage of a private setting, including more specialised machines.");
   }
-  return {
-    purpose: `A ${focusName} setup that stands out for ${strong.join(" and ")}.`,
-    strengths: strong.map((v) => `Strong ${v}.`),
-    weakness: `Main trade-off: lower score for ${labels[weak]}.`,
-  };
+  if (input.costUse <= 2 && lightCount > 0) {
+    strengths.push(cs ? `Drží cenu nízko: ${lightCount} z ${combo.length} strojů z úsporné řady Light.` : `Keeps the price down: ${lightCount} of ${combo.length} machines from the economical Light line.`);
+  } else if (input.costUse >= 4 && convDiv.length > 0) {
+    strengths.push(cs ? `Obsahuje prémiové converging/diverging stroje (${convDiv.map((p) => p.code).join(", ")}).` : `Includes premium converging/diverging machines (${convDiv.map((p) => p.code).join(", ")}).`);
+  }
+  if (input.balanceSpecialised <= 2 && Math.min(upper, lower, core) >= 2.2) {
+    strengths.push(cs ? "Rovnoměrně zapojuje horní i dolní polovinu těla a střed těla." : "Works the upper body, lower body and core evenly.");
+  } else if (input.balanceSpecialised >= 4 && input.primaryFocus !== "full") {
+    strengths.push(cs ? `Cíleně staví na strojích pro ${focusName}.` : `Deliberately built around machines for ${focusName}.`);
+  }
+  if (input.existingWorkout && complementAvg >= 5.5) {
+    strengths.push(cs ? "Dobře doplňuje stávající workoutovou konstrukci — bez duplicit s hrazdami." : "Complements your existing workout structure — no overlap with pull-up rigs.");
+  }
+  if (budget > 0 && totalPrice <= budget) {
+    strengths.push(cs ? "Vejde se do zadaného rozpočtu." : "Fits within your budget.");
+  }
+  if (strengths.length < 2) {
+    strengths.push(cs ? `${patterns.size} různých pohybových vzorců bez zdvojených strojů.` : `${patterns.size} distinct movement patterns with no duplicated machines.`);
+  }
+
+  // One honest trade-off, first true statement wins.
+  let weakness: string;
+  if (footprint !== null && input.availableSpace > 0 && footprint > input.availableSpace) {
+    weakness = cs ? `Plocha strojů (~${footprint.toFixed(0)} m²) přesahuje zadaný prostor.` : `The machine footprint (~${footprint.toFixed(0)} m²) exceeds your available space.`;
+  } else if (footprint !== null && input.availableSpace > 0 && footprint > input.availableSpace * 0.8) {
+    weakness = cs ? "Plocha strojů se blíží hranici dostupného prostoru." : "The machine footprint is close to your available space.";
+  } else if (Math.min(upper, lower, core) < 1.2 && input.balanceSpecialised <= 3) {
+    const gap = upper <= lower && upper <= core ? (cs ? "horní části těla" : "the upper body") : lower <= core ? (cs ? "dolní části těla" : "the lower body") : (cs ? "středu těla" : "the core");
+    weakness = cs ? `Slabší pokrytí ${gap} — zvažte doplnění dalším strojem.` : `Lighter coverage of ${gap} — consider adding one more machine.`;
+  } else if (input.costUse >= 4 && premium.length + convDiv.length > 0) {
+    weakness = cs ? "Prémiové stroje zvyšují celkovou cenu sestavy." : "Premium machines raise the total price of the setup.";
+  } else if (input.costUse <= 2) {
+    weakness = cs ? "Úsporná volba — bez prémiových converging/diverging strojů." : "Economical choice — no premium converging/diverging machines.";
+  } else if (combo.length <= 2) {
+    weakness = cs ? "Malý počet strojů — pokrytí tréninku je nutně užší." : "A small setup — training coverage is necessarily narrower.";
+  } else {
+    weakness = cs ? "Bez zásadního kompromisu — vyvážená sestava pro zadané priority." : "No major trade-off — a balanced setup for your priorities.";
+  }
+
+  return { purpose, strengths: strengths.slice(0, 3), weakness };
 }
 
 export function recommend(products: PricedProduct[], input: ConfigInput, locale: "en" | "cs"): CombinationResult[] {
@@ -317,20 +392,23 @@ export function recommend(products: PricedProduct[], input: ConfigInput, locale:
     for (const { products: combo, price } of enumerateCombos(candidates, count, budgetCap)) {
       const { score, metrics } = scoreCombination(combo, input, price, budget || input.budgetCzk);
       const footprints = combo.map((p) => p.footprint).filter((v): v is number => typeof v === "number");
+      const footprint = footprints.length === combo.length ? footprints.reduce((a, b) => a + b, 0) : null;
       scored.push({
         id: combo.map((p) => p.code).join("+"),
         products: combo,
         totalEur: price / Math.max(1, input.exchangeRate),
         totalCzk: price,
-        footprint: footprints.length === combo.length ? footprints.reduce((a, b) => a + b, 0) : null,
+        footprint,
         score,
+        match: Math.round(average(Object.values(metrics)) * 10),
         metrics,
-        ...explanations(metrics, input, locale),
+        ...explanations(combo, input, price, budget, footprint, locale),
       });
     }
   }
 
-  scored.sort((a, b) => b.score - a.score);
+  // Rank by slider match (what the user sees), internal score breaks ties.
+  scored.sort((a, b) => b.match - a.match || b.score - a.score);
   const diverse: CombinationResult[] = [];
   for (const candidate of scored) {
     const limit = candidate.products.length <= 2 ? 0.3 : 0.5;

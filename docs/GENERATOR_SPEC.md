@@ -73,10 +73,20 @@ c. **Cost ↔ Use** — labels: `As cheap as possible` · `No preference` · `No
    - 5 ("no limit"): additionally adds the **Pro** line — Pro is proposed **only** at 5
      (owner 2026-07-22; Pro and Plus are separate, no longer one block).
 
-## 5. Results
+## 5. Results (reworked 2026-07-23 per owner)
 
-Unchanged from the current generator (ranked cards, /10 score, CZK price ≈ EUR, metric bars,
-strengths, trade-off, PDF).
+- Rank badge shows **% match with the brief** (average of the three slider-match
+  metrics), not the old /10 score. Ranking sorts by match, internal score breaks ties.
+- The **three metric bars mirror the three sliders 1:1** (Body coverage, Installation,
+  Cost and use) — each is "how well this setup matches the slider as set" (poles scored
+  separately, blended by slider position). The old coverage/focus/value/space bars are gone.
+- **Texts are fact-based**: purpose = machine count + focus + line composition;
+  strengths = up to three true statements driven by the sliders (public-safe machines,
+  Light-line share, premium conv/div codes, even region coverage, workout complement,
+  budget fit); trade-off = first true item of (space exceeded/tight → region gap →
+  premium price → economy trade-off → small setup → none). No generic filler.
+- Machine cards in the result are picture-first (large thumbnails), CZK ≈ EUR, PDF kept.
+- The product detail page no longer shows the old "Recommendation profile" score panel.
 
 ## Interpretation notes (flag to owner if wrong)
 

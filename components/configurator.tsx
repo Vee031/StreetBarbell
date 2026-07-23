@@ -55,9 +55,10 @@ const DEFAULTS: FormState = {
   resultCount: 5,
 };
 
+// The three bars mirror the three priority sliders 1:1.
 const metricLabels: Record<Locale, Record<MetricKey, string>> = {
-  en: { coverage: "Body coverage", focusFit: "Focus fit", value: "Value for money", space: "Space efficiency" },
-  cs: { coverage: "Zapojení těla", focusFit: "Zaměření", value: "Poměr cena/užitek", space: "Úspora prostoru" },
+  en: { bodyCoverage: "Body coverage", installation: "Installation", costUse: "Cost and use" },
+  cs: { bodyCoverage: "Zapojení těla", installation: "Umístění", costUse: "Cena a využití" },
 };
 
 function YesNo({ id, label, value, onChange, pulseId, cs }: { id: string; label: string; value: boolean; onChange: (v: boolean) => void; pulseId: string; cs: boolean }) {
@@ -214,7 +215,7 @@ export function Configurator({ locale }: { locale: Locale }) {
     doc.setDrawColor(210); doc.line(18, 35, 192, 35);
     doc.setFontSize(12);
     doc.text(`${cs ? "Odhad ceny sestavy (bez DPH)" : "Estimated equipment price (excl. VAT)"}: ${Math.round(result.totalCzk).toLocaleString()} CZK / ≈ €${Math.round(result.totalEur).toLocaleString()}`, 18, 45);
-    doc.text(`${cs ? "Skóre doporučení" : "Recommendation score"}: ${result.score.toFixed(1)} / 10`, 18, 53);
+    doc.text(`${cs ? "Shoda se zadáním" : "Match with your brief"}: ${result.match} %`, 18, 53);
     doc.setFont("DejaVu", "bold"); doc.text(cs ? "Stroje" : "Machines", 18, 66);
     doc.setFont("DejaVu", "normal");
     let y = 75;
@@ -323,7 +324,7 @@ export function Configurator({ locale }: { locale: Locale }) {
           <div className="result-list">
             {results.map((result, index) => (
               <article className="result-card" key={result.id}>
-                <div className="result-rank"><span>#{index + 1}</span><strong>{result.score.toFixed(1)}</strong><small>/ 10</small></div>
+                <div className="result-rank"><span>#{index + 1}</span><strong>{result.match}<i className="rank-pct">%</i></strong><small>{cs ? "shoda se zadáním" : "match"}</small></div>
                 <div className="result-content">
                   <div className="result-title-row">
                     <div><small>{result.products.length} {countNoun(result.products.length, locale, nounMachines)}</small><h3>{result.products.map((p) => getProductName(p)).join(" + ")}</h3></div>
@@ -340,11 +341,11 @@ export function Configurator({ locale }: { locale: Locale }) {
                   <p className="result-purpose">{result.purpose}</p>
                   <div className="result-products">{result.products.map((product) => (
                     <Link key={product.code} href={`/${locale}/products/${product.lineSlug}/${product.slug}`} className="result-product">
-                      <span className="result-thumb"><Image src={product.image || product.categoryImage} alt="" fill sizes="80px" /></span>
+                      <span className="result-thumb"><Image src={product.image || product.categoryImage} alt="" fill sizes="240px" /></span>
                       <span className="result-product-text"><span>{product.code}</span><strong>{getProductName(product)}</strong><small>{product.bodyFocus}</small></span>
                     </Link>
                   ))}</div>
-                  <div className="metric-bars">{(Object.entries(result.metrics) as [MetricKey, number][]).map(([key, value]) => <div key={key}><span>{metricLabels[locale][key]}</span><i><b style={{ width: `${value * 10}%` }} /></i><strong>{value.toFixed(1)}</strong></div>)}</div>
+                  <div className="metric-bars">{(["bodyCoverage", "installation", "costUse"] as MetricKey[]).map((key) => <div key={key}><span>{metricLabels[locale][key]}</span><i><b style={{ width: `${(result.metrics[key] ?? 0) * 10}%` }} /></i><strong>{(result.metrics[key] ?? 0).toFixed(1)}</strong></div>)}</div>
                   <div className="result-notes"><div>{result.strengths.map((strength) => <p key={strength}><Check size={16} /> {strength}</p>)}</div><p className="weakness"><Info size={16} /> {result.weakness}</p></div>
                   <div className="result-footer">
                     <span>{result.footprint ? `${cs ? "Přibližná plocha strojů" : "Approx. machine footprint"}: ${result.footprint.toFixed(1)} m²` : (cs ? "Pro část strojů chybí rozměrová data." : "Some machine footprint data is unavailable.")}</span>

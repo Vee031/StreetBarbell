@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
-import { ArrowLeft, ArrowUpRight, Check, FileText, Mail, Play } from "lucide-react";
+import { ArrowLeft, Check, FileText, Mail, Play } from "lucide-react";
 import { MuscleMap } from "@/components/muscle-map";
 import { ProductGallery } from "@/components/product-gallery";
 import { getProductDescription, getProductName, productLines, products } from "@/lib/data";
@@ -65,7 +65,6 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         {documents.length > 0 && <section><span className="eyebrow">{cs ? "Dokumenty" : "Documents"}</span><h2>{cs ? "Ke stažení" : "Downloads"}</h2><div className="document-list">{documents.map((doc) => <a key={doc.url} href={doc.url} target="_blank" rel="noreferrer"><FileText size={18}/><span>{doc.name}</span></a>)}</div></section>}
         <section><span className="eyebrow">{d.products.materials}</span><div className="material-table"><div><span>{d.products.frame}</span><strong>{product.materials.frame || "—"}</strong></div><div><span>{d.products.rails}</span><strong>{product.materials.rails || "—"}</strong></div><div><span>{d.products.smallParts}</span><strong>{product.materials.smallParts || "—"}</strong></div><div><span>{d.products.finish}</span><strong>{product.materials.finish || "—"}</strong></div></div></section>
       </div>
-      <aside className="detail-aside"><span className="eyebrow">{cs ? "Doporučovací data" : "Recommendation profile"}</span><h3>{cs ? "Jak stroj funguje v sestavě" : "How it performs in a setup"}</h3>{[[cs?"Variabilita":"Variety",product.scores.variety],[cs?"Pro veřejnost":"Public usability",product.scores.beginner],[cs?"Přístupnost":"Accessibility",product.scores.accessibility],[cs?"Úspora prostoru":"Space efficiency",product.scores.space],[cs?"Doplnění workoutu":"Workout complement",product.scores.complement]].map(([label,score]) => <div className="aside-score" key={String(label)}><span>{label}</span><i><b style={{width:`${Number(score)*10}%`}}/></i><strong>{score}/10</strong></div>)}<Link className="button button-dark" href={`/${locale}/configurations`}>{cs ? "Použít v konfigurátoru" : "Use in configurator"}<ArrowUpRight size={18}/></Link>{product.websiteUrl && <a className="source-link" href={product.websiteUrl} target="_blank" rel="noreferrer">{d.products.openSource}<ArrowUpRight size={15}/></a>}</aside>
     </section>
   </>;
 }
