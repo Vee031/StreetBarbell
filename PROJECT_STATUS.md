@@ -5,6 +5,19 @@
 > Last checkpoint: **2026-07-22**. It supersedes the older
 > `STREETBARBELL_CODEX_HANDOVER_COMPLETE.md` (one folder tree up, kept for history).
 
+## ⚠️ OPEN INCIDENT (2026-07-24): Blob store suspended
+
+The Vercel Blob store `streetbarbell-content` is **suspended** (content downloads return
+"Your store is blocked", writes fail "store has been suspended"). **All data is intact**
+(list/head confirm every JSON store with healthy sizes/timestamps, incl. the owner's six
+custom setups saved 23 Jul ~15:45). Until the owner resolves it in the Vercel dashboard →
+Storage (likely Hobby usage limit → upgrade or wait for cycle reset), the public site falls
+back to built-in content and /system shows a "storage unreachable" page. Commit `9346f5d`
+hardened all admin read-modify-write paths (strict reads that THROW on blocked/bot-check
+responses) so an outage can never cause a save to wipe a store. After unblocking: everything
+reappears by itself; also take a local JSON backup (see memory) and consider reducing blob
+bandwidth (product images are served unoptimized from blob to every visitor).
+
 ## Where we left off (2026-07-22)
 
 Everything requested so far is **built, deployed and verified live**. No half-finished work.
