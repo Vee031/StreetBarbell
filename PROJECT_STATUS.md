@@ -123,6 +123,8 @@ and in Vercel → Settings → Environment Variables (Production). Local dev use
 | `STREETBARBELL_PRICING_JSON` | Legacy 6-variant EUR distributor prices — no longer read by code, kept as the source for regenerating the pricelist fallback |
 | `STREETBARBELL_ADMIN_PASSWORD` | Login for the `/system` text editor |
 | `BLOB_READ_WRITE_TOKEN` | Vercel Blob store `streetbarbell-content` (auto-added by store link) |
+| `RESEND_API_KEY` | Resend key for inquiry e-mail notifications (lib/notify.ts) |
+| `INQUIRY_NOTIFY_TO` | Recipient of inquiry e-mails. **Currently the owner's Gmail** — Resend without a verified domain only delivers to the account owner's address; after verifying rvl13.com at resend.com/domains, switch to export@rvl13.com and change FROM in lib/notify.ts |
 
 Gotcha: adding env values via PowerShell piping appends `\r` that Vercel keeps. Use
 `cmd /c "npx vercel env add NAME production < file"` with a file that has **no trailing newline**.
@@ -316,6 +318,9 @@ with rapid automated fetches (transient "Vercel Security Checkpoint" HTML replac
   EN/CZ names; built-in machines keep their code (permanent ID) but names are editable as
   diffs-only overrides (empty = revert). Local verify was skipped this once — the machine's
   file I/O was crawling (Avast/Dropbox); Vercel's build (incl. TypeScript) was the gate.
+- `e569c1c` (2026-07-23) **inquiry e-mail notifications via Resend** (lib/notify.ts): each
+  submitted inquiry is also e-mailed to `INQUIRY_NOTIFY_TO` with reply-to = visitor;
+  non-fatal on failure. See the env table for the domain-verification caveat.
 - `c457cd4` (2026-07-23) **Lower/Upper slider + step 4 personal preferences** (GENERATOR_SPEC
   §4a + §4b): body-coverage slider now carries the focus (1–2 lower, 3 none, 4–5 upper;
   Focus dropdown removed); new step 4 with N choose + N avoid machine selects
