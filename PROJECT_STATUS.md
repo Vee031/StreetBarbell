@@ -316,6 +316,13 @@ with rapid automated fetches (transient "Vercel Security Checkpoint" HTML replac
   EN/CZ names; built-in machines keep their code (permanent ID) but names are editable as
   diffs-only overrides (empty = revert). Local verify was skipped this once — the machine's
   file I/O was crawling (Avast/Dropbox); Vercel's build (incl. TypeScript) was the gate.
+- `46ff2e5`+`9cebade` (2026-07-23) **geo-aware entry**: middleware.ts on the bare `/` —
+  `x-vercel-ip-country` CZ → /cs, anything else → /en (Accept-Language `cs` decides only
+  when the header is absent, i.e. local dev). Response carries `x-detected-country` for
+  debugging (`curl -I streetbarbell.cz`). Direct /en, /cs and the switcher untouched.
+- `9ef5d2d` (2026-07-23) **Code & name editable in the product card**: custom products —
+  code + EN/CZ names (code change re-keys meta/overrides, slug/URL follows); built-ins —
+  code locked, names via overrides (empty = revert).
 - `696719b` (2026-07-22) **working inquiry pipeline**: the contact form submits server-side
   into a new admin inbox **/system/inquiries** (each inquiry = own blob under `inquiries/`,
   no write races; honeypot field; `lib/inquiries.ts`). Product-page quote buttons and the
