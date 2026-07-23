@@ -11,6 +11,7 @@ import { fetchProductMetaUncached, META_BLOB_PATH, youtubeVideoId, type ProductM
 import { fetchProductGroupsUncached, GROUPS_BLOB_PATH } from "@/lib/product-groups";
 import {
   buildCategoryMap,
+  customToProduct,
   CUSTOM_PRODUCTS_BLOB_PATH,
   fetchCustomProductsUncached,
   fetchProductOverridesUncached,
@@ -169,6 +170,36 @@ export async function saveIdentity(formData: FormData) {
   else entry.nameEn = nameEn;
   if (!nameCs || nameCs === base?.nameCs) delete entry.nameCs;
   else entry.nameCs = nameCs;
+  if (Object.keys(entry).length === 0) delete overrides[code];
+  else overrides[code] = entry;
+  await writeBlobJson(PRODUCTS_BLOB_PATH, overrides);
+  updateTag(PRODUCTS_CACHE_TAG);
+  revalidatePath("/", "layout");
+  redirect(editorPath(slug, "?saved=1"));
+}
+
+// The wording on the product page: descriptions, target-muscles line, movement
+// patterns. Stored as diffs-only overrides (the same store the XLSX import uses,
+// so the spreadsheet template round-trips them). Empty field = back to the
+// built-in / as-created text. Editing "Target muscles" also re-drives the
+// auto-detected muscle figure when no explicit region selection is saved.
+const TEXT_FIELDS = ["descriptionEn", "descriptionCs", "muscles", "movementPatterns"] as const;
+
+export async function saveTexts(formData: FormData) {
+  await requireAdmin();
+  const { code, slug, custom } = await requireProduct(formData);
+  let base: Record<(typeof TEXT_FIELDS)[number], string> | undefined = products.find((p) => p.code === code);
+  if (custom) {
+    const record = (await fetchCustomProductsUncached())[code];
+    if (record) base = customToProduct(record, buildCategoryMap(await fetchProductGroupsUncached()));
+  }
+  const overrides = await fetchProductOverridesUncached();
+  const entry = { ...(overrides[code] ?? {}) };
+  for (const field of TEXT_FIELDS) {
+    const value = String(formData.get(field) ?? "").trim().slice(0, 4000);
+    if (!value || value === base?.[field]) delete entry[field];
+    else entry[field] = value;
+  }
   if (Object.keys(entry).length === 0) delete overrides[code];
   else overrides[code] = entry;
   await writeBlobJson(PRODUCTS_BLOB_PATH, overrides);

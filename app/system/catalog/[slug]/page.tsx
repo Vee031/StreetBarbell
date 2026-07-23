@@ -10,7 +10,10 @@ import { shapeIndicesForKeys } from "@/lib/muscle-figure";
 import { effectiveMuscleShapes, fetchProductMetaUncached, isEnabled } from "@/lib/product-meta";
 import { fetchProductGroupsUncached } from "@/lib/product-groups";
 import { fetchCustomProductsUncached, getProducts, POSITION_OPTIONS } from "@/lib/products-store";
-import { deleteCustomProduct, deleteDocument, deleteGalleryImage, makeMainImage, saveIdentity, saveLine, savePosition, saveVideoAndMuscles, toggleProduct, uploadDocument, uploadGalleryImages } from "../actions";
+import { deleteCustomProduct, deleteDocument, deleteGalleryImage, makeMainImage, saveIdentity, saveLine, savePosition, saveTexts, saveVideoAndMuscles, toggleProduct, uploadDocument, uploadGalleryImages } from "../actions";
+
+const fieldLabel = { color: "var(--muted)", fontWeight: 600, textTransform: "uppercase", fontSize: ".74rem", letterSpacing: ".06em" } as const;
+const fieldInput = { border: "1px solid var(--line)", borderRadius: 10, padding: "10px 13px", background: "var(--bg)", fontSize: ".92rem", width: "100%", fontFamily: "inherit" } as const;
 
 export const dynamic = "force-dynamic";
 
@@ -119,6 +122,33 @@ export default async function CatalogProductPage({ params, searchParams }: { par
               <input type="hidden" name="code" value={product.code} />
               <input type="file" name="images" accept="image/*" multiple required />
               <button type="submit" className="button button-red button-small">Upload photos</button>
+            </form>
+          </section>
+
+          <section className="sys-card">
+            <div className="sys-card-head">
+              <h2>Product texts</h2>
+              <p>The wording on the product page. Empty a field and save to return to the original text. Movement patterns are separated with a semicolon.</p>
+            </div>
+            <form action={saveTexts} style={{ display: "grid", gap: 12 }}>
+              <input type="hidden" name="code" value={product.code} />
+              <label style={{ display: "grid", gap: 4 }}>
+                <small style={fieldLabel}>Description EN</small>
+                <textarea name="descriptionEn" rows={4} defaultValue={product.descriptionEn} style={fieldInput} />
+              </label>
+              <label style={{ display: "grid", gap: 4 }}>
+                <small style={fieldLabel}>Description CZ</small>
+                <textarea name="descriptionCs" rows={4} defaultValue={product.descriptionCs} style={fieldInput} />
+              </label>
+              <label style={{ display: "grid", gap: 4 }}>
+                <small style={fieldLabel}>Target muscles (drives the auto muscle figure)</small>
+                <input type="text" name="muscles" defaultValue={product.muscles} style={fieldInput} />
+              </label>
+              <label style={{ display: "grid", gap: 4 }}>
+                <small style={fieldLabel}>Movement patterns (semicolon-separated)</small>
+                <input type="text" name="movementPatterns" defaultValue={product.movementPatterns} style={fieldInput} />
+              </label>
+              <div><button type="submit" className="button button-red button-small">Save texts</button></div>
             </form>
           </section>
 
