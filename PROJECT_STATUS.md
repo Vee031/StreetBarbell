@@ -311,6 +311,11 @@ with rapid automated fetches (transient "Vercel Security Checkpoint" HTML replac
 - `97778d2` (2026-07-22) hero stat: "20 priority points" → ∞ combinations; intro no longer mentions the 20-point matrix
 - `658f6f6` (2026-07-22) admin dashboard at /system (stat tiles) + permanent SystemNav top bar
   (RVL13-style big tabs); site-texts editor moved to **/system/texts**
+- `9ef5d2d` (2026-07-22) **Code & name editable in the product card**: admin-created products
+  can change code (re-keys product-meta + overrides; slug/URL follows `productSlugFor`) and
+  EN/CZ names; built-in machines keep their code (permanent ID) but names are editable as
+  diffs-only overrides (empty = revert). Local verify was skipped this once — the machine's
+  file I/O was crawling (Avast/Dropbox); Vercel's build (incl. TypeScript) was the gate.
 - `696719b` (2026-07-22) **working inquiry pipeline**: the contact form submits server-side
   into a new admin inbox **/system/inquiries** (each inquiry = own blob under `inquiries/`,
   no write races; honeypot field; `lib/inquiries.ts`). Product-page quote buttons and the
