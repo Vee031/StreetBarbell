@@ -57,9 +57,12 @@ Chip ↔ control mapping:
 
 Each slider shows a label at the left end, middle, and right end.
 
-a. **Balanced ↔ Specialised** — labels: `Balanced` · `No preference` · `Specialised`.
-   Balanced → prefer full-body machines. Specialised + Upper/Lower focus → prefer machines that
-   target that region.
+a. **Lower body ↔ Upper body** (changed 2026-07-23) — labels: `Lower body` ·
+   `No preference` · `Upper body`. The slider CARRIES the primary focus: 1–2 = lower
+   body, 3 = no preference (balanced full body), 4–5 = upper body. The separate
+   "Primary focus" dropdown was removed from step 2. Internally: focus direction =
+   slider side, focus intensity = distance from the middle (middle prefers
+   full-body machines, ends prefer machines covering the chosen region).
 
 b. **Public ↔ Private** — labels: `Public` · `No preference` · `Private`.
    Public (1–2) → avoid **dumbbell sets** (MB 7.33, 7.34, 7.71, 7.72) and the **Boxing line**
@@ -72,6 +75,21 @@ c. **Cost ↔ Use** — labels: `As cheap as possible` · `No preference` · `No
      (MB 7.52, 7.53, 7.54, 7.55, 7.100).
    - 5 ("no limit"): additionally adds the **Pro** line — Pro is proposed **only** at 5
      (owner 2026-07-22; Pro and Plus are separate, no longer one block).
+
+## 4b. Step 4 — Personal preferences (added 2026-07-23)
+
+Between Priorities and Results. "Leave blank if you are not interested in a
+particular machine."
+
+- N **choose** slots ("I want this machine") and N **avoid** slots, each a
+  scrollable select listing ONLY machines that pass the previous steps' filters
+  (`/api/candidates`, codes + English names, no prices).
+- N = the fixed machine count if set; otherwise ⌊budget / 149 000 CZK⌋
+  (`BUDGET_PER_MACHINE_SLOT`, clamped 1–6); blank budget → 3.
+- Chosen machines are FORCED into every generated setup (families of forced
+  machines are excluded from the extras; diversity is judged on the non-forced
+  part). Avoided machines never appear. A machine picked in one list disappears
+  from the other.
 
 ## 5. Results (reworked 2026-07-23 per owner)
 

@@ -31,13 +31,15 @@ export type ConfigInput = {
   includedLines: string[]; // line slugs the search may use (from the category chips)
   bodyweight: boolean; // false => also drop the "no bodyweight" excluded machines
   existingWorkout: boolean; // true => exclude Workout line + deprioritize duplicate machines
-  primaryFocus: PrimaryFocus;
+  primaryFocus: PrimaryFocus; // derived from the body-coverage slider (≤2 lower, ≥4 upper, else full)
   position: PositionPreference;
   wheelchair: boolean;
-  balanceSpecialised: number; // 1 balanced .. 5 specialised
+  balanceSpecialised: number; // 1 lower body .. 3 no preference .. 5 upper body
   publicPrivate: number; // 1 public .. 5 private
   costUse: number; // 1 as cheap as possible .. 5 no limit
   resultCount: number;
+  mustInclude?: string[]; // step 4: machines the user explicitly wants in every setup
+  mustAvoid?: string[]; // step 4: machines the user never wants proposed
 };
 
 // The three result bars mirror the three priority sliders 1:1 — each metric is
@@ -100,8 +102,9 @@ function positionFit(product: Product, position: PositionPreference) {
 
 // -1 (cheap) .. +1 (no limit)
 const costAxis = (input: ConfigInput) => (input.costUse - 3) / 2;
-// -1 (balanced) .. +1 (specialised)
-const specAxis = (input: ConfigInput) => (input.balanceSpecialised - 3) / 2;
+// Body-coverage slider: the DIRECTION (lower/upper) is carried by primaryFocus;
+// this returns the focus INTENSITY 0 (middle, no preference) .. 1 (either end).
+const specAxis = (input: ConfigInput) => Math.abs(input.balanceSpecialised - 3) / 2;
 // -1 (public) .. +1 (private)
 const privacyAxis = (input: ConfigInput) => (input.publicPrivate - 3) / 2;
 
@@ -110,10 +113,11 @@ function productScore(product: PricedProduct, input: ConfigInput) {
   const spec = specAxis(input);
   const cost = costAxis(input);
 
-  // Body targeting: balanced rewards full-body machines, specialised rewards focus-region machines.
+  // Body targeting: middle of the slider rewards full-body machines, either end
+  // rewards machines covering the chosen region (lower/upper via primaryFocus).
   const focusFit = focusCoverage(product, input.primaryFocus);
   const balance = balanceScore(product);
-  let score = 3 + (spec >= 0 ? focusFit * (1 + spec) + balance * (1 - spec) : balance * (1 - spec) + focusFit * (1 + spec));
+  let score = 3 + focusFit * (1 + spec) + balance * (1 - spec);
 
   score += product.scores.variety * 0.28 + product.scores.beginner * 0.12;
   score += positionFit(product, input.position);
@@ -146,6 +150,7 @@ function productScore(product: PricedProduct, input: ConfigInput) {
 
 function passesFilters(product: PricedProduct, input: ConfigInput) {
   if (product.bodyFocus === "Accessory") return false;
+  if (input.mustAvoid?.includes(product.code)) return false; // step 4: explicitly avoided
   const line = lineOf(product);
   if (!input.includedLines.includes(line)) return false;
   if (!product.priceCzk) return false;
@@ -196,7 +201,9 @@ function metricsFor(combo: PricedProduct[], input: ConfigInput, totalPrice: numb
   const cardio = combo.reduce((s, p) => s + p.coverage.cardio, 0);
   const balancedPole = clamp((Math.min(upper, lower, core) / Math.max(1, combo.length)) * 3 + Math.min(2, cardio * 0.4));
   const specialisedPole = clamp(average(combo.map((p) => focusCoverage(p, input.primaryFocus))) * 1.2);
-  const bodyCoverage = blend(balancedPole, specialisedPole, specAxis(input));
+  // specAxis is already an intensity 0..1 (middle → balanced pole, ends → focus pole).
+  const focusIntensity = specAxis(input);
+  const bodyCoverage = clamp(balancedPole * (1 - focusIntensity) + specialisedPole * focusIntensity);
 
   // Installation: public pole = robust, high-throughput, beginner-friendly machines
   // (loose dumbbells/boxing are already filtered out at the public end); private
@@ -275,8 +282,15 @@ function enumerateCombos(candidates: PricedProduct[], count: number, budgetCap: 
 function jaccard(a: Product[], b: Product[]) {
   const setA = new Set(a.map((p) => p.code));
   const setB = new Set(b.map((p) => p.code));
+  if (setA.size === 0 && setB.size === 0) return 1; // identical (both empty)
   const intersection = [...setA].filter((v) => setB.has(v)).length;
   return intersection / (setA.size + setB.size - intersection);
+}
+
+// The machines a visitor can pick from in step 4 (personal preferences): the
+// pool that survives the line chips and every filter of the previous steps.
+export function eligibleMachines(products: PricedProduct[], input: ConfigInput) {
+  return products.filter((product) => passesFilters(product, input));
 }
 
 // Fact-based texts: every sentence is derived from the actual machines in the
@@ -312,6 +326,10 @@ function explanations(combo: PricedProduct[], input: ConfigInput, totalPrice: nu
   // Strengths: only claims that are true for THIS setup, ordered by relevance
   // to the sliders as set. Take the first three.
   const strengths: string[] = [];
+  const pickedHere = (input.mustInclude ?? []).filter((code) => combo.some((p) => p.code === code));
+  if (pickedHere.length > 0) {
+    strengths.push(cs ? `Obsahuje stroje z vašeho výběru (${pickedHere.join(", ")}).` : `Includes the machines you picked (${pickedHere.join(", ")}).`);
+  }
   if (input.publicPrivate <= 2) {
     strengths.push(cs ? "Vhodné pro veřejný prostor — bez volných jednoruček a boxovacího vybavení." : "Suitable for public installation — no loose dumbbell sets or boxing equipment.");
   } else if (input.publicPrivate >= 4 && (convDiv.length > 0 || premium.length > 0)) {
@@ -322,9 +340,9 @@ function explanations(combo: PricedProduct[], input: ConfigInput, totalPrice: nu
   } else if (input.costUse >= 4 && convDiv.length > 0) {
     strengths.push(cs ? `Obsahuje prémiové converging/diverging stroje (${convDiv.map((p) => p.code).join(", ")}).` : `Includes premium converging/diverging machines (${convDiv.map((p) => p.code).join(", ")}).`);
   }
-  if (input.balanceSpecialised <= 2 && Math.min(upper, lower, core) >= 2.2) {
+  if (input.balanceSpecialised === 3 && Math.min(upper, lower, core) >= 2.2) {
     strengths.push(cs ? "Rovnoměrně zapojuje horní i dolní polovinu těla a střed těla." : "Works the upper body, lower body and core evenly.");
-  } else if (input.balanceSpecialised >= 4 && input.primaryFocus !== "full") {
+  } else if (input.balanceSpecialised !== 3 && input.primaryFocus !== "full") {
     strengths.push(cs ? `Cíleně staví na strojích pro ${focusName}.` : `Deliberately built around machines for ${focusName}.`);
   }
   if (input.existingWorkout && complementAvg >= 5.5) {
@@ -343,7 +361,7 @@ function explanations(combo: PricedProduct[], input: ConfigInput, totalPrice: nu
     weakness = cs ? `Plocha strojů (~${footprint.toFixed(0)} m²) přesahuje zadaný prostor.` : `The machine footprint (~${footprint.toFixed(0)} m²) exceeds your available space.`;
   } else if (footprint !== null && input.availableSpace > 0 && footprint > input.availableSpace * 0.8) {
     weakness = cs ? "Plocha strojů se blíží hranici dostupného prostoru." : "The machine footprint is close to your available space.";
-  } else if (Math.min(upper, lower, core) < 1.2 && input.balanceSpecialised <= 3) {
+  } else if (Math.min(upper, lower, core) < 1.2 && input.balanceSpecialised === 3) {
     const gap = upper <= lower && upper <= core ? (cs ? "horní části těla" : "the upper body") : lower <= core ? (cs ? "dolní části těla" : "the lower body") : (cs ? "středu těla" : "the core");
     weakness = cs ? `Slabší pokrytí ${gap} — zvažte doplnění dalším strojem.` : `Lighter coverage of ${gap} — consider adding one more machine.`;
   } else if (input.costUse >= 4 && premium.length + convDiv.length > 0) {
@@ -365,31 +383,51 @@ export function recommend(products: PricedProduct[], input: ConfigInput, locale:
   const budget = hasBudget ? input.budgetCzk : 0;
   const budgetCap = hasBudget ? input.budgetCzk : null;
 
+  // Step 4: machines the user explicitly picked go into EVERY setup; avoided
+  // machines are dropped in passesFilters.
+  const avoidSet = new Set(input.mustAvoid ?? []);
+  const forcedCodes = [...new Set((input.mustInclude ?? []).filter((code) => !avoidSet.has(code)))];
+  const forced = forcedCodes
+    .map((code) => products.find((p) => p.code === code))
+    .filter((p): p is PricedProduct => Boolean(p && p.priceCzk));
+  const forcedSet = new Set(forced.map((p) => p.code));
+  const forcedFamilies = new Set(forced.map(familyOf));
+  const forcedPrice = forced.reduce((sum, p) => sum + (p.priceCzk ?? 0), 0);
+
   let candidates = products
     .filter((product) => passesFilters(product, input))
+    .filter((product) => !forcedSet.has(product.code) && !forcedFamilies.has(familyOf(product)))
     .filter((product) => (budgetCap === null ? true : (product.priceCzk ?? Infinity) <= budgetCap))
     .sort((a, b) => productScore(b, input) - productScore(a, input));
 
-  if (candidates.length === 0) return [];
+  if (candidates.length === 0 && forced.length === 0) return [];
 
   const poolSize = fixedCount ? 18 : 24;
   candidates = candidates.slice(0, poolSize);
 
   let counts: number[];
   if (fixedCount) {
-    counts = [Math.min(Number(input.machineCount), candidates.length)];
+    counts = [Math.min(Number(input.machineCount), candidates.length + forced.length)];
   } else if (hasBudget) {
     const prices = candidates.map((p) => p.priceCzk ?? 0).filter((v) => v > 0).sort((a, b) => a - b);
     const reference = prices.length ? prices[Math.floor((prices.length - 1) * 0.78)] : input.budgetCzk;
     const inferred = Math.max(1, Math.min(5, Math.floor(input.budgetCzk / Math.max(1, reference))));
     counts = [inferred];
   } else {
-    counts = [Math.min(3, candidates.length)]; // blank budget → a sensible default setup size
+    counts = [Math.min(3, candidates.length + forced.length)]; // blank budget → a sensible default setup size
   }
 
   const scored: CombinationResult[] = [];
   for (const count of counts) {
-    for (const { products: combo, price } of enumerateCombos(candidates, count, budgetCap)) {
+    const extrasCount = Math.max(0, count - forced.length);
+    const remainingCap = budgetCap === null ? null : Math.max(0, budgetCap - forcedPrice);
+    const enumerated = extrasCount === 0
+      ? [{ products: [] as PricedProduct[], price: 0 }]
+      : enumerateCombos(candidates, extrasCount, remainingCap);
+    for (const { products: extras, price: extrasPrice } of enumerated) {
+      const combo = [...forced, ...extras];
+      if (combo.length === 0) continue;
+      const price = forcedPrice + extrasPrice;
       const { score, metrics } = scoreCombination(combo, input, price, budget || input.budgetCzk);
       const footprints = combo.map((p) => p.footprint).filter((v): v is number => typeof v === "number");
       const footprint = footprints.length === combo.length ? footprints.reduce((a, b) => a + b, 0) : null;
@@ -409,10 +447,13 @@ export function recommend(products: PricedProduct[], input: ConfigInput, locale:
 
   // Rank by slider match (what the user sees), internal score breaks ties.
   scored.sort((a, b) => b.match - a.match || b.score - a.score);
+  // Diversity is judged on the non-forced part — every setup shares the
+  // machines the user explicitly picked in step 4.
+  const extrasOf = (r: CombinationResult) => r.products.filter((p) => !forcedSet.has(p.code));
   const diverse: CombinationResult[] = [];
   for (const candidate of scored) {
     const limit = candidate.products.length <= 2 ? 0.3 : 0.5;
-    if (diverse.every((selected) => jaccard(selected.products, candidate.products) < limit)) diverse.push(candidate);
+    if (diverse.every((selected) => jaccard(extrasOf(selected), extrasOf(candidate)) < limit)) diverse.push(candidate);
     if (diverse.length >= input.resultCount) break;
   }
   if (diverse.length < input.resultCount) {

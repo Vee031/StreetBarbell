@@ -604,6 +604,12 @@ p { color: var(--muted); line-height: 1.7; }
 .result-thumb { position: relative; width: 100%; height: 130px; border-radius: 8px; overflow: hidden; background: white; }
 .result-thumb img { object-fit: contain; }
 .rank-pct { font-style: normal; font-size: 1.6rem; margin-left: 2px; }
+
+/* ---- step 4: personal preferences (choose / avoid machine slots) ---- */
+.pref-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 26px; }
+.pref-column { display: grid; gap: 10px; align-content: start; }
+.pref-column h3 { margin: 0 0 4px; font-size: 1rem; }
+.pref-select { border: 1px solid var(--line); border-radius: 10px; padding: 11px 13px; background: white; font-size: .9rem; width: 100%; }
 .result-product-text { min-width: 0; }
 .result-product-text span { color: var(--red); font-size: .68rem; font-weight: 800; display: block; }
 .result-product-text strong { margin: 3px 0; font-size: .82rem; display: block; }

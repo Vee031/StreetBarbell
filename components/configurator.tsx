@@ -8,7 +8,7 @@ import { ArrowRight, Check, Download, Info, Mail, RotateCcw, Sparkles } from "lu
 import { getProductName } from "@/lib/data";
 import { pdfFontBold, pdfFontNormal } from "@/lib/pdf-font";
 import type { CombinationResult, ConfigInput, MetricKey, PositionPreference, PrimaryFocus } from "@/lib/recommender";
-import { DEFAULT_BUDGET_CZK, FALLBACK_EXCHANGE_RATE, LINES, deriveLines, sliderLabels } from "@/lib/generator-rules";
+import { BUDGET_PER_MACHINE_SLOT, DEFAULT_BUDGET_CZK, FALLBACK_EXCHANGE_RATE, LINES, deriveLines, sliderLabels } from "@/lib/generator-rules";
 import { countNoun, nounMachines, type Locale } from "@/lib/i18n";
 
 type FormState = {
@@ -25,9 +25,8 @@ type FormState = {
   kids: boolean;
   boxingBag: boolean;
   wheelchair: boolean;
-  primaryFocus: PrimaryFocus;
   position: PositionPreference;
-  balanceSpecialised: number;
+  balanceSpecialised: number; // 1 lower body .. 3 no preference .. 5 upper body
   publicPrivate: number;
   costUse: number;
   resultCount: number;
@@ -47,7 +46,6 @@ const DEFAULTS: FormState = {
   kids: false,
   boxingBag: false,
   wheelchair: false,
-  primaryFocus: "full",
   position: "any",
   balanceSpecialised: 3,
   publicPrivate: 3,
@@ -93,6 +91,10 @@ export function Configurator({ locale }: { locale: Locale }) {
   const [resultsPriced, setResultsPriced] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [generationError, setGenerationError] = useState("");
+  // Step 4 (personal preferences): pickable machines = the pool passing steps 1–3.
+  const [candidates, setCandidates] = useState<{ code: string; name: string }[] | null>(null);
+  const [chosen, setChosen] = useState<string[]>([]);
+  const [avoided, setAvoided] = useState<string[]>([]);
 
   useEffect(() => {
     fetch("/api/exchange-rate")
@@ -167,25 +169,69 @@ export function Configurator({ locale }: { locale: Locale }) {
     });
   };
 
+  // The body-coverage slider carries the focus: ≤2 = lower body, ≥4 = upper body.
+  const derivedFocus: PrimaryFocus = form.balanceSpecialised <= 2 ? "lower" : form.balanceSpecialised >= 4 ? "upper" : "full";
+
+  // Step 4 slot count: fixed machine count, or budget / 149,000 CZK, or 3.
+  const budgetNumRaw = typeof form.budgetCzk === "number" && form.budgetCzk > 0 ? form.budgetCzk : null;
+  const preferenceSlots =
+    form.machineCount !== "auto"
+      ? Number(form.machineCount)
+      : budgetNumRaw
+        ? Math.max(1, Math.min(6, Math.floor(budgetNumRaw / BUDGET_PER_MACHINE_SLOT)))
+        : 3;
+
+  const buildInput = (): ConfigInput => ({
+    budgetCzk: typeof form.budgetCzk === "number" ? form.budgetCzk : 0, // 0 = left blank
+    exchangeRate: form.exchangeRate,
+    machineCount: form.machineCount,
+    availableSpace: typeof form.availableSpace === "number" ? form.availableSpace : 0,
+    includedLines,
+    bodyweight: form.bodyweight,
+    existingWorkout: form.existingWorkout,
+    primaryFocus: derivedFocus,
+    position: form.position,
+    wheelchair: form.wheelchair,
+    balanceSpecialised: form.balanceSpecialised,
+    publicPrivate: form.publicPrivate,
+    costUse: form.costUse,
+    resultCount: form.resultCount,
+  });
+
+  const loadCandidates = async () => {
+    try {
+      const response = await fetch("/api/candidates", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ input: buildInput() }) });
+      const data = await response.json();
+      if (response.ok && Array.isArray(data.machines)) setCandidates(data.machines);
+      else setCandidates([]);
+    } catch {
+      setCandidates([]);
+    }
+  };
+
+  const goToPreferences = () => {
+    setCandidates(null);
+    void loadCandidates();
+    setStep(4);
+  };
+
+  const setSlot = (kind: "chosen" | "avoided", index: number, value: string) => {
+    const setter = kind === "chosen" ? setChosen : setAvoided;
+    setter((current) => {
+      const next = [...current];
+      next[index] = value;
+      return next;
+    });
+    setResultsVisible(false);
+    setResults([]);
+  };
+
   const generate = async () => {
     setIsGenerating(true);
     setGenerationError("");
-    const input: ConfigInput = {
-      budgetCzk: typeof form.budgetCzk === "number" ? form.budgetCzk : 0, // 0 = left blank
-      exchangeRate: form.exchangeRate,
-      machineCount: form.machineCount,
-      availableSpace: typeof form.availableSpace === "number" ? form.availableSpace : 0,
-      includedLines,
-      bodyweight: form.bodyweight,
-      existingWorkout: form.existingWorkout,
-      primaryFocus: form.primaryFocus,
-      position: form.position,
-      wheelchair: form.wheelchair,
-      balanceSpecialised: form.balanceSpecialised,
-      publicPrivate: form.publicPrivate,
-      costUse: form.costUse,
-      resultCount: form.resultCount,
-    };
+    const picked = [...new Set(chosen.slice(0, preferenceSlots).filter(Boolean))];
+    const dodged = [...new Set(avoided.slice(0, preferenceSlots).filter(Boolean))].filter((code) => !picked.includes(code));
+    const input: ConfigInput = { ...buildInput(), mustInclude: picked, mustAvoid: dodged };
     try {
       const response = await fetch("/api/recommend", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ input, locale }) });
       const data = await response.json();
@@ -193,7 +239,7 @@ export function Configurator({ locale }: { locale: Locale }) {
       setResults(data.results as CombinationResult[]);
       setResultsPriced(Boolean(data.priced));
       setResultsVisible(true);
-      setStep(4);
+      setStep(5);
       setTimeout(() => document.getElementById("configuration-results")?.scrollIntoView({ behavior: "smooth", block: "start" }), 100);
     } catch (error) {
       setGenerationError(error instanceof Error ? error.message : "Recommendation failed.");
@@ -228,7 +274,13 @@ export function Configurator({ locale }: { locale: Locale }) {
     doc.save(`street-barbell-configuration-${resultIndex + 1}.pdf`);
   };
 
-  const reset = () => { setForm({ ...DEFAULTS, exchangeRate: form.exchangeRate }); setResultsVisible(false); setResults([]); setStep(1); };
+  const reset = () => { setForm({ ...DEFAULTS, exchangeRate: form.exchangeRate }); setResultsVisible(false); setResults([]); setChosen([]); setAvoided([]); setCandidates(null); setStep(1); };
+
+  // Entering step 4 via the progress chips still needs the machine list.
+  useEffect(() => {
+    if (step === 4 && candidates === null) void loadCandidates();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [step]);
 
   const budgetNum = typeof form.budgetCzk === "number" && form.budgetCzk > 0 ? form.budgetCzk : null;
 
@@ -244,7 +296,7 @@ export function Configurator({ locale }: { locale: Locale }) {
       `${cs ? "Rozpočet" : "Budget"}: ${budgetNum ? `${budgetNum.toLocaleString()} CZK` : cs ? "nevyplněno" : "not filled in"}`,
       `${cs ? "Prostor" : "Space"}: ${typeof form.availableSpace === "number" ? `${form.availableSpace} m²` : cs ? "individuální" : "individual"}`,
       `${cs ? "Počet strojů" : "Machine count"}: ${form.machineCount === "auto" ? (cs ? "automaticky" : "auto") : form.machineCount}`,
-      `${cs ? "Zaměření" : "Focus"}: ${focusLabels[form.primaryFocus][cs ? 1 : 0]}`,
+      `${cs ? "Zaměření" : "Focus"}: ${focusLabels[derivedFocus][cs ? 1 : 0]}`,
       `${cs ? "Poloha" : "Position"}: ${positionLabels[form.position][cs ? 1 : 0]}`,
       `${cs ? "Řady" : "Lines"}: ${includedLines.map(lineLabel).join(", ")}`,
       `${cs ? "Priority (1–5)" : "Priorities (1–5)"}: ${form.balanceSpecialised} / ${form.publicPrivate} / ${form.costUse}`,
@@ -258,7 +310,7 @@ export function Configurator({ locale }: { locale: Locale }) {
   return (
     <div className="configurator-shell">
       <div className="config-progress">
-        {[1, 2, 3, 4].map((n) => <button key={n} className={step >= n ? "active" : ""} onClick={() => setStep(n)}><span>{step > n ? <Check size={15} /> : n}</span><small>{[cs ? "Rozsah" : "Scope", cs ? "Zadání" : "Brief", cs ? "Priority" : "Priorities", cs ? "Výsledky" : "Results"][n - 1]}</small></button>)}
+        {[1, 2, 3, 4, 5].map((n) => <button key={n} className={step >= n ? "active" : ""} onClick={() => setStep(n)}><span>{step > n ? <Check size={15} /> : n}</span><small>{[cs ? "Rozsah" : "Scope", cs ? "Zadání" : "Brief", cs ? "Priority" : "Priorities", cs ? "Preference" : "Preferences", cs ? "Výsledky" : "Results"][n - 1]}</small></button>)}
       </div>
 
       {/* Category bar — reflects (and drives) which product lines are in the search. */}
@@ -298,7 +350,6 @@ export function Configurator({ locale }: { locale: Locale }) {
           <YesNo id="q-kids" cs={cs} pulseId={pulse} label={cs ? "Dětské prvky?" : "Kids equipment?"} value={form.kids} onChange={(v) => update("kids", v)} />
           <YesNo id="q-boxing" cs={cs} pulseId={pulse} label={cs ? "Zahrnout boxovací pytel?" : "Include a boxing bag?"} value={form.boxingBag} onChange={(v) => update("boxingBag", v)} />
           <YesNo id="q-wheelchair" cs={cs} pulseId={pulse} label={cs ? "Přístupné pro vozíčkáře?" : "Wheelchair accessible?"} value={form.wheelchair} onChange={(v) => update("wheelchair", v)} />
-          <div className="choice-group"><span>{cs ? "Hlavní zaměření" : "Primary focus"}</span><select className="choice-select" value={form.primaryFocus} onChange={(e) => update("primaryFocus", e.target.value as PrimaryFocus)}><option value="full">{cs ? "Celé tělo" : "Full body"}</option><option value="upper">{cs ? "Horní část těla" : "Upper body"}</option><option value="lower">{cs ? "Dolní část těla" : "Lower body"}</option></select></div>
           <div className="choice-group"><span>{cs ? "Preferovaná poloha" : "Position preference"}</span><select className="choice-select" value={form.position} onChange={(e) => update("position", e.target.value as PositionPreference)}><option value="any">{cs ? "Nezáleží" : "Doesn't matter"}</option><option value="seated">{cs ? "Vsedě" : "Seated"}</option><option value="standing">{cs ? "Ve stoje" : "Standing"}</option></select></div>
         </div>
         <div className="config-next"><button className="button button-light" onClick={() => setStep(1)}>{cs ? "Zpět" : "Back"}</button><button className="button button-red" onClick={() => setStep(3)}>{cs ? "Nastavit priority" : "Set priorities"} <ArrowRight size={18} /></button></div>
@@ -312,8 +363,43 @@ export function Configurator({ locale }: { locale: Locale }) {
           <div className="slider-block"><h3>{cs ? "Cena a využití" : "Cost and use"}</h3><Slider id="q-cost" pulseId={pulse} value={form.costUse} onChange={(v) => update("costUse", v)} labels={sliderLabels.costUse[locale]} /></div>
           <label className="brief-select"><span>{cs ? "Počet zobrazených sestav" : "Recommendations to show"}</span><select value={form.resultCount} onChange={(e) => update("resultCount", Number(e.target.value))}>{[3, 5, 8, 10].map((v) => <option key={v}>{v}</option>)}</select></label>
         </div>
-        <div className="config-next"><button className="button button-light" onClick={() => setStep(2)}>{cs ? "Zpět" : "Back"}</button><button className="button button-red" disabled={isGenerating || includedLines.length === 0} onClick={generate}><Sparkles size={18} /> {isGenerating ? (cs ? "Počítám…" : "Calculating…") : (cs ? "Vygenerovat sestavy" : "Generate configurations")}</button></div>
+        <div className="config-next"><button className="button button-light" onClick={() => setStep(2)}>{cs ? "Zpět" : "Back"}</button><button className="button button-red" disabled={includedLines.length === 0} onClick={goToPreferences}>{cs ? "Osobní preference" : "Personal preferences"} <ArrowRight size={18} /></button></div>
         {includedLines.length === 0 && <p className="generation-error">{cs ? "Vyberte alespoň jednu produktovou řadu v horní liště." : "Select at least one product line in the bar above."}</p>}
+      </section>
+
+      <section className={step === 4 ? "config-step active" : "config-step"}>
+        <div className="config-step-heading"><span>04</span><div><h2>{cs ? "Osobní preference" : "Personal preferences"}</h2><p>{cs ? "Nechte prázdné, pokud vám na konkrétních strojích nezáleží. Na výběr jsou jen stroje odpovídající předchozím krokům." : "Leave blank if you are not interested in a particular machine. Only machines matching your previous steps are offered."}</p></div></div>
+        {candidates === null ? (
+          <p className="sys-note" style={{ padding: "10px 0" }}>{cs ? "Načítám stroje…" : "Loading machines…"}</p>
+        ) : candidates.length === 0 ? (
+          <p className="generation-error">{cs ? "Předchozím krokům neodpovídají žádné stroje — upravte výběr řad." : "No machines match your previous steps — adjust the line selection."}</p>
+        ) : (
+          <div className="pref-grid">
+            <div className="pref-column">
+              <h3>{cs ? "Chci konkrétní stroj" : "I want this machine"}</h3>
+              {Array.from({ length: preferenceSlots }, (_, i) => (
+                <select key={`c${i}`} className="pref-select" value={chosen[i] ?? ""} onChange={(e) => setSlot("chosen", i, e.target.value)}>
+                  <option value="">{cs ? "— bez preference —" : "— no preference —"}</option>
+                  {candidates.filter((m) => m.code === (chosen[i] ?? "") || (!chosen.includes(m.code) && !avoided.includes(m.code))).map((m) => (
+                    <option key={m.code} value={m.code}>{m.code} — {m.name}</option>
+                  ))}
+                </select>
+              ))}
+            </div>
+            <div className="pref-column">
+              <h3>{cs ? "Vyhnout se stroji" : "Avoid this machine"}</h3>
+              {Array.from({ length: preferenceSlots }, (_, i) => (
+                <select key={`a${i}`} className="pref-select" value={avoided[i] ?? ""} onChange={(e) => setSlot("avoided", i, e.target.value)}>
+                  <option value="">{cs ? "— žádný —" : "— none —"}</option>
+                  {candidates.filter((m) => m.code === (avoided[i] ?? "") || (!chosen.includes(m.code) && !avoided.includes(m.code))).map((m) => (
+                    <option key={m.code} value={m.code}>{m.code} — {m.name}</option>
+                  ))}
+                </select>
+              ))}
+            </div>
+          </div>
+        )}
+        <div className="config-next"><button className="button button-light" onClick={() => setStep(3)}>{cs ? "Zpět" : "Back"}</button><button className="button button-red" disabled={isGenerating || includedLines.length === 0} onClick={generate}><Sparkles size={18} /> {isGenerating ? (cs ? "Počítám…" : "Calculating…") : (cs ? "Vygenerovat sestavy" : "Generate configurations")}</button></div>
       </section>
 
       {generationError && <p className="generation-error">{generationError}</p>}

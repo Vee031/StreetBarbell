@@ -14,6 +14,8 @@ function validateInput(input: ConfigInput | undefined) {
   if (!Number.isFinite(input.exchangeRate) || input.exchangeRate < 1 || input.exchangeRate > 100) return "Invalid exchange rate.";
   if (!Number.isFinite(input.availableSpace) || input.availableSpace < 0 || input.availableSpace > 100_000) return "Invalid available space.";
   if (input.machineCount !== "auto" && (!Number.isInteger(input.machineCount) || input.machineCount < 1 || input.machineCount > 8)) return "Invalid machine count.";
+  const codeList = (v: unknown) => v === undefined || (Array.isArray(v) && v.length <= 8 && v.every((x) => typeof x === "string" && x.length <= 24));
+  if (!codeList(input.mustInclude) || !codeList(input.mustAvoid)) return "Invalid machine preferences.";
   if (!Number.isInteger(input.resultCount) || input.resultCount < 1 || input.resultCount > 10) return "Invalid result count.";
   if (!Array.isArray(input.includedLines) || input.includedLines.some((s) => !LINE_SLUGS.has(s))) return "Invalid line selection.";
   if (!["full", "upper", "lower"].includes(input.primaryFocus)) return "Invalid primary focus.";

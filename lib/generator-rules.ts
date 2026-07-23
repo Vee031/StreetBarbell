@@ -114,11 +114,18 @@ export const COST_PRO_THRESHOLD = 5; // ONLY 5 ("no limit") adds the Pro line
 export const PUBLIC_MAX = 2; // 1–2 = "public" band (avoid dumbbells + boxing)
 
 // --- Slider end/middle labels ----------------------------------------------
+// Body coverage runs Lower body ↔ Upper body (owner 2026-07-23); the middle is
+// "no preference" = balanced full-body. The slider therefore also carries the
+// primary focus — the old separate Focus dropdown is gone.
 export const sliderLabels = {
-  balanceSpecialised: { en: ["Balanced", "No preference", "Specialised"], cs: ["Vyvážené", "Bez preference", "Specializované"] },
+  balanceSpecialised: { en: ["Lower body", "No preference", "Upper body"], cs: ["Dolní část těla", "Bez preference", "Horní část těla"] },
   publicPrivate: { en: ["Public", "No preference", "Private"], cs: ["Veřejné", "Bez preference", "Soukromé"] },
   costUse: { en: ["As cheap as possible", "No preference", "No limit"], cs: ["Co nejlevněji", "Bez preference", "Bez limitu"] },
 } as const;
+
+// Step 4 "personal preferences": when the machine count is automatic, the number
+// of choose/avoid slots = budget / this amount (at least 1, at most 6).
+export const BUDGET_PER_MACHINE_SLOT = 149_000;
 
 // --- Line selection: turns the answers into the set of lines the search uses --
 export type LineSelectionInput = {
