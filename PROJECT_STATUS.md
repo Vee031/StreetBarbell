@@ -316,6 +316,9 @@ with rapid automated fetches (transient "Vercel Security Checkpoint" HTML replac
   EN/CZ names; built-in machines keep their code (permanent ID) but names are editable as
   diffs-only overrides (empty = revert). Local verify was skipped this once — the machine's
   file I/O was crawling (Avast/Dropbox); Vercel's build (incl. TypeScript) was the gate.
+- `b46e52f` (2026-07-23) **editable product texts in the catalogue card**: Description EN/CZ,
+  target muscles (re-drives the auto muscle figure), movement patterns (semicolon-separated) —
+  diffs-only overrides, empty field reverts, XLSX template round-trips them.
 - `436b261` (2026-07-23) **custom-product main picture**: first uploaded photo auto-promotes
   to the main picture when the product has none (stock line photo no longer sticks);
   "Make main" on each gallery photo swaps it with the current main (nothing lost).
