@@ -316,6 +316,13 @@ with rapid automated fetches (transient "Vercel Security Checkpoint" HTML replac
   EN/CZ names; built-in machines keep their code (permanent ID) but names are editable as
   diffs-only overrides (empty = revert). Local verify was skipped this once — the machine's
   file I/O was crawling (Avast/Dropbox); Vercel's build (incl. TypeScript) was the gate.
+- `c457cd4` (2026-07-23) **Lower/Upper slider + step 4 personal preferences** (GENERATOR_SPEC
+  §4a + §4b): body-coverage slider now carries the focus (1–2 lower, 3 none, 4–5 upper;
+  Focus dropdown removed); new step 4 with N choose + N avoid machine selects
+  (N = machine count, or ⌊budget/149 000⌋ clamped 1–6, or 3) fed by public
+  `/api/candidates` (pool passing prior filters, no prices); recommender forces
+  `mustInclude` into every setup (families excluded from extras, diversity on non-forced
+  part) and drops `mustAvoid`; results are step 5.
 - `544f3b3` (2026-07-23) **generator results reworked** (see GENERATOR_SPEC §5): 3 metric
   bars mirror the 3 sliders (pole-blend scoring), rank badge = % match (sorts results),
   fact-based EN/CZ purpose/strengths/trade-off from actual setup composition, picture-first
