@@ -14,6 +14,7 @@ const SECTION_META: Record<SectionKey, { title: string; hint: string }> = {
   config: { title: "Configurator page", hint: "Heading of the recommended-configurations tool." },
   gallery: { title: "Gallery page", hint: "Gallery heading, intro and filter buttons." },
   contact: { title: "Contact page", hint: "Contact & quote request heading." },
+  faq: { title: "FAQ page", hint: "FAQ heading and intro (the questions themselves are edited in code, not here)." },
   common: { title: "Common labels", hint: "Small labels reused across the site." },
   footer: { title: "Footer", hint: "Footer description and column titles." },
 };

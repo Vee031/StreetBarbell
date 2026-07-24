@@ -22,6 +22,7 @@ export function Footer({ locale, d }: { locale: Locale; d: SiteTexts }) {
           <h3>{d.footer.tools}</h3>
           <Link href={`/${locale}/configurations`}>{d.nav.configurations}</Link>
           <Link href={`/${locale}/gallery`}>{d.nav.gallery}</Link>
+          <Link href={`/${locale}/faq`}>{d.nav.faq}</Link>
           <Link href={`/${locale}/contact`}>{d.nav.quote}</Link>
         </div>
         <div>

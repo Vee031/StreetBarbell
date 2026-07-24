@@ -87,6 +87,7 @@ function HeaderContent({ locale, d, groupNav, hideConfigLink, pathname }: Header
           ))}
           {!hideConfigLink && <Link className="nav-link" href={`/${locale}/configurations`}>{d.nav.configurations}</Link>}
           <Link className="nav-link" href={`/${locale}/gallery`}>{d.nav.gallery}</Link>
+          <Link className="nav-link" href={`/${locale}/faq`}>{d.nav.faq}</Link>
           <Link className="nav-link" href={`/${locale}/contact`}>{d.nav.contact}</Link>
         </nav>
 
@@ -127,6 +128,7 @@ function HeaderContent({ locale, d, groupNav, hideConfigLink, pathname }: Header
         ))}
         {!hideConfigLink && <Link href={`/${locale}/configurations`}>{d.nav.configurations}</Link>}
         <Link href={`/${locale}/gallery`}>{d.nav.gallery}</Link>
+        <Link href={`/${locale}/faq`}>{d.nav.faq}</Link>
         <Link href={`/${locale}/contact`}>{d.nav.contact}</Link>
         <Link className="button button-red" href={`/${locale}/contact`}>{d.nav.quote}</Link>
       </div>

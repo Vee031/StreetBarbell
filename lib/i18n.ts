@@ -16,6 +16,7 @@ export const dictionaries = {
       allProducts: "All products",
       menuTitle: "Product lines",
       menuText: "A complete outdoor fitness portfolio for different users and training goals.",
+      faq: "FAQ",
     },
     home: {
       eyebrow: "Outdoor strength. Built without compromise.",
@@ -89,6 +90,10 @@ export const dictionaries = {
       title: "Contact & quote request",
       intro: "Tell us what you are planning. The form prepares a structured enquiry for email or WhatsApp.",
     },
+    faq: {
+      title: "Frequently asked questions",
+      intro: "Answers to the questions we hear most often about our outdoor fitness machines and services. Can't find what you're looking for? Contact us directly.",
+    },
     common: {
       learnMore: "Learn more",
       email: "Email",
@@ -110,6 +115,7 @@ export const dictionaries = {
       allProducts: "Všechny produkty",
       menuTitle: "Produktové řady",
       menuText: "Kompletní nabídka venkovního fitness pro různé cílové skupiny.",
+      faq: "Časté dotazy",
     },
     home: {
       eyebrow: "Venkovní síla. Bez kompromisů.",
@@ -182,6 +188,10 @@ export const dictionaries = {
     contact: {
       title: "Kontakt a nezávazná poptávka",
       intro: "Popište nám svůj projekt. Formulář připraví strukturovanou poptávku pro e-mail nebo WhatsApp.",
+    },
+    faq: {
+      title: "Časté dotazy",
+      intro: "Odpovědi na otázky, které od vás slýcháme nejčastěji — k našim venkovním fitness strojům i souvisejícím službám. Nenašli jste, co jste hledali? Napište nám.",
     },
     common: {
       learnMore: "Zjistit více",
