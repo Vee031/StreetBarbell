@@ -20,6 +20,7 @@ export type ProductMeta = {
   youtubeUrl?: string;
   muscles?: MuscleKey[]; // legacy: whole-group highlight selection (pre shape editor)
   muscleShapes?: number[]; // manual per-region selection: indices into MUSCLE_SHAPES
+  components?: string[]; // product codes this combination is built from, in display order
 };
 
 export type ProductMetaMap = Record<string, ProductMeta>;

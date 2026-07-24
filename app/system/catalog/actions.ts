@@ -105,6 +105,34 @@ export async function saveVideoAndMuscles(formData: FormData) {
   redirect(editorPath(slug, "?saved=1"));
 }
 
+export async function addComponentProduct(formData: FormData) {
+  await requireAdmin();
+  const { code, slug } = await requireProduct(formData);
+  const componentCode = String(formData.get("componentCode") ?? "").trim();
+  if (!componentCode || componentCode === code) redirect(editorPath(slug));
+  const allProducts = await getProducts();
+  if (!allProducts.some((p) => p.code === componentCode)) redirect(editorPath(slug));
+  const meta = await fetchProductMetaUncached();
+  const entry = { ...(meta[code] ?? {}) };
+  const existing = entry.components ?? [];
+  if (!existing.includes(componentCode)) entry.components = [...existing, componentCode];
+  meta[code] = entry;
+  await saveMeta(meta);
+  redirect(editorPath(slug, "?saved=1"));
+}
+
+export async function removeComponentProduct(formData: FormData) {
+  await requireAdmin();
+  const { code, slug } = await requireProduct(formData);
+  const componentCode = String(formData.get("componentCode") ?? "").trim();
+  const meta = await fetchProductMetaUncached();
+  const entry = { ...(meta[code] ?? {}) };
+  entry.components = (entry.components ?? []).filter((c) => c !== componentCode);
+  meta[code] = entry;
+  await saveMeta(meta);
+  redirect(editorPath(slug, "?saved=1"));
+}
+
 export async function savePosition(formData: FormData) {
   await requireAdmin();
   const { code, slug } = await requireProduct(formData);

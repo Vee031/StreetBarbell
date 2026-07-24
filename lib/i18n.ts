@@ -73,6 +73,7 @@ export const dictionaries = {
       exVat: "excl. VAT",
       priceOnRequest: "Price on request",
       detail: "Product detail",
+      componentsTitle: "This combination includes",
     },
     config: {
       title: "Recommended configurations",
@@ -172,6 +173,7 @@ export const dictionaries = {
       exVat: "bez DPH",
       priceOnRequest: "Cena na vyžádání",
       detail: "Detail produktu",
+      componentsTitle: "Tato sestava obsahuje",
     },
     config: {
       title: "Doporučené sestavy",

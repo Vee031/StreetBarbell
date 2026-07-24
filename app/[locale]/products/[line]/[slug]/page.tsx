@@ -2,11 +2,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { ArrowLeft, Check, FileText, Mail, Play } from "lucide-react";
 import { MuscleMap } from "@/components/muscle-map";
+import { ProductCard } from "@/components/product-card";
 import { ProductGallery } from "@/components/product-gallery";
 import { getProductDescription, getProductName, productLines, products } from "@/lib/data";
 import { effectiveMuscleShapes, isEnabled, loadProductMeta, youtubeVideoId } from "@/lib/product-meta";
 import { loadProductGroups } from "@/lib/product-groups";
-import { getMergedProduct } from "@/lib/products-store";
+import { getMergedProduct, getProducts } from "@/lib/products-store";
 import { isLocale, type Locale } from "@/lib/i18n";
 import { getSiteTexts } from "@/lib/site-texts";
 
@@ -30,6 +31,10 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   const documents = meta?.documents ?? [];
   const videoId = youtubeVideoId(meta?.youtubeUrl);
   const muscleShapes = effectiveMuscleShapes(product, meta);
+  const componentCodes = meta?.components ?? [];
+  const componentProducts = componentCodes.length > 0
+    ? (await getProducts()).filter((p) => componentCodes.includes(p.code) && isEnabled(metaMap, p.code))
+    : [];
   // Back link: line page for line products, group page for combination-group products.
   let backHref = `/${locale}/products/${product.lineSlug}`;
   if (!productLines.some((l) => l.slug === product.lineSlug)) {
@@ -52,6 +57,13 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
 
     <section className="section page-shell detail-sections">
       <div className="detail-main">
+        {componentProducts.length > 0 && (
+          <section>
+            <span className="eyebrow">{product.code}</span>
+            <h2>{d.products.componentsTitle}</h2>
+            <div className="product-grid">{componentProducts.map((c) => <ProductCard key={c.code} product={c} locale={locale} t={d.products} />)}</div>
+          </section>
+        )}
         <section><span className="eyebrow">{d.products.specification}</span><h2>{cs ? "Data pro projektování a nabídku" : "Data for project planning and quotations"}</h2><div className="spec-grid">
           <div><small>{d.products.dimensions}</small><strong>{valueOrDash(product.dimensions.length)} × {valueOrDash(product.dimensions.width)} × {valueOrDash(product.dimensions.height)} mm</strong></div>
           <div><small>{d.products.weight}</small><strong>{product.weightKg ? `${product.weightKg} kg` : "—"}</strong></div>

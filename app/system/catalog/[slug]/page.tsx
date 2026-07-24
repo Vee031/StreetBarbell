@@ -10,7 +10,7 @@ import { shapeIndicesForKeys } from "@/lib/muscle-figure";
 import { effectiveMuscleShapes, fetchProductMetaUncached, isEnabled } from "@/lib/product-meta";
 import { fetchProductGroupsUncached } from "@/lib/product-groups";
 import { fetchCustomProductsUncached, getProducts, POSITION_OPTIONS } from "@/lib/products-store";
-import { deleteCustomProduct, deleteDocument, deleteGalleryImage, makeMainImage, saveIdentity, saveLine, savePosition, saveTexts, saveVideoAndMuscles, toggleProduct, uploadDocument, uploadGalleryImages } from "../actions";
+import { addComponentProduct, deleteCustomProduct, deleteDocument, deleteGalleryImage, makeMainImage, removeComponentProduct, saveIdentity, saveLine, savePosition, saveTexts, saveVideoAndMuscles, toggleProduct, uploadDocument, uploadGalleryImages } from "../actions";
 
 const fieldLabel = { color: "var(--muted)", fontWeight: 600, textTransform: "uppercase", fontSize: ".74rem", letterSpacing: ".06em" } as const;
 const fieldInput = { border: "1px solid var(--line)", borderRadius: 10, padding: "10px 13px", background: "var(--bg)", fontSize: ".92rem", width: "100%", fontFamily: "inherit" } as const;
@@ -48,6 +48,9 @@ export default async function CatalogProductPage({ params, searchParams }: { par
   const name = getProductName(product);
   const initialShapes = effectiveMuscleShapes(product, meta);
   const autoShapes = shapeIndicesForKeys(detectMuscles(product.muscles));
+  const componentCodes = meta.components ?? [];
+  const componentProducts = componentCodes.map((c) => allProducts.find((p) => p.code === c)).filter((p) => p !== undefined);
+  const availableComponents = allProducts.filter((p) => p.code !== product.code && !componentCodes.includes(p.code)).sort((a, b) => a.code.localeCompare(b.code));
 
   return (
     <>
@@ -229,6 +232,39 @@ export default async function CatalogProductPage({ params, searchParams }: { par
               </select>
               <button type="submit" className="button button-red button-small">Save category</button>
             </form>
+          </section>
+
+          <section className="sys-card">
+            <div className="sys-card-head">
+              <h2>Component machines</h2>
+              <p>For a combination like a recommended setup: which individual machines is it built from? Pick one, save, then repeat for the next — they show as linked products on the public page.</p>
+            </div>
+            {componentProducts.length > 0 ? (
+              <div style={{ display: "grid", gap: 8, marginBottom: 14 }}>
+                {componentProducts.map((c) => (
+                  <div className="cat-doc-row" key={c.code}>
+                    <Link href={`/system/catalog/${c.slug}`}>{c.code} — {getProductName(c)}</Link>
+                    <form action={removeComponentProduct}>
+                      <input type="hidden" name="code" value={product.code} />
+                      <input type="hidden" name="componentCode" value={c.code} />
+                      <button type="submit">Remove</button>
+                    </form>
+                  </div>
+                ))}
+              </div>
+            ) : <p className="sys-note">No component machines added yet.</p>}
+            {availableComponents.length > 0 && (
+              <form action={addComponentProduct} style={{ display: "grid", gap: 10 }}>
+                <input type="hidden" name="code" value={product.code} />
+                <label style={{ display: "grid", gap: 4 }}>
+                  <small style={fieldLabel}>Add a machine</small>
+                  <select name="componentCode" size={8} style={{ ...fieldInput, height: "auto" }} required>
+                    {availableComponents.map((p) => <option key={p.code} value={p.code}>{p.code} — {getProductName(p)} · {p.line}</option>)}
+                  </select>
+                </label>
+                <div><button type="submit" className="button button-red button-small">Add machine</button></div>
+              </form>
+            )}
           </section>
 
           <section className="sys-card">
