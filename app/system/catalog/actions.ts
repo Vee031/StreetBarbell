@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { isAdminAuthenticated } from "@/lib/admin-auth";
 import { writeBlobJson } from "@/lib/blob-json";
 import { products } from "@/lib/data";
+import { resizeForUpload } from "@/lib/image-upload";
 import { MUSCLE_SHAPES } from "@/lib/muscle-figure";
 import { fetchProductMetaUncached, META_BLOB_PATH, youtubeVideoId, type ProductMetaMap } from "@/lib/product-meta";
 import { fetchProductGroupsUncached, GROUPS_BLOB_PATH } from "@/lib/product-groups";
@@ -262,10 +263,11 @@ export async function uploadGalleryImages(formData: FormData) {
   for (const file of files) {
     if (!file.type.startsWith("image/")) redirect(editorPath(slug, "?error=notimage"));
     if (file.size > 8 * 1024 * 1024) redirect(editorPath(slug, "?error=toobig"));
-    const blob = await put(mediaPath(code, "gallery", file.name), file, {
+    const resized = await resizeForUpload(file);
+    const blob = await put(mediaPath(code, "gallery", resized.fileName), resized.buffer, {
       access: "public",
       addRandomSuffix: true,
-      contentType: file.type,
+      contentType: resized.contentType,
       abortSignal: AbortSignal.timeout(30000),
     });
     urls.push(blob.url);
@@ -376,10 +378,11 @@ export async function createProduct(formData: FormData) {
   if (file instanceof File && file.size > 0) {
     if (!file.type.startsWith("image/")) redirect("/system/catalog/new?error=notimage");
     if (file.size > 8 * 1024 * 1024) redirect("/system/catalog/new?error=toobig");
-    const blob = await put(mediaPath(code, "gallery", `main-${file.name}`), file, {
+    const resized = await resizeForUpload(file);
+    const blob = await put(mediaPath(code, "gallery", `main-${resized.fileName}`), resized.buffer, {
       access: "public",
       addRandomSuffix: true,
-      contentType: file.type,
+      contentType: resized.contentType,
       abortSignal: AbortSignal.timeout(30000),
     });
     image = blob.url;
