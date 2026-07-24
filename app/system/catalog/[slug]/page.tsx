@@ -10,7 +10,7 @@ import { shapeIndicesForKeys } from "@/lib/muscle-figure";
 import { effectiveMuscleShapes, fetchProductMetaUncached, isEnabled } from "@/lib/product-meta";
 import { fetchProductGroupsUncached } from "@/lib/product-groups";
 import { fetchCustomProductsUncached, getProducts, POSITION_OPTIONS } from "@/lib/products-store";
-import { addComponentProduct, deleteCustomProduct, deleteDocument, deleteGalleryImage, makeMainImage, removeComponentProduct, saveIdentity, saveLine, savePosition, saveTexts, saveVideoAndMuscles, toggleProduct, uploadDocument, uploadGalleryImages } from "../actions";
+import { addComponentProduct, deleteCustomProduct, deleteDocument, deleteGalleryImage, makeMainImage, removeComponentProduct, saveIdentity, saveLine, savePosition, saveSpecification, saveTexts, saveVideoAndMuscles, toggleProduct, uploadDocument, uploadGalleryImages } from "../actions";
 
 const fieldLabel = { color: "var(--muted)", fontWeight: 600, textTransform: "uppercase", fontSize: ".74rem", letterSpacing: ".06em" } as const;
 const fieldInput = { border: "1px solid var(--line)", borderRadius: 10, padding: "10px 13px", background: "var(--bg)", fontSize: ".92rem", width: "100%", fontFamily: "inherit" } as const;
@@ -265,6 +265,57 @@ export default async function CatalogProductPage({ params, searchParams }: { par
                 <div><button type="submit" className="button button-red button-small">Add machine</button></div>
               </form>
             )}
+          </section>
+
+          <section className="sys-card">
+            <div className="sys-card-head">
+              <h2>Technical specification</h2>
+              <p>Dimensions, weight and materials shown on the product page. Left blank on admin-created combinations by default — fill in whatever you know; the rest stays as “—”. Empty a field and save to clear it.</p>
+            </div>
+            <form action={saveSpecification} style={{ display: "grid", gap: 12 }}>
+              <input type="hidden" name="code" value={product.code} />
+              <label style={{ display: "grid", gap: 4 }}>
+                <small style={fieldLabel}>Dimensions — length × width × height (mm)</small>
+                <div style={{ display: "flex", gap: 8 }}>
+                  <input type="number" name="dimLength" defaultValue={product.dimensions.length ?? ""} placeholder="Length" style={fieldInput} />
+                  <input type="number" name="dimWidth" defaultValue={product.dimensions.width ?? ""} placeholder="Width" style={fieldInput} />
+                  <input type="number" name="dimHeight" defaultValue={product.dimensions.height ?? ""} placeholder="Height" style={fieldInput} />
+                </div>
+              </label>
+              <label style={{ display: "grid", gap: 4 }}>
+                <small style={fieldLabel}>Equipment weight (kg)</small>
+                <input type="number" name="weightKg" defaultValue={product.weightKg ?? ""} style={fieldInput} />
+              </label>
+              <label style={{ display: "grid", gap: 4 }}>
+                <small style={fieldLabel}>Load specification</small>
+                <input type="text" name="loadSpecification" defaultValue={product.loadSpecification} placeholder="e.g. 2 × 100 kg variable load" style={fieldInput} />
+              </label>
+              <label style={{ display: "grid", gap: 4 }}>
+                <small style={fieldLabel}>Approx. footprint (m²)</small>
+                <input type="number" step="0.01" name="footprint" defaultValue={product.footprint ?? ""} style={fieldInput} />
+              </label>
+              <label style={{ display: "grid", gap: 4 }}>
+                <small style={fieldLabel}>Simultaneous users</small>
+                <input type="text" name="simultaneousUsers" defaultValue={product.simultaneousUsers} style={fieldInput} />
+              </label>
+              <label style={{ display: "grid", gap: 4 }}>
+                <small style={fieldLabel}>Frame</small>
+                <input type="text" name="matFrame" defaultValue={product.materials.frame} style={fieldInput} />
+              </label>
+              <label style={{ display: "grid", gap: 4 }}>
+                <small style={fieldLabel}>Rails</small>
+                <input type="text" name="matRails" defaultValue={product.materials.rails} style={fieldInput} />
+              </label>
+              <label style={{ display: "grid", gap: 4 }}>
+                <small style={fieldLabel}>Small parts</small>
+                <input type="text" name="matSmallParts" defaultValue={product.materials.smallParts} style={fieldInput} />
+              </label>
+              <label style={{ display: "grid", gap: 4 }}>
+                <small style={fieldLabel}>Finish</small>
+                <input type="text" name="matFinish" defaultValue={product.materials.finish} style={fieldInput} />
+              </label>
+              <div><button type="submit" className="button button-red button-small">Save specification</button></div>
+            </form>
           </section>
 
           <section className="sys-card">

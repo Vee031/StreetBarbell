@@ -261,6 +261,60 @@ export async function saveTexts(formData: FormData) {
   redirect(editorPath(slug, "?saved=1"));
 }
 
+// Technical spec + materials: blank for admin-created combination products
+// (customToProduct zeroes them out) since there's no Excel row to source them
+// from. Same diffs-only overrides store as saveTexts/the XLSX import.
+const SPEC_TEXT_FIELDS = ["loadSpecification", "simultaneousUsers", "matFrame", "matRails", "matSmallParts", "matFinish"] as const;
+const SPEC_NUMBER_FIELDS = ["weightKg", "footprint", "dimLength", "dimWidth", "dimHeight"] as const;
+
+export async function saveSpecification(formData: FormData) {
+  await requireAdmin();
+  const { code, slug, custom } = await requireProduct(formData);
+  let base = products.find((p) => p.code === code);
+  if (custom) {
+    const record = (await fetchCustomProductsUncached())[code];
+    if (record) base = customToProduct(record, buildCategoryMap(await fetchProductGroupsUncached()));
+  }
+  const overrides = await fetchProductOverridesUncached();
+  const entry = { ...(overrides[code] ?? {}) };
+
+  const textBase: Record<(typeof SPEC_TEXT_FIELDS)[number], string | undefined> = {
+    loadSpecification: base?.loadSpecification,
+    simultaneousUsers: base?.simultaneousUsers,
+    matFrame: base?.materials.frame,
+    matRails: base?.materials.rails,
+    matSmallParts: base?.materials.smallParts,
+    matFinish: base?.materials.finish,
+  };
+  for (const field of SPEC_TEXT_FIELDS) {
+    const value = String(formData.get(field) ?? "").trim().slice(0, 500);
+    if (!value || value === textBase[field]) delete entry[field];
+    else entry[field] = value;
+  }
+
+  const numberBase: Record<(typeof SPEC_NUMBER_FIELDS)[number], number | null> = {
+    weightKg: base?.weightKg ?? null,
+    footprint: base?.footprint ?? null,
+    dimLength: base?.dimensions.length ?? null,
+    dimWidth: base?.dimensions.width ?? null,
+    dimHeight: base?.dimensions.height ?? null,
+  };
+  for (const field of SPEC_NUMBER_FIELDS) {
+    const raw = String(formData.get(field) ?? "").trim();
+    if (raw === "") { delete entry[field]; continue; }
+    const value = Number(raw);
+    if (!Number.isFinite(value) || value === numberBase[field]) delete entry[field];
+    else entry[field] = value;
+  }
+
+  if (Object.keys(entry).length === 0) delete overrides[code];
+  else overrides[code] = entry;
+  await writeBlobJson(PRODUCTS_BLOB_PATH, overrides);
+  updateTag(PRODUCTS_CACHE_TAG);
+  revalidatePath("/", "layout");
+  redirect(editorPath(slug, "?saved=1"));
+}
+
 export async function saveLine(formData: FormData) {
   await requireAdmin();
   const { code, slug } = await requireProduct(formData);
